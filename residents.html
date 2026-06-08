@@ -11,8 +11,10 @@
       <a class="brand" href="./index.html">鼠鼠星球</a>
       <nav class="topnav" aria-label="主导航">
         <a href="./index.html">首页</a>
-        <a class="active" href="./residents.html">星球居民</a>
+        <a class="active" href="./residents.html" aria-current="page">星球居民</a>
         <a href="./map.html">星球地图</a>
+        <a href="./planet-wall.html">纪念星河</a>
+        <a href="./submit.html">投稿原型</a>
       </nav>
     </header>
 
@@ -21,7 +23,7 @@
         <p class="eyebrow">Residents</p>
         <h1 id="residents-title">星球居民</h1>
         <p class="lede">
-          每一张纪念卡都像一颗小星星。可以按名字、性格、爱吃的东西搜索，也可以新增一位鼠鼠。
+          每一张纪念卡都像一颗小星星。现在可以先在本地记录自己的鼠鼠，未来这里会收录更多玩家心爱的鼠鼠。
         </p>
       </section>
 
@@ -47,10 +49,10 @@
             <input id="search-input" type="search" placeholder="名字、昵称、爱吃的、性格..." />
           </label>
           <div class="filters" role="group" aria-label="星球区域">
-            <button class="filter active" type="button" data-filter="all">全部</button>
-            <button class="filter" type="button" data-filter="月光谷">月光谷</button>
-            <button class="filter" type="button" data-filter="瓜子环">瓜子环</button>
-            <button class="filter" type="button" data-filter="棉花云">棉花云</button>
+            <button class="filter active" type="button" data-filter="all" aria-pressed="true">全部</button>
+            <button class="filter" type="button" data-filter="月光谷" aria-pressed="false">月光谷</button>
+            <button class="filter" type="button" data-filter="瓜子环" aria-pressed="false">瓜子环</button>
+            <button class="filter" type="button" data-filter="棉花云" aria-pressed="false">棉花云</button>
           </div>
         </section>
         <div id="cards" class="cards"></div>
@@ -61,12 +63,27 @@
       <section id="add-memory" class="add-memory" aria-labelledby="add-title">
         <div class="section-heading">
           <p class="eyebrow">New Memory</p>
-          <h2 id="add-title">新增一张纪念卡</h2>
+          <h2 id="add-title">新增一张本地纪念卡</h2>
         </div>
         <form id="memory-form" class="memory-form">
+          <p id="memory-form-status" class="form-status" aria-live="polite">
+            新增内容只保存在当前浏览器，之后可以编辑或删除。
+          </p>
+          <label>
+            <span>玩家昵称</span>
+            <input name="playerName" maxlength="20" placeholder="比如：奶盖的饲养员" />
+          </label>
           <label>
             <span>鼠鼠名字</span>
             <input name="name" required maxlength="16" placeholder="比如：奶盖" />
+          </label>
+          <label>
+            <span>鼠鼠昵称</span>
+            <input name="nickname" maxlength="20" placeholder="比如：盖盖" />
+          </label>
+          <label>
+            <span>抵达鼠星日期</span>
+            <input name="arrivedAt" type="date" />
           </label>
           <label>
             <span>所在区域</span>
@@ -81,17 +98,27 @@
             <input name="food" maxlength="20" placeholder="比如：冻干豆腐" />
           </label>
           <label>
+            <span>头像色块</span>
+            <input name="color" type="color" value="#8fd2c8" />
+          </label>
+          <label>
+            <span>性格标签</span>
+            <input name="traits" maxlength="60" placeholder="用逗号分隔，比如：亲人, 爱跑轮" />
+          </label>
+          <label>
             <span>一句话纪念</span>
-            <textarea name="memory" required maxlength="120" placeholder="写下最想记住的那一幕"></textarea>
+            <textarea name="memory" required maxlength="180" placeholder="写下最想记住的那一幕"></textarea>
           </label>
           <div class="form-actions">
-            <button class="button primary" type="submit">点亮这颗星</button>
+            <button class="button primary" id="memory-submit" type="submit">点亮这颗星</button>
+            <button class="button ghost" id="cancel-edit" type="button" hidden>取消编辑</button>
             <button class="button ghost" id="clear-local" type="button">清除本地新增</button>
           </div>
         </form>
       </section>
     </main>
 
+    <script src="./data/memories.js"></script>
     <script src="./src/app.js"></script>
   </body>
 </html>

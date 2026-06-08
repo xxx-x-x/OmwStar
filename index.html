@@ -10,9 +10,11 @@
     <header class="topbar">
       <a class="brand" href="./index.html">鼠鼠星球</a>
       <nav class="topnav" aria-label="主导航">
-        <a class="active" href="./index.html">首页</a>
+        <a class="active" href="./index.html" aria-current="page">首页</a>
         <a href="./residents.html">星球居民</a>
         <a href="./map.html">星球地图</a>
+        <a href="./planet-wall.html">纪念星河</a>
+        <a href="./submit.html">投稿原型</a>
       </nav>
     </header>
 
@@ -29,15 +31,17 @@
         </div>
 
         <div class="hero-copy">
-          <p class="eyebrow">Memory Archive</p>
+          <p class="eyebrow">Players' Memory Archive</p>
           <h1 id="page-title">鼠鼠星球</h1>
           <p class="lede">
-            给已经去鼠星的鼠鼠们留一盏小灯。这里收录它们的名字、性格、爱吃的东西，
-            以及那些只有你记得的、闪闪发亮的小瞬间。
+            给各个玩家心爱的鼠鼠留一盏小灯。这里收录已经到达鼠星的小居民，记下它们的名字、性格、爱吃的东西，
+            以及那些被认真爱过、闪闪发亮的小瞬间。
           </p>
           <div class="hero-actions">
             <a class="button primary" href="./residents.html#add-memory">新增鼠鼠</a>
             <a class="button ghost" href="./residents.html">看看星球居民</a>
+            <a class="button ghost" href="./planet-wall.html">进入纪念星河</a>
+            <a class="button ghost" href="./submit.html">查看投稿原型</a>
           </div>
         </div>
       </section>
@@ -60,15 +64,24 @@
       <section class="home-gateway" aria-label="进入鼠鼠星球">
         <a class="gateway-link" href="./residents.html">
           <span>星球居民</span>
-          <strong>查看所有已经抵达鼠星的鼠鼠档案</strong>
+          <strong>查看已经抵达鼠星的小居民档案</strong>
         </a>
         <a class="gateway-link" href="./map.html">
           <span>星球地图</span>
           <strong>按月光谷、瓜子环、棉花云寻找它们</strong>
         </a>
+        <a class="gateway-link" href="./submit.html">
+          <span>投稿原型</span>
+          <strong>看看未来玩家如何把心爱的鼠鼠送到星球</strong>
+        </a>
+        <a class="gateway-link" href="./planet-wall.html">
+          <span>纪念星河</span>
+          <strong>预览未来公开收录后的小星星们</strong>
+        </a>
       </section>
     </main>
 
+    <script src="./data/memories.js"></script>
     <script src="./src/app.js"></script>
   </body>
 </html>

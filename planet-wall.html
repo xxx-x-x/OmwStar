@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>鼠鼠星球 | 纪念星河</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./index.html">鼠鼠星球</a>
+      <nav class="topnav" aria-label="主导航">
+        <a href="./index.html">首页</a>
+        <a href="./residents.html">星球居民</a>
+        <a href="./map.html">星球地图</a>
+        <a class="active" href="./planet-wall.html" aria-current="page">纪念星河</a>
+        <a href="./submit.html">投稿原型</a>
+      </nav>
+    </header>
+
+    <main class="shell page-shell">
+      <section class="page-hero" aria-labelledby="wall-title">
+        <p class="eyebrow">Memory Galaxy</p>
+        <h1 id="wall-title">纪念星河</h1>
+        <p class="lede">
+          这里是未来公开收录空间的静态概念页。每一张卡片都代表一位玩家主动送来的鼠鼠档案；当前只使用示例数据，不接收真实投稿。
+        </p>
+      </section>
+
+      <section class="wall-notice" aria-label="纪念星河说明">
+        <article>
+          <span>当前状态</span>
+          <strong>静态概念原型</strong>
+          <p>这里不会上传、保存或公开玩家内容，只用于验证未来公开展示的氛围。</p>
+        </article>
+        <article>
+          <span>公开原则</span>
+          <strong>主动提交，审核后收录</strong>
+          <p>真实上线后，只有玩家主动确认公开的档案，才会进入待审核流程。</p>
+        </article>
+        <article>
+          <span>互动原则</span>
+          <strong>点灯，不排行</strong>
+          <p>轻互动只表达“我来过”，不会做热度榜，也不会比较哪一位更被喜欢。</p>
+        </article>
+      </section>
+
+      <section class="wall-section" aria-labelledby="wall-list-title">
+        <div class="section-heading">
+          <p class="eyebrow">Public Archive Concept</p>
+          <h2 id="wall-list-title">已经点亮的小星星</h2>
+        </div>
+        <div id="wall-cards" class="wall-cards" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script src="./data/memories.js"></script>
+    <script src="./src/app.js"></script>
+  </body>
+</html>

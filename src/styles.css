@@ -70,6 +70,7 @@ textarea {
   border-radius: 8px;
   padding: 5px;
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   background: rgba(255, 255, 255, 0.74);
   box-shadow: 0 10px 28px rgba(38, 53, 61, 0.08);
@@ -114,7 +115,7 @@ textarea {
 .home-gateway {
   margin-top: 28px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
 }
 
@@ -337,9 +338,12 @@ h2 {
 
 .stats,
 .toolbar,
+.wall-notice,
 .planet-map,
 .resident-page,
-.add-memory {
+.add-memory,
+.submission-form,
+.submission-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.72);
@@ -353,12 +357,20 @@ h2 {
   overflow: hidden;
 }
 
-.stats article {
+.wall-notice {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  overflow: hidden;
+}
+
+.stats article,
+.wall-notice article {
   padding: 22px;
   border-right: 1px solid var(--line);
 }
 
-.stats article:last-child {
+.stats article:last-child,
+.wall-notice article:last-child {
   border-right: 0;
 }
 
@@ -374,6 +386,27 @@ h2 {
   color: var(--muted);
 }
 
+.wall-notice span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--coral);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.wall-notice strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.18rem;
+}
+
+.wall-notice p {
+  margin: 0;
+  color: #4d5b5f;
+  line-height: 1.7;
+}
+
 .toolbar {
   margin: 0 0 22px;
   padding: 18px;
@@ -384,13 +417,15 @@ h2 {
 }
 
 .search-field,
-.memory-form label {
+.memory-form label,
+.submission-form label {
   display: grid;
   gap: 8px;
 }
 
 .search-field span,
-.memory-form span {
+.memory-form span,
+.submission-form span {
   color: #526064;
   font-size: 0.9rem;
   font-weight: 800;
@@ -411,6 +446,11 @@ input,
 select {
   min-height: 44px;
   padding: 0 14px;
+}
+
+input[type="color"] {
+  min-height: 44px;
+  padding: 4px;
 }
 
 textarea {
@@ -633,7 +673,7 @@ textarea:focus {
 
 .resident-notes {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   margin-top: 22px;
 }
@@ -663,7 +703,20 @@ textarea:focus {
   gap: 16px;
 }
 
-.card {
+.wall-section {
+  margin-top: 42px;
+}
+
+.wall-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card,
+.wall-card {
+  position: relative;
+  overflow: hidden;
   min-height: 280px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -672,6 +725,20 @@ textarea:focus {
   flex-direction: column;
   background: var(--panel);
   box-shadow: 0 12px 36px rgba(38, 53, 61, 0.08);
+}
+
+.wall-card {
+  gap: 0;
+}
+
+.wall-card-glow {
+  position: absolute;
+  inset: -80px -80px auto auto;
+  width: 180px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0.18;
+  filter: blur(8px);
 }
 
 .card-top {
@@ -699,6 +766,13 @@ textarea:focus {
   color: var(--muted);
 }
 
+.wall-owner {
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -722,13 +796,68 @@ textarea:focus {
   line-height: 1.75;
 }
 
-.card .button {
-  width: 100%;
+.card-actions {
   margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.card-actions .button {
+  width: 100%;
+  padding: 0 10px;
+}
+
+.card-actions .button:first-child {
+  grid-column: 1 / -1;
+}
+
+.danger {
+  color: #8f3b2f;
+}
+
+.danger:hover {
+  border-color: rgba(143, 59, 47, 0.32);
+  background: #fff4ef;
+}
+
+.wall-actions {
+  margin-top: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.wall-actions span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.light-button[aria-pressed="true"] {
+  color: #172326;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--gold), var(--mint));
+}
+
+.wall-card.lit {
+  border-color: rgba(242, 195, 107, 0.72);
+  box-shadow: 0 18px 48px rgba(242, 195, 107, 0.18);
 }
 
 .add-memory {
   margin-top: 44px;
+  padding: 24px;
+}
+
+.submit-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.15fr) minmax(280px, 0.85fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.submission-form,
+.submission-panel {
   padding: 24px;
 }
 
@@ -738,9 +867,51 @@ textarea:focus {
   gap: 16px;
 }
 
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.full-field {
+  grid-column: 1 / -1;
+}
+
 .memory-form label:last-of-type,
 .form-actions {
   grid-column: 1 / -1;
+}
+
+.form-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  border: 1px dashed rgba(39, 48, 51, 0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #4d5b5f;
+  background: rgba(255, 253, 249, 0.78);
+  line-height: 1.7;
+}
+
+.consent-check {
+  margin: 18px 0 0;
+  border: 1px dashed rgba(39, 48, 51, 0.2);
+  border-radius: 8px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  background: rgba(255, 253, 249, 0.78);
+}
+
+.consent-check input {
+  width: 18px;
+  min-height: 18px;
+  margin: 2px 0 0;
+}
+
+.consent-check span {
+  line-height: 1.7;
 }
 
 .form-actions {
@@ -753,45 +924,28 @@ textarea:focus {
   flex: 1 1 190px;
 }
 
-.detail-dialog {
-  width: min(560px, calc(100% - 28px));
-  border: 0;
-  border-radius: 8px;
-  padding: 0;
-  color: var(--ink);
-  background: #fffdf9;
-  box-shadow: 0 28px 100px rgba(0, 0, 0, 0.24);
+.submission-panel {
+  position: sticky;
+  top: 86px;
 }
 
-.detail-dialog::backdrop {
-  background: rgba(28, 36, 39, 0.42);
+.submission-panel h3 {
+  margin: 0 0 12px;
+  font-size: clamp(1.45rem, 3vw, 2.2rem);
+  line-height: 1.12;
 }
 
-.close {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  width: 38px;
-  height: 38px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--ink);
-  cursor: pointer;
+.submission-panel p {
+  color: #4d5b5f;
+  line-height: 1.75;
 }
 
-.detail {
-  padding: 30px;
+.submission-preview {
+  margin-top: 18px;
 }
 
-.detail .avatar {
-  width: 86px;
-  margin-bottom: 14px;
-}
-
-.detail h3 {
-  margin: 0 0 6px;
-  font-size: 2rem;
+.submission-card {
+  min-height: auto;
 }
 
 .empty {
@@ -836,8 +990,13 @@ textarea:focus {
 
   .map-layout,
   .resident-hero,
-  .home-gateway {
+  .home-gateway,
+  .submit-layout {
     grid-template-columns: 1fr;
+  }
+
+  .submission-panel {
+    position: static;
   }
 
   .map-orbit {
@@ -846,6 +1005,20 @@ textarea:focus {
 
   .cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wall-cards,
+  .wall-notice {
+    grid-template-columns: 1fr;
+  }
+
+  .wall-notice article {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .wall-notice article:last-child {
+    border-bottom: 0;
   }
 }
 
@@ -863,10 +1036,10 @@ textarea:focus {
   }
 
   .topnav a {
-    flex: 1 1 0;
+    flex: 1 1 30%;
     justify-content: center;
     padding: 0 8px;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
   }
 
   .shell {
@@ -876,7 +1049,9 @@ textarea:focus {
 
   .stats,
   .cards,
+  .wall-cards,
   .memory-form,
+  .form-grid,
   .resident-notes {
     grid-template-columns: 1fr;
   }
@@ -901,7 +1076,9 @@ textarea:focus {
 
   .planet-map,
   .resident-page,
-  .add-memory {
+  .add-memory,
+  .submission-form,
+  .submission-panel {
     padding: 18px;
   }
 

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>鼠鼠星球 | 星球居民</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./index.html">鼠鼠星球</a>
+      <nav class="topnav" aria-label="主导航">
+        <a href="./index.html">首页</a>
+        <a class="active" href="./residents.html">星球居民</a>
+        <a href="./map.html">星球地图</a>
+      </nav>
+    </header>
+
+    <main class="shell page-shell">
+      <section class="page-hero" aria-labelledby="residents-title">
+        <p class="eyebrow">Residents</p>
+        <h1 id="residents-title">星球居民</h1>
+        <p class="lede">
+          每一张纪念卡都像一颗小星星。可以按名字、性格、爱吃的东西搜索，也可以新增一位鼠鼠。
+        </p>
+      </section>
+
+      <section class="stats" aria-label="鼠鼠星球概览">
+        <article>
+          <span id="total-count">0</span>
+          <p>位星球居民</p>
+        </article>
+        <article>
+          <span id="favorite-food">瓜子</span>
+          <p>最常出现的小零食</p>
+        </article>
+        <article>
+          <span id="latest-arrival">小星星</span>
+          <p>最近点亮的名字</p>
+        </article>
+      </section>
+
+      <section id="archive" class="archive" aria-label="鼠鼠档案">
+        <section class="toolbar" aria-label="筛选和搜索">
+          <label class="search-field">
+            <span>搜索</span>
+            <input id="search-input" type="search" placeholder="名字、昵称、爱吃的、性格..." />
+          </label>
+          <div class="filters" role="group" aria-label="星球区域">
+            <button class="filter active" type="button" data-filter="all">全部</button>
+            <button class="filter" type="button" data-filter="月光谷">月光谷</button>
+            <button class="filter" type="button" data-filter="瓜子环">瓜子环</button>
+            <button class="filter" type="button" data-filter="棉花云">棉花云</button>
+          </div>
+        </section>
+        <div id="cards" class="cards"></div>
+      </section>
+
+      <section id="resident-detail" class="resident-page" hidden aria-live="polite"></section>
+
+      <section id="add-memory" class="add-memory" aria-labelledby="add-title">
+        <div class="section-heading">
+          <p class="eyebrow">New Memory</p>
+          <h2 id="add-title">新增一张纪念卡</h2>
+        </div>
+        <form id="memory-form" class="memory-form">
+          <label>
+            <span>鼠鼠名字</span>
+            <input name="name" required maxlength="16" placeholder="比如：奶盖" />
+          </label>
+          <label>
+            <span>所在区域</span>
+            <select name="region">
+              <option>月光谷</option>
+              <option>瓜子环</option>
+              <option>棉花云</option>
+            </select>
+          </label>
+          <label>
+            <span>爱吃的</span>
+            <input name="food" maxlength="20" placeholder="比如：冻干豆腐" />
+          </label>
+          <label>
+            <span>一句话纪念</span>
+            <textarea name="memory" required maxlength="120" placeholder="写下最想记住的那一幕"></textarea>
+          </label>
+          <div class="form-actions">
+            <button class="button primary" type="submit">点亮这颗星</button>
+            <button class="button ghost" id="clear-local" type="button">清除本地新增</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="./src/app.js"></script>
+  </body>
+</html>

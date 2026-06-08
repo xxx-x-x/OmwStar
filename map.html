@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>鼠鼠星球 | 星球地图</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./index.html">鼠鼠星球</a>
+      <nav class="topnav" aria-label="主导航">
+        <a href="./index.html">首页</a>
+        <a href="./residents.html">星球居民</a>
+        <a class="active" href="./map.html">星球地图</a>
+      </nav>
+    </header>
+
+    <main class="shell page-shell">
+      <section class="page-hero" aria-labelledby="map-title">
+        <p class="eyebrow">Planet Map</p>
+        <h1 id="map-title">星球地图</h1>
+        <p class="lede">
+          鼠鼠星球被分成月光谷、瓜子环和棉花云。点一点区域，就能看到住在那里的鼠鼠。
+        </p>
+      </section>
+
+      <section id="planet-map" class="planet-map standalone-map" aria-label="鼠鼠星球地图">
+        <div class="map-layout">
+          <div class="map-orbit" aria-label="星球区域地图">
+            <button class="map-zone zone-moon active" type="button" data-map-region="月光谷">
+              <span>月光谷</span>
+              <small>安静晒月亮</small>
+            </button>
+            <button class="map-zone zone-seed" type="button" data-map-region="瓜子环">
+              <span>瓜子环</span>
+              <small>零食很多</small>
+            </button>
+            <button class="map-zone zone-cloud" type="button" data-map-region="棉花云">
+              <span>棉花云</span>
+              <small>适合睡觉</small>
+            </button>
+            <div class="map-core" aria-hidden="true">
+              <span>鼠鼠星球</span>
+            </div>
+          </div>
+          <div class="map-panel">
+            <p class="map-kicker" id="map-region-name">月光谷</p>
+            <h3 id="map-region-title">这里住着温柔的小星星</h3>
+            <p id="map-region-copy">
+              月光谷收留那些安静、亲近、喜欢在掌心或窝边发呆的鼠鼠。
+            </p>
+            <div id="map-residents" class="map-residents"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="resident-detail" class="resident-page" hidden aria-live="polite"></section>
+    </main>
+
+    <script src="./src/app.js"></script>
+  </body>
+</html>

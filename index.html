@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>鼠鼠星球 | 首页</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./index.html">鼠鼠星球</a>
+      <nav class="topnav" aria-label="主导航">
+        <a class="active" href="./index.html">首页</a>
+        <a href="./residents.html">星球居民</a>
+        <a href="./map.html">星球地图</a>
+      </nav>
+    </header>
+
+    <main class="shell">
+      <section id="home" class="hero" aria-labelledby="page-title">
+        <div class="hero-art" aria-hidden="true">
+          <div class="planet">
+            <span class="planet-ring"></span>
+            <span class="planet-face">⌒ ⌒</span>
+          </div>
+          <span class="star star-one"></span>
+          <span class="star star-two"></span>
+          <span class="star star-three"></span>
+        </div>
+
+        <div class="hero-copy">
+          <p class="eyebrow">Memory Archive</p>
+          <h1 id="page-title">鼠鼠星球</h1>
+          <p class="lede">
+            给已经去鼠星的鼠鼠们留一盏小灯。这里收录它们的名字、性格、爱吃的东西，
+            以及那些只有你记得的、闪闪发亮的小瞬间。
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="./residents.html#add-memory">新增鼠鼠</a>
+            <a class="button ghost" href="./residents.html">看看星球居民</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="鼠鼠星球概览">
+        <article>
+          <span id="total-count">0</span>
+          <p>位星球居民</p>
+        </article>
+        <article>
+          <span id="favorite-food">瓜子</span>
+          <p>最常出现的小零食</p>
+        </article>
+        <article>
+          <span id="latest-arrival">小星星</span>
+          <p>最近点亮的名字</p>
+        </article>
+      </section>
+
+      <section class="home-gateway" aria-label="进入鼠鼠星球">
+        <a class="gateway-link" href="./residents.html">
+          <span>星球居民</span>
+          <strong>查看所有已经抵达鼠星的鼠鼠档案</strong>
+        </a>
+        <a class="gateway-link" href="./map.html">
+          <span>星球地图</span>
+          <strong>按月光谷、瓜子环、棉花云寻找它们</strong>
+        </a>
+      </section>
+    </main>
+
+    <script src="./src/app.js"></script>
+  </body>
+</html>

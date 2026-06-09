@@ -1,0 +1,20 @@
+[Unit]
+Description=OmwStar web application
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/OmwStar
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=3004
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=3
+User=ubuntu
+Group=ubuntu
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+{
+  "name": "shushu-planet",
+  "version": "1.1.0",
+  "private": true,
+  "description": "鼠鼠星球网站后端和静态页面",
+  "scripts": {
+    "start": "node server/app.cjs",
+    "dev": "node server/app.cjs",
+    "db:init": "node server/scripts/init-db.cjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.11.5",
+    "redis": "^4.7.0"
+  }
+}

@@ -27,40 +27,15 @@
         </p>
       </section>
 
-      <section id="planet-map" class="planet-map standalone-map" aria-label="鼠鼠星球地图">
-        <div class="map-layout">
-          <div class="map-orbit" aria-label="星球区域地图">
-            <button class="map-zone zone-moon active" type="button" data-map-region="月光谷" aria-pressed="true">
-              <span>月光谷</span>
-              <small>安静晒月亮</small>
-            </button>
-            <button class="map-zone zone-seed" type="button" data-map-region="瓜子环" aria-pressed="false">
-              <span>瓜子环</span>
-              <small>零食很多</small>
-            </button>
-            <button class="map-zone zone-cloud" type="button" data-map-region="棉花云" aria-pressed="false">
-              <span>棉花云</span>
-              <small>适合睡觉</small>
-            </button>
-            <div class="map-core" aria-hidden="true">
-              <span>鼠鼠星球</span>
-            </div>
-          </div>
-          <div class="map-panel">
-            <p class="map-kicker" id="map-region-name">月光谷</p>
-            <h3 id="map-region-title">这里住着温柔的小星星</h3>
-            <p id="map-region-copy">
-              月光谷收留那些安静、亲近、喜欢在掌心或窝边发呆的鼠鼠。
-            </p>
-            <div id="map-residents" class="map-residents"></div>
-          </div>
+      <section id="planet-map" class="planet-map standalone-map planet-showcase" aria-label="可旋转鼠鼠星球">
+        <div id="three-planet-stage" class="three-planet-stage" aria-label="一个可以拖动旋转的鼠鼠星球">
+          <p class="three-planet-fallback">正在点亮鼠鼠星球。</p>
         </div>
       </section>
-
-      <section id="resident-detail" class="resident-page" hidden aria-live="polite"></section>
     </main>
 
     <script src="./data/memories.js"></script>
     <script src="./src/app.js"></script>
+    <script type="module" src="./src/planet-map.js"></script>
   </body>
 </html>

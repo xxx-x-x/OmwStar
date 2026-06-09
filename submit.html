@@ -1,110 +1,125 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>鼠鼠星球 | 投稿原型</title>
-    <link rel="stylesheet" href="./src/styles.css" />
-  </head>
-  <body>
-    <header class="topbar">
-      <a class="brand" href="./index.html">鼠鼠星球</a>
-      <nav class="topnav" aria-label="主导航">
-        <a href="./index.html">首页</a>
-        <a href="./residents.html">星球居民</a>
-        <a href="./map.html">星球地图</a>
-        <a href="./planet-wall.html">纪念星河</a>
-        <a class="active" href="./submit.html" aria-current="page">投稿原型</a>
-      </nav>
-    </header>
 
-    <main class="shell page-shell">
-      <section class="page-hero" aria-labelledby="submit-title">
-        <p class="eyebrow">Submission Prototype</p>
-        <h1 id="submit-title">把鼠鼠送到星球</h1>
-        <p class="lede">
-          这里是未来玩家投稿流程的静态原型。当前页面不会上传、保存或公开任何内容，只用于确认一份鼠鼠档案被收录前应该包含什么。
-        </p>
-      </section>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>鼠鼠星球 | 投稿原型</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+  <script>
+    (function () { try { var t = localStorage.getItem("shushu-planet.theme.v1"); if (!t && window.matchMedia("(prefers-color-scheme: dark)").matches) t = "dark"; if (t === "dark") document.documentElement.setAttribute("data-theme", "dark") } catch (e) { } })()
+  </script>
+</head>
 
-      <section class="submit-layout" aria-label="玩家投稿流程原型">
-        <form id="submission-form" class="submission-form">
-          <div class="section-heading">
-            <p class="eyebrow">Archive Draft</p>
-            <h2>待审核纪念档案</h2>
-          </div>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./index.html">鼠鼠星球</a>
+    <nav class="topnav" aria-label="主导航">
+      <a href="./index.html">首页</a>
+      <a href="./map.html">星球地图</a>
+      <a href="./planet-wall.html">纪念星河</a>
+      <a class="active" href="./submit.html" aria-current="page">投稿原型</a>
+    </nav>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">🌙</button>
+  </header>
 
-          <div class="form-grid">
-            <label>
-              <span>玩家昵称</span>
-              <input name="playerName" required maxlength="20" placeholder="比如：奶盖的饲养员" />
-            </label>
-            <label>
-              <span>鼠鼠名字</span>
-              <input name="name" required maxlength="16" placeholder="比如：奶盖" />
-            </label>
-            <label>
-              <span>鼠鼠昵称</span>
-              <input name="nickname" maxlength="20" placeholder="比如：盖盖" />
-            </label>
-            <label>
-              <span>抵达鼠星日期</span>
-              <input name="arrivedAt" type="date" required />
-            </label>
-            <label>
-              <span>所在区域</span>
-              <select name="region">
-                <option>月光谷</option>
-                <option>瓜子环</option>
-                <option>棉花云</option>
-              </select>
-            </label>
-            <label>
-              <span>爱吃的</span>
-              <input name="food" maxlength="20" placeholder="比如：南瓜籽" />
-            </label>
-            <label>
-              <span>性格标签</span>
-              <input name="traits" maxlength="60" placeholder="用逗号分隔，比如：亲人, 爱跑轮, 会洗脸" />
-            </label>
-            <label>
-              <span>公开意愿</span>
-              <select name="visibility">
-                <option value="private">先保持私密</option>
-                <option value="review">愿意未来公开收录，进入待审核</option>
-              </select>
-            </label>
-            <label class="full-field">
-              <span>想留下的一段纪念</span>
-              <textarea name="memory" required maxlength="180" placeholder="写下最想让鼠鼠星球记住的那一幕"></textarea>
-            </label>
-          </div>
+  <main class="shell page-shell">
+    <section class="page-hero" aria-labelledby="submit-title">
+      <p class="eyebrow">Submission Prototype</p>
+      <h1 id="submit-title">把鼠鼠送到星球</h1>
+      <p class="lede">
+        这里是未来玩家投稿流程的静态原型。当前页面不会上传、保存或公开任何内容，只用于确认一份鼠鼠档案被收录前应该包含什么。
+      </p>
+    </section>
 
-          <label class="consent-check">
-            <input name="confirm" type="checkbox" required />
-            <span>我知道当前只是静态原型，不会上传内容；未来真实公开前，需要再次确认并经过审核。</span>
+    <section class="submit-layout" aria-label="玩家投稿流程原型">
+      <form id="submission-form" class="submission-form">
+        <div class="section-heading">
+          <p class="eyebrow">Archive Draft</p>
+          <h2>待审核纪念档案</h2>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            <span>玩家昵称</span>
+            <input name="playerName" required maxlength="20" placeholder="比如：奶盖的饲养员" />
           </label>
+          <label>
+            <span>鼠鼠名字</span>
+            <input name="name" required maxlength="16" placeholder="比如：奶盖" />
+          </label>
+          <label>
+            <span>鼠鼠昵称</span>
+            <input name="nickname" maxlength="20" placeholder="比如：盖盖" />
+          </label>
+          <label>
+            <span>抵达鼠星日期</span>
+            <input name="arrivedAt" type="date" required />
+          </label>
+          <label>
+            <span>所在区域</span>
+            <select name="region">
+              <option>月光谷</option>
+              <option>瓜子环</option>
+              <option>棉花云</option>
+              <option>星砂海</option>
+              <option>蜜糖丘</option>
+              <option>软绒原</option>
+            </select>
+          </label>
+          <label>
+            <span>爱吃的</span>
+            <input name="food" maxlength="20" placeholder="比如：南瓜籽" />
+          </label>
+          <label>
+            <span>性格标签</span>
+            <input name="traits" maxlength="60" placeholder="用逗号分隔，比如：亲人, 爱跑轮, 会洗脸" />
+          </label>
+          <label>
+            <span>公开意愿</span>
+            <select name="visibility">
+              <option value="private">先保持私密</option>
+              <option value="review">愿意未来公开收录，进入待审核</option>
+            </select>
+          </label>
+          <label class="full-field">
+            <span>想留下的一段纪念</span>
+            <textarea name="memory" required maxlength="180" placeholder="写下最想让鼠鼠星球记住的那一幕"></textarea>
+          </label>
+        </div>
 
-          <div class="form-actions">
-            <button class="button primary" type="submit">生成待审核预览</button>
-            <button class="button ghost" type="reset">清空草稿</button>
-          </div>
-        </form>
+        <label class="consent-check">
+          <input name="confirm" type="checkbox" required />
+          <span>我知道当前只是静态原型，不会上传内容；未来真实公开前，需要再次确认并经过审核。</span>
+        </label>
 
-        <aside class="submission-panel" aria-live="polite">
-          <p class="map-kicker">预览状态</p>
-          <h3 id="submission-status">还没有生成档案</h3>
-          <p id="submission-copy">
-            填好左侧表单后，可以生成一张待审核预览。它只会显示在当前页面，不会写入本地档案，也不会提交到服务器。
-          </p>
-          <div id="submission-preview" class="submission-preview">
-            <p class="empty compact">待审核预览会出现在这里。</p>
-          </div>
-        </aside>
-      </section>
-    </main>
+        <div class="form-actions">
+          <button class="button primary" type="submit">生成待审核预览</button>
+          <button class="button ghost" type="reset">清空草稿</button>
+        </div>
+      </form>
 
-    <script src="./data/memories.js"></script>
-    <script src="./src/app.js"></script>
-  </body>
+      <aside class="submission-panel" aria-live="polite">
+        <p class="map-kicker">预览状态</p>
+        <h3 id="submission-status">还没有生成档案</h3>
+        <p id="submission-copy">
+          填好左侧表单后，可以生成一张待审核预览。它只会显示在当前页面，不会写入本地档案，也不会提交到服务器。
+        </p>
+        <div id="submission-preview" class="submission-preview">
+          <p class="empty compact">待审核预览会出现在这里。</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer" aria-label="网站备案信息">
+    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">晋ICP备2022009437号-1</a>
+    <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=14042702000017" target="_blank"
+      rel="noopener">晋公网安备14042702000017号</a>
+  </footer>
+
+  <script src="./data/memories.js"></script>
+  <script src="./src/app.js"></script>
+</body>
+
 </html>

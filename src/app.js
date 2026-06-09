@@ -15,15 +15,83 @@ const submissionStatusEl = document.querySelector("#submission-status");
 const submissionCopyEl = document.querySelector("#submission-copy");
 const submissionPreviewEl = document.querySelector("#submission-preview");
 const wallCardsEl = document.querySelector("#wall-cards");
+const wallStarCountEl = document.querySelector("#wall-star-count");
+const wallLightTotalEl = document.querySelector("#wall-light-total");
+const wallFilterButtons = [...document.querySelectorAll("[data-wall-filter]")];
 const residentDetailEl = document.querySelector("#resident-detail");
 const singleResidentEl = document.querySelector("#single-resident");
+const mapRegionEyebrowEl = document.querySelector("#map-region-eyebrow");
+const mapRegionTitleEl = document.querySelector("#map-region-title");
+const mapRegionDescEl = document.querySelector("#map-region-desc");
+const mapResidentsEl = document.querySelector("#map-residents");
 const localStorageKey = "shushu-planet.memories.v1";
+const lightsStorageKey = "shushu-planet.wall-lights.v1";
+const themeStorageKey = "shushu-planet.theme.v1";
 const apiBase = "/api";
 const defaultRegion = "月光谷";
+
+// ---- 主题切换 ----
+function getSavedTheme() {
+  try {
+    return localStorage.getItem(themeStorageKey);
+  } catch {
+    return null;
+  }
+}
+
+function saveTheme(theme) {
+  try {
+    localStorage.setItem(themeStorageKey, theme);
+  } catch {
+    // 忽略存储错误
+  }
+}
+
+function applyTheme(theme) {
+  const html = document.documentElement;
+  if (theme === "dark") {
+    html.setAttribute("data-theme", "dark");
+  } else {
+    html.removeAttribute("data-theme");
+  }
+}
+
+function updateToggleButton(theme) {
+  const btn = document.querySelector("#theme-toggle");
+  if (!btn) return;
+  btn.textContent = theme === "dark" ? "☀️" : "🌙";
+}
+
+function initTheme() {
+  const saved = getSavedTheme();
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = saved || (prefersDark ? "dark" : "light");
+  applyTheme(theme);
+  updateToggleButton(theme);
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.hasAttribute("data-theme");
+  const newTheme = isDark ? "light" : "dark";
+  applyTheme(newTheme);
+  saveTheme(newTheme);
+  updateToggleButton(newTheme);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+  const toggleBtn = document.querySelector("#theme-toggle");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", toggleTheme);
+  }
+});
+
 const seedMemories = Array.isArray(window.shushuSeedMemories) ? window.shushuSeedMemories : [];
 
 let memories = loadMemories();
 let activeRegion = "all";
+let wallActiveRegion = "all";
+let mapRegion = null;
 let editingMemoryId = null;
 let apiResidentsLoaded = false;
 
@@ -186,7 +254,50 @@ function renderStats() {
 }
 
 function renderMap() {
-  return;
+  if (!mapResidentsEl) return;
+
+  if (!mapRegion) {
+    // 初始状态：展示引导文案
+    if (mapRegionEyebrowEl) mapRegionEyebrowEl.textContent = "选择一片星域";
+    if (mapRegionTitleEl) mapRegionTitleEl.textContent = "点击星球上的色块，查看那里的居民";
+    if (mapRegionDescEl) mapRegionDescEl.textContent = "旋转星球，找到彩色的陆地区域，点一下就能看到住在那里的鼠鼠们。";
+    mapResidentsEl.innerHTML = "";
+    return;
+  }
+
+  const regionResidents = memories.filter((m) => m.region === mapRegion);
+
+  if (mapRegionEyebrowEl) mapRegionEyebrowEl.textContent = mapRegion;
+  if (mapRegionTitleEl) mapRegionTitleEl.textContent = `住在${mapRegion}的鼠鼠们`;
+  if (mapRegionDescEl) {
+    mapRegionDescEl.textContent = regionResidents.length
+      ? `「${mapRegion}」目前有 ${regionResidents.length} 位居民。点卡片可以查看纪念页。`
+      : `「${mapRegion}」暂时还没有居民入住。去星球居民页为它添加第一位鼠鼠吧。`;
+  }
+
+  mapResidentsEl.innerHTML = "";
+
+  if (!regionResidents.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.innerHTML = `这片星域还在等待第一位小居民。<a href="./residents.html#add-memory">去新增鼠鼠</a>`;
+    mapResidentsEl.append(empty);
+    return;
+  }
+
+  const cards = regionResidents.map((memory) => {
+    const card = createCard(memory);
+    const detailLink = card.querySelector(".card-actions a");
+    if (detailLink && residentDetailEl) {
+      detailLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        openResidentPage(memory.id);
+      });
+    }
+    return card;
+  });
+
+  mapResidentsEl.append(...cards);
 }
 
 function createShareText(memory) {
@@ -374,14 +485,13 @@ function createCard(memory) {
     <p class="memory">${safeMemory}</p>
     <div class="card-actions">
       <a class="button ghost" href="${getResidentPageUrl(memory.id)}">查看纪念页</a>
-      ${
-        memory.saved
-          ? `
+      ${memory.saved
+      ? `
             <button class="button ghost" type="button" data-action="edit" data-id="${memory.id}">编辑</button>
             <button class="button ghost danger" type="button" data-action="delete" data-id="${memory.id}">删除</button>
           `
-          : ""
-      }
+      : ""
+    }
     </div>
   `;
 
@@ -398,10 +508,13 @@ function createWallCard(memory, index) {
   const safePlayerName = escapeHtml(memory.playerName || "一位玩家");
   const safeMemory = escapeHtml(memory.memory);
   const safeTraits = memory.traits.map(escapeHtml);
+  const savedLights = getLightCount(memory.id);
   const baseLights = 8 + index * 3;
+  const totalLights = baseLights + savedLights;
+  const wasLit = savedLights > 0;
 
   const article = document.createElement("article");
-  article.className = "wall-card";
+  article.className = `wall-card${wasLit ? " lit" : ""}`;
   article.innerHTML = `
     <div class="wall-card-glow" style="background:${memory.color}" aria-hidden="true"></div>
     <div class="card-top">
@@ -418,19 +531,23 @@ function createWallCard(memory, index) {
       ${safeTraits.slice(0, 2).map((trait) => `<li>${trait}</li>`).join("")}
     </ul>
     <div class="wall-actions">
-      <span data-light-count>${baseLights} 盏小灯</span>
-      <button class="button ghost light-button" type="button" aria-pressed="false">点一盏灯</button>
+      <span data-light-count>${totalLights} 盏小灯</span>
+      <button class="button ghost light-button" type="button" aria-pressed="${wasLit}">${wasLit ? "已点亮" : "点一盏灯"}</button>
     </div>
   `;
 
   const lightButton = article.querySelector(".light-button");
   const lightCountEl = article.querySelector("[data-light-count]");
   lightButton.addEventListener("click", () => {
-    const isLit = lightButton.getAttribute("aria-pressed") === "true";
-    lightButton.setAttribute("aria-pressed", (!isLit).toString());
-    lightButton.textContent = isLit ? "点一盏灯" : "已点亮";
-    lightCountEl.textContent = `${baseLights + (isLit ? 0 : 1)} 盏小灯`;
-    article.classList.toggle("lit", !isLit);
+    const alreadyLit = lightButton.getAttribute("aria-pressed") === "true";
+    if (alreadyLit) return; // 每人每只鼠鼠只能点一次
+    addLight(memory.id);
+    const newTotal = totalLights + 1;
+    lightButton.setAttribute("aria-pressed", "true");
+    lightButton.textContent = "已点亮";
+    lightCountEl.textContent = `${newTotal} 盏小灯`;
+    article.classList.add("lit");
+    updateWallStats();
   });
 
   return article;
@@ -453,23 +570,86 @@ function renderCards() {
   cardsEl.append(...visibleMemories.map(createCard));
 }
 
+function getWallLights() {
+  try {
+    return JSON.parse(localStorage.getItem(lightsStorageKey) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function getLightCount(memoryId) {
+  const lights = getWallLights();
+  return lights[memoryId] || 0;
+}
+
+function addLight(memoryId) {
+  const lights = getWallLights();
+  lights[memoryId] = (lights[memoryId] || 0) + 1;
+  try {
+    localStorage.setItem(lightsStorageKey, JSON.stringify(lights));
+  } catch { /* 忽略存储错误 */ }
+}
+
+function getWallMemories() {
+  const baseMemories = apiResidentsLoaded
+    ? memories.filter((memory) => !memory.saved)
+    : getSeedMemories();
+
+  if (wallActiveRegion === "all") return baseMemories;
+  return baseMemories.filter((m) => m.region === wallActiveRegion);
+}
+
+function updateWallStats() {
+  if (!wallStarCountEl || !wallLightTotalEl) return;
+
+  const wallMemories = getWallMemories();
+  const allMemories = apiResidentsLoaded
+    ? memories.filter((memory) => !memory.saved)
+    : getSeedMemories();
+
+  wallStarCountEl.textContent = wallMemories.length;
+
+  let totalLights = 0;
+  const lights = getWallLights();
+  allMemories.forEach((m) => {
+    totalLights += lights[m.id] || 0;
+  });
+  // 加上基础灯数（每个 seed memory 有 baseLights）
+  allMemories.forEach((m, i) => {
+    if (!lights[m.id]) totalLights += 8 + i * 3;
+  });
+  wallLightTotalEl.textContent = totalLights;
+}
+
+function setWallFilter(region) {
+  wallActiveRegion = region;
+  wallFilterButtons.forEach((btn) => {
+    const isActive = btn.dataset.wallFilter === region;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive.toString());
+  });
+  renderWall();
+}
+
 function renderWall() {
   if (!wallCardsEl) return;
 
+  const wallMemories = getWallMemories();
   wallCardsEl.innerHTML = "";
-  const wallMemories = apiResidentsLoaded
-    ? memories.filter((memory) => !memory.saved)
-    : getSeedMemories();
 
   if (!wallMemories.length) {
     const empty = document.createElement("p");
     empty.className = "empty";
-    empty.textContent = "纪念星河还没有点亮的小星星。未来公开收录的鼠鼠会在这里出现。";
+    empty.textContent = wallActiveRegion === "all"
+      ? "纪念星河还没有点亮的小星星。"
+      : `「${wallActiveRegion}」星域还没有居民抵达。`;
     wallCardsEl.append(empty);
-    return;
+  } else {
+    wallCardsEl.append(...wallMemories.map((m, i) => createWallCard(m, i)));
   }
 
-  wallCardsEl.append(...wallMemories.map(createWallCard));
+  updateWallStats();
 }
 
 function openResidentPage(id, shouldUpdateHash = true) {
@@ -648,8 +828,11 @@ function setActiveFilter(region) {
   renderCards();
 }
 
-function setMapRegion() {
-  return;
+function setMapRegion(region) {
+  mapRegion = region;
+  renderMap();
+  // 滚动到区域居民面板
+  document.querySelector(".map-region-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function setMemoryFormStatus(message) {
@@ -893,6 +1076,10 @@ filterButtons.forEach((button) => {
   button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
 });
 
+wallFilterButtons.forEach((button) => {
+  button.addEventListener("click", () => setWallFilter(button.dataset.wallFilter));
+});
+
 searchInput?.addEventListener("input", renderCards);
 form?.addEventListener("submit", addMemory);
 cancelEditButton?.addEventListener("click", resetMemoryForm);
@@ -900,6 +1087,11 @@ submissionForm?.addEventListener("submit", renderSubmissionPreview);
 submissionForm?.addEventListener("reset", resetSubmissionPreview);
 clearLocalButton?.addEventListener("click", clearLocalMemories);
 window.addEventListener("hashchange", handleHashRoute);
+
+// 星球地图：监听区域点击事件
+document.addEventListener("planet:region-click", (event) => {
+  setMapRegion(event.detail.region);
+});
 
 renderAll();
 handleHashRoute();

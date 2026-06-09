@@ -1,41 +1,62 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>鼠鼠星球 | 星球地图</title>
-    <link rel="stylesheet" href="./src/styles.css" />
-  </head>
-  <body>
-    <header class="topbar">
-      <a class="brand" href="./index.html">鼠鼠星球</a>
-      <nav class="topnav" aria-label="主导航">
-        <a href="./index.html">首页</a>
-        <a href="./residents.html">星球居民</a>
-        <a class="active" href="./map.html" aria-current="page">星球地图</a>
-        <a href="./planet-wall.html">纪念星河</a>
-        <a href="./submit.html">投稿原型</a>
-      </nav>
-    </header>
 
-    <main class="shell page-shell">
-      <section class="page-hero" aria-labelledby="map-title">
-        <p class="eyebrow">Planet Map</p>
-        <h1 id="map-title">星球地图</h1>
-        <p class="lede">
-          鼠鼠星球被分成月光谷、瓜子环和棉花云。点一点区域，就能看到住在那里的小居民；未来也会承载更多玩家送来的鼠鼠档案。
-        </p>
-      </section>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>鼠鼠星球 | 星球地图</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+  <script>
+    (function () { try { var t = localStorage.getItem("shushu-planet.theme.v1"); if (!t && window.matchMedia("(prefers-color-scheme: dark)").matches) t = "dark"; if (t === "dark") document.documentElement.setAttribute("data-theme", "dark") } catch (e) { } })()
+  </script>
+</head>
 
-      <section id="planet-map" class="planet-map standalone-map planet-showcase" aria-label="可旋转鼠鼠星球">
-        <div id="three-planet-stage" class="three-planet-stage" aria-label="一个可以拖动旋转的鼠鼠星球">
-          <p class="three-planet-fallback">正在点亮鼠鼠星球。</p>
-        </div>
-      </section>
-    </main>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./index.html">鼠鼠星球</a>
+    <nav class="topnav" aria-label="主导航">
+      <a href="./index.html">首页</a>
+      <a class="active" href="./map.html" aria-current="page">星球地图</a>
+      <a href="./planet-wall.html">纪念星河</a>
+      <a href="./submit.html">投稿原型</a>
+    </nav>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">🌙</button>
+  </header>
 
-    <script src="./data/memories.js"></script>
-    <script src="./src/app.js"></script>
-    <script type="module" src="./src/planet-map.js"></script>
-  </body>
+  <main class="shell page-shell">
+    <section class="page-hero" aria-labelledby="map-title">
+      <p class="eyebrow">Planet Map</p>
+      <h1 id="map-title">星球地图</h1>
+      <p class="lede">
+        鼠鼠星球被分成月光谷、瓜子环、棉花云、星砂海、蜜糖丘和软绒原。点一点区域，就能看到住在那里的小居民；未来也会承载更多玩家送来的鼠鼠档案。
+      </p>
+    </section>
+
+    <section id="planet-map" class="planet-map standalone-map planet-showcase" aria-label="可旋转鼠鼠星球">
+      <div id="three-planet-stage" class="three-planet-stage" aria-label="一个可以拖动旋转的鼠鼠星球">
+        <p class="three-planet-fallback">正在点亮鼠鼠星球。</p>
+      </div>
+    </section>
+
+    <section class="map-region-panel" aria-label="区域居民" aria-live="polite">
+      <div class="map-region-header">
+        <p class="eyebrow" id="map-region-eyebrow">选择一片星域</p>
+        <h2 id="map-region-title">点击星球上的色块，查看那里的居民</h2>
+        <p class="lede" id="map-region-desc">旋转星球，找到彩色的陆地区域，点一下就能看到住在那里的鼠鼠们。</p>
+      </div>
+      <div id="map-residents" class="cards map-residents-cards"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer" aria-label="网站备案信息">
+    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">晋ICP备2022009437号-1</a>
+    <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=14042702000017" target="_blank"
+      rel="noopener">晋公网安备14042702000017号</a>
+  </footer>
+
+  <script src="./data/memories.js"></script>
+  <script src="./src/app.js"></script>
+  <script type="module" src="./src/planet-map.js"></script>
+</body>
+
 </html>

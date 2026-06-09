@@ -5,12 +5,12 @@ const PLANET_RADIUS = 4;
 const TEXTURE_WIDTH = 2048;
 const TEXTURE_HEIGHT = 1024;
 const LAND_REGIONS = [
-  { color: "#ffd2aa", x: 330, y: 310, radiusX: 240, radiusY: 150, rotation: -0.16 },
-  { color: "#bde6a2", x: 930, y: 306, radiusX: 260, radiusY: 160, rotation: 0.18 },
-  { color: "#f8b7d7", x: 1540, y: 330, radiusX: 280, radiusY: 168, rotation: -0.1 },
-  { color: "#a7e2cd", x: 410, y: 720, radiusX: 260, radiusY: 145, rotation: 0.12 },
-  { color: "#dfc3ff", x: 1220, y: 740, radiusX: 245, radiusY: 150, rotation: -0.24 },
-  { color: "#ffe4a6", x: 1810, y: 780, radiusX: 175, radiusY: 104, rotation: 0.28 },
+  { name: "月光谷", color: "#f0c090", x: 330, y: 310, radiusX: 240, radiusY: 150, rotation: -0.16 },
+  { name: "瓜子环", color: "#a3d680", x: 930, y: 306, radiusX: 260, radiusY: 160, rotation: 0.18 },
+  { name: "棉花云", color: "#f2a0cc", x: 1540, y: 330, radiusX: 280, radiusY: 168, rotation: -0.1 },
+  { name: "星砂海", color: "#86d4b8", x: 410, y: 720, radiusX: 260, radiusY: 145, rotation: 0.12 },
+  { name: "蜜糖丘", color: "#d0a8f8", x: 1220, y: 740, radiusX: 245, radiusY: 150, rotation: -0.24 },
+  { name: "软绒原", color: "#f5d478", x: 1810, y: 780, radiusX: 175, radiusY: 104, rotation: 0.28 },
 ];
 
 if (stage) {
@@ -32,6 +32,11 @@ if (stage) {
 
   let frameId = null;
   let hoveredLand = null;
+  let prevHoveredLand = null;
+  let animPaused = false;
+  let needsRender = true;
+  let pointerDownX = 0;
+  let pointerDownY = 0;
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
@@ -39,12 +44,35 @@ if (stage) {
   renderer.domElement.className = "three-planet-canvas";
   renderer.domElement.setAttribute("aria-label", "可以拖动旋转的三维鼠鼠星球");
 
+  // ---- 区域名称浮层 tooltip（必须在 replaceChildren 之后创建）----
+  const tooltip = document.createElement("div");
+  tooltip.className = "planet-tooltip";
+  tooltip.setAttribute("aria-hidden", "true");
+  tooltip.style.display = "none";
+  stage.appendChild(tooltip);
+
+  function showTooltip(land, clientX, clientY) {
+    const stageRect = stage.getBoundingClientRect();
+    tooltip.textContent = land.region;
+    tooltip.style.display = "block";
+    tooltip.style.left = `${clientX - stageRect.left}px`;
+    tooltip.style.top = `${clientY - stageRect.top - 18}px`;
+    tooltip.style.transform = "translate(-50%, -100%)";
+  }
+
+  function hideTooltip() {
+    tooltip.style.display = "none";
+    tooltip.style.transform = "none";
+  }
+
   camera.position.set(0, 0.28, 14.6);
   scene.add(camera);
   scene.add(planetGroup);
 
   const starField = createStarField();
-  scene.add(starField);
+  const starGroup = new THREE.Group();
+  starGroup.add(starField);
+  scene.add(starGroup);
 
   const fairyTexture = createShushuPlanetTexture();
 
@@ -61,7 +89,7 @@ if (stage) {
     new THREE.MeshBasicMaterial({
       map: createFairyGlowTexture(),
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.06,
     }),
   );
   planetGroup.add(colorWash);
@@ -106,19 +134,19 @@ if (stage) {
   );
   planetGroup.add(rim);
 
-  const keyLight = new THREE.DirectionalLight("#fff4e8", 1.15);
+  const keyLight = new THREE.DirectionalLight("#fff8ed", 0.72);
   keyLight.position.set(8, 7, 8);
   scene.add(keyLight);
 
-  const pinkLight = new THREE.PointLight("#ff9ec1", 0.38, 40);
+  const pinkLight = new THREE.PointLight("#ff9ec1", 0.24, 40);
   pinkLight.position.set(-7, 4, 5);
   scene.add(pinkLight);
 
-  const blueLight = new THREE.PointLight("#85d8ff", 0.32, 40);
+  const blueLight = new THREE.PointLight("#85d8ff", 0.20, 40);
   blueLight.position.set(6, -4, 6);
   scene.add(blueLight);
 
-  scene.add(new THREE.AmbientLight("#7f91a8", 0.42));
+  scene.add(new THREE.AmbientLight("#8899aa", 0.26));
 
   function resize() {
     const rect = stage.getBoundingClientRect();
@@ -131,14 +159,35 @@ if (stage) {
 
   function animate() {
     frameId = requestAnimationFrame(animate);
-    if (!pointerState.active) {
-      planet.rotation.y += 0.0018;
-      landLayer.rotation.y += 0.0018;
-      colorWash.rotation.y += 0.0018;
-      clouds.rotation.y += 0.0028;
-      starField.rotation.y += 0.00024;
+
+    if (animPaused) {
+      if (!needsRender) return;
+      needsRender = false;
+      renderer.render(scene, camera);
+      return;
     }
-    updateSelectableLands(selectableLands, hoveredLand);
+
+    if (!pointerState.active) {
+      planetGroup.rotation.y += 0.0018;
+      clouds.rotation.y += 0.0010;
+      starGroup.rotation.y += 0.00024;
+    }
+
+    if (hoveredLand !== prevHoveredLand) {
+      prevHoveredLand = hoveredLand;
+      updateSelectableLands(selectableLands, hoveredLand);
+    } else {
+      // Keep animating land transitions if any lift is still converging
+      const anyAnimating = selectableLands.some((land) => {
+        const lift = land.group.userData.lift ?? 0;
+        const target = land === hoveredLand ? 1 : 0;
+        return Math.abs(lift - target) > 0.002;
+      });
+      if (anyAnimating) {
+        updateSelectableLands(selectableLands, hoveredLand);
+      }
+    }
+
     renderer.render(scene, camera);
   }
 
@@ -152,6 +201,9 @@ if (stage) {
     pointerState.y = event.clientY;
     pointerState.rotationX = planetGroup.rotation.x;
     pointerState.rotationY = planetGroup.rotation.y;
+    pointerDownX = event.clientX;
+    pointerDownY = event.clientY;
+    hideTooltip();
     renderer.domElement.setPointerCapture?.(event.pointerId);
     renderer.domElement.classList.add("dragging");
   }
@@ -162,15 +214,30 @@ if (stage) {
       const deltaY = event.clientY - pointerState.y;
       planetGroup.rotation.y = pointerState.rotationY + deltaX * 0.006;
       planetGroup.rotation.x = Math.max(-0.62, Math.min(0.62, pointerState.rotationX + deltaY * 0.004));
+    } else {
+      updateHoveredLand(event);
     }
-    updateHoveredLand(event);
   }
 
   function onPointerUp(event) {
+    const dx = event.clientX - pointerDownX;
+    const dy = event.clientY - pointerDownY;
+    const wasDrag = Math.sqrt(dx * dx + dy * dy) > 5;
+
     pointerState.active = false;
     renderer.domElement.releasePointerCapture?.(event.pointerId);
     renderer.domElement.classList.remove("dragging");
     renderer.domElement.style.cursor = hoveredLand ? "pointer" : "grab";
+
+    // 点击（非拖拽）且悬停在陆地区块上 → 分发区域点击事件
+    if (!wasDrag && hoveredLand) {
+      stage.dispatchEvent(
+        new CustomEvent("planet:region-click", {
+          bubbles: true,
+          detail: { region: hoveredLand.region },
+        }),
+      );
+    }
   }
 
   function updateHoveredLand(event) {
@@ -183,13 +250,60 @@ if (stage) {
       selectableLands.map((land) => land.surface),
       false,
     );
-    hoveredLand = hits.length ? hits[0].object.userData.land : null;
+    const newHovered = hits.length ? hits[0].object.userData.land : null;
+    if (newHovered !== hoveredLand) {
+      hoveredLand = newHovered;
+      if (hoveredLand) {
+        showTooltip(hoveredLand, event.clientX, event.clientY);
+        stage.dispatchEvent(
+          new CustomEvent("planet:region-hover", {
+            bubbles: true,
+            detail: { region: hoveredLand.region },
+          }),
+        );
+      } else {
+        hideTooltip();
+        stage.dispatchEvent(
+          new CustomEvent("planet:region-hover", {
+            bubbles: true,
+            detail: { region: null },
+          }),
+        );
+      }
+    } else if (hoveredLand && !pointerState.active) {
+      // 在同一区块内移动时更新 tooltip 位置（跟随 3D 色块）
+      showTooltip(hoveredLand, event.clientX, event.clientY);
+    }
     renderer.domElement.style.cursor = pointerState.active ? "grabbing" : hoveredLand ? "pointer" : "grab";
   }
 
   function clearHoveredLand() {
     hoveredLand = null;
+    hideTooltip();
     renderer.domElement.style.cursor = "grab";
+  }
+
+  // Visibility API: pause when tab is hidden
+  function onVisibilityChange() {
+    if (document.hidden) {
+      animPaused = true;
+    } else {
+      animPaused = false;
+      needsRender = true;
+    }
+  }
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  // IntersectionObserver: pause when canvas is scrolled out of viewport
+  if (window.IntersectionObserver) {
+    const visibilityObserver = new IntersectionObserver(
+      (entries) => {
+        animPaused = !entries[0].isIntersecting;
+        if (!animPaused) needsRender = true;
+      },
+      { threshold: 0 },
+    );
+    visibilityObserver.observe(stage);
   }
 
   renderer.domElement.addEventListener("pointerdown", onPointerDown);
@@ -207,6 +321,7 @@ if (stage) {
 
   window.addEventListener("pagehide", () => {
     if (frameId) cancelAnimationFrame(frameId);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
     renderer.dispose();
   });
 }
@@ -218,11 +333,11 @@ function createShushuPlanetTexture() {
   const context = canvas.getContext("2d");
   const ocean = context.createLinearGradient(0, 0, canvas.width, canvas.height);
 
-  ocean.addColorStop(0, "#ffd1e5");
-  ocean.addColorStop(0.22, "#a9e7f3");
-  ocean.addColorStop(0.48, "#7cc7ec");
-  ocean.addColorStop(0.72, "#b4a4ef");
-  ocean.addColorStop(1, "#ffe0bd");
+  ocean.addColorStop(0, "#e8c4d8");
+  ocean.addColorStop(0.22, "#8ecfdf");
+  ocean.addColorStop(0.48, "#5eaad4");
+  ocean.addColorStop(0.72, "#9888d8");
+  ocean.addColorStop(1, "#e8c8a0");
   context.fillStyle = ocean;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -322,7 +437,7 @@ function createSelectableLands() {
     const surface = createSphericalLandMesh(points, region.color);
     const outline = createSphericalLandOutline(points);
 
-    surface.userData.land = { group, surface, outline };
+    surface.userData.land = { group, surface, outline, region: region.name, tx: region.x, ty: region.y };
     group.add(surface);
     group.add(outline);
 
@@ -388,6 +503,18 @@ function createSphericalLandMesh(points, color) {
   geometry.setFromPoints(vertices);
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
+
+  // Pre-cache normalized direction vectors for each vertex (used in updateLandSurfaceLift)
+  const posAttr = geometry.getAttribute("position");
+  const normals = new Float32Array(posAttr.count * 3);
+  const tmp = new THREE.Vector3();
+  for (let i = 0; i < posAttr.count; i += 1) {
+    tmp.set(posAttr.getX(i), posAttr.getY(i), posAttr.getZ(i)).normalize();
+    normals[i * 3] = tmp.x;
+    normals[i * 3 + 1] = tmp.y;
+    normals[i * 3 + 2] = tmp.z;
+  }
+  geometry.userData.normals = normals;
   geometry.userData.baseRadius = baseRadius;
   geometry.userData.hoverRadius = PLANET_RADIUS + 0.18;
 
@@ -443,11 +570,13 @@ function updateSelectableLands(lands, activeLand) {
 
 function updateLandSurfaceLift(geometry, lift) {
   const position = geometry.getAttribute("position");
+  const normals = geometry.userData.normals;
+  if (!normals) return;
   const radius = THREE.MathUtils.lerp(geometry.userData.baseRadius, geometry.userData.hoverRadius, lift);
 
   for (let i = 0; i < position.count; i += 1) {
-    const normal = new THREE.Vector3(position.getX(i), position.getY(i), position.getZ(i)).normalize();
-    position.setXYZ(i, normal.x * radius, normal.y * radius, normal.z * radius);
+    const i3 = i * 3;
+    position.setXYZ(i, normals[i3] * radius, normals[i3 + 1] * radius, normals[i3 + 2] * radius);
   }
 
   position.needsUpdate = true;

@@ -1,60 +1,70 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>鼠鼠星球 | 纪念星河</title>
-    <link rel="stylesheet" href="./src/styles.css" />
-  </head>
-  <body>
-    <header class="topbar">
-      <a class="brand" href="./index.html">鼠鼠星球</a>
-      <nav class="topnav" aria-label="主导航">
-        <a href="./index.html">首页</a>
-        <a href="./residents.html">星球居民</a>
-        <a href="./map.html">星球地图</a>
-        <a class="active" href="./planet-wall.html" aria-current="page">纪念星河</a>
-        <a href="./submit.html">投稿原型</a>
-      </nav>
-    </header>
 
-    <main class="shell page-shell">
-      <section class="page-hero" aria-labelledby="wall-title">
-        <p class="eyebrow">Memory Galaxy</p>
-        <h1 id="wall-title">纪念星河</h1>
-        <p class="lede">
-          这里是未来公开收录空间的静态概念页。每一张卡片都代表一位玩家主动送来的鼠鼠档案；当前只使用示例数据，不接收真实投稿。
-        </p>
-      </section>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>鼠鼠星球 | 纪念星河</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+  <script>
+    (function () { try { var t = localStorage.getItem("shushu-planet.theme.v1"); if (!t && window.matchMedia("(prefers-color-scheme: dark)").matches) t = "dark"; if (t === "dark") document.documentElement.setAttribute("data-theme", "dark") } catch (e) { } })()
+  </script>
+</head>
 
-      <section class="wall-notice" aria-label="纪念星河说明">
-        <article>
-          <span>当前状态</span>
-          <strong>静态概念原型</strong>
-          <p>这里不会上传、保存或公开玩家内容，只用于验证未来公开展示的氛围。</p>
-        </article>
-        <article>
-          <span>公开原则</span>
-          <strong>主动提交，审核后收录</strong>
-          <p>真实上线后，只有玩家主动确认公开的档案，才会进入待审核流程。</p>
-        </article>
-        <article>
-          <span>互动原则</span>
-          <strong>点灯，不排行</strong>
-          <p>轻互动只表达“我来过”，不会做热度榜，也不会比较哪一位更被喜欢。</p>
-        </article>
-      </section>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./index.html">鼠鼠星球</a>
+    <nav class="topnav" aria-label="主导航">
+      <a href="./index.html">首页</a>
+      <a href="./map.html">星球地图</a>
+      <a class="active" href="./planet-wall.html" aria-current="page">纪念星河</a>
+      <a href="./submit.html">投稿原型</a>
+    </nav>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">🌙</button>
+  </header>
 
-      <section class="wall-section" aria-labelledby="wall-list-title">
-        <div class="section-heading">
-          <p class="eyebrow">Public Archive Concept</p>
-          <h2 id="wall-list-title">已经点亮的小星星</h2>
+  <main class="shell page-shell">
+    <section class="page-hero wall-hero" aria-labelledby="wall-title">
+      <p class="eyebrow">Memory Galaxy</p>
+      <h1 id="wall-title">纪念星河</h1>
+      <p class="lede">
+        每一颗星星都是一位被认真爱过的鼠鼠。它们曾经有自己的名字、性格、爱吃的东西，也曾经被某个玩家记在心里。这里永远安静，永远不排名——只负责把那些闪闪发亮的小瞬间，挂在这片星河里。
+      </p>
+      <div class="wall-stats-bar" id="wall-stats-bar" aria-label="星河统计">
+        <span><strong id="wall-star-count">0</strong> 颗星星</span>
+        <span class="wall-stats-divider" aria-hidden="true">·</span>
+        <span><strong id="wall-light-total">0</strong> 盏小灯被点亮</span>
+      </div>
+    </section>
+
+    <section class="wall-section" aria-labelledby="wall-list-title">
+      <div class="section-heading wall-section-head">
+        <div>
+          <p class="eyebrow">Stars in the Galaxy</p>
+          <h2 id="wall-list-title">已经抵达鼠星的小居民</h2>
         </div>
-        <div id="wall-cards" class="wall-cards" aria-live="polite"></div>
-      </section>
-    </main>
+        <div class="wall-filters" role="group" aria-label="按星域筛选">
+          <button class="filter active" type="button" data-wall-filter="all" aria-pressed="true">全部星域</button>
+          <button class="filter" type="button" data-wall-filter="月光谷" aria-pressed="false">月光谷</button>
+          <button class="filter" type="button" data-wall-filter="瓜子环" aria-pressed="false">瓜子环</button>
+          <button class="filter" type="button" data-wall-filter="棉花云" aria-pressed="false">棉花云</button>
+          <button class="filter" type="button" data-wall-filter="星砂海" aria-pressed="false">星砂海</button>
+          <button class="filter" type="button" data-wall-filter="蜜糖丘" aria-pressed="false">蜜糖丘</button>
+          <button class="filter" type="button" data-wall-filter="软绒原" aria-pressed="false">软绒原</button>
+        </div>
+      </div>
+      <div id="wall-cards" class="wall-cards" aria-live="polite"></div>
+    </section>
+  </main>
 
-    <script src="./data/memories.js"></script>
-    <script src="./src/app.js"></script>
-  </body>
+  <footer class="site-footer" aria-label="网站备案信息">
+    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">晋ICP备2022009437号-1</a>
+    <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=14042702000017" target="_blank"
+      rel="noopener">晋公网安备14042702000017号</a>
+  </footer>
+
+  <script src="./data/memories.js"></script>
+  <script src="./src/app.js"></script>
+</body>
+
 </html>

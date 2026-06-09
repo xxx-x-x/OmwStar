@@ -34,6 +34,7 @@ app.use((request, response, next) => {
 app.use(express.static(root, {
   dotfiles: "ignore",
   extensions: ["html"],
+  maxAge: "7d",
   setHeaders(response, filePath) {
     if (filePath.endsWith(".html")) {
       response.setHeader("Cache-Control", "no-store");

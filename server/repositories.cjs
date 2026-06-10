@@ -26,6 +26,7 @@ function toResident(row) {
     playerName: row.player_name,
     name: row.name,
     nickname: row.nickname,
+    breed: row.breed || "",
     region: row.region,
     arrivedAt: row.arrived_at,
     food: row.food,
@@ -37,6 +38,9 @@ function toResident(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     publishedAt: row.published_at,
+    douyin: row.douyin || "",
+    xiaohongshu: row.xiaohongshu || "",
+    bilibili: row.bilibili || "",
   };
 }
 
@@ -49,6 +53,7 @@ function toSubmission(row) {
     playerName: row.player_name,
     name: row.name,
     nickname: row.nickname,
+    breed: row.breed || "",
     region: row.region,
     arrivedAt: row.arrived_at,
     food: row.food,
@@ -60,6 +65,9 @@ function toSubmission(row) {
     reviewerNote: row.reviewer_note,
     createdAt: row.created_at,
     reviewedAt: row.reviewed_at,
+    douyin: row.douyin || "",
+    xiaohongshu: row.xiaohongshu || "",
+    bilibili: row.bilibili || "",
   };
 }
 
@@ -100,14 +108,15 @@ async function createSubmission(payload) {
   const publicId = createPublicId();
   await getPool().execute(
     `INSERT INTO submissions
-      (public_id, status, player_name, name, nickname, region, arrived_at, food, color, traits, memory, photos, public_consent)
+      (public_id, status, player_name, name, nickname, breed, region, arrived_at, food, color, traits, memory, photos, public_consent, douyin, xiaohongshu, bilibili)
      VALUES
-      (:publicId, 'pending', :playerName, :name, :nickname, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), :publicConsent)`,
+      (:publicId, 'pending', :playerName, :name, :nickname, :breed, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), :publicConsent, :douyin, :xiaohongshu, :bilibili)`,
     {
       publicId,
       playerName: payload.playerName,
       name: payload.name,
       nickname: payload.nickname,
+      breed: payload.breed || "",
       region: payload.region,
       arrivedAt: payload.arrivedAt,
       food: payload.food,
@@ -116,6 +125,9 @@ async function createSubmission(payload) {
       memory: payload.memory,
       photos: JSON.stringify(payload.photos || []),
       publicConsent: payload.publicConsent ? 1 : 0,
+      douyin: payload.douyin || "",
+      xiaohongshu: payload.xiaohongshu || "",
+      bilibili: payload.bilibili || "",
     },
   );
   return publicId;
@@ -190,13 +202,14 @@ async function reviewSubmission(publicId, action, reviewerNote = "") {
     const residentPublicId = createPublicId();
     const [residentResult] = await connection.execute(
       `INSERT INTO residents
-        (public_id, name, nickname, player_name, region, arrived_at, food, color, traits, memory, photos, visibility, source, published_at)
+        (public_id, name, nickname, breed, player_name, region, arrived_at, food, color, traits, memory, photos, visibility, source, published_at, douyin, xiaohongshu, bilibili)
        VALUES
-        (:residentPublicId, :name, :nickname, :playerName, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), 'public', 'submission', NOW())`,
+        (:residentPublicId, :name, :nickname, :breed, :playerName, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), 'public', 'submission', NOW(), :douyin, :xiaohongshu, :bilibili)`,
       {
         residentPublicId,
         name: submission.name,
         nickname: submission.nickname,
+        breed: submission.breed || "",
         playerName: submission.player_name,
         region: submission.region,
         arrivedAt: submission.arrived_at,
@@ -205,6 +218,9 @@ async function reviewSubmission(publicId, action, reviewerNote = "") {
         traits: JSON.stringify(parseJsonField(submission.traits, [])),
         memory: submission.memory,
         photos: JSON.stringify(parseJsonField(submission.photos, [])),
+        douyin: submission.douyin || "",
+        xiaohongshu: submission.xiaohongshu || "",
+        bilibili: submission.bilibili || "",
       },
     );
 

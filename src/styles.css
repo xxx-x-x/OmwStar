@@ -502,16 +502,61 @@ select,
 textarea {
   width: 100%;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fffdf9;
   color: var(--ink);
   outline: none;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 input,
 select {
-  min-height: 44px;
+  min-height: 46px;
   padding: 0 14px;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23687579' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+select:hover {
+  border-color: var(--mint);
+  background-color: #f8fffc;
+}
+
+select:focus {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 4px rgba(233, 143, 115, 0.16);
+  background-color: #fff;
+}
+
+select option {
+  padding: 10px 14px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.93rem;
+}
+
+select option:checked {
+  background: var(--mint);
+  color: #1a3d38;
+  font-weight: 600;
+}
+
+select optgroup {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 0;
 }
 
 input[type="color"] {
@@ -526,7 +571,6 @@ textarea {
 }
 
 input:focus,
-select:focus,
 textarea:focus {
   border-color: var(--coral);
   box-shadow: 0 0 0 4px rgba(233, 143, 115, 0.18);
@@ -1189,13 +1233,12 @@ textarea:focus {
 
 .submit-layout {
   display: grid;
-  grid-template-columns: minmax(320px, 1.15fr) minmax(280px, 0.85fr);
+  grid-template-columns: minmax(320px, 1fr);
   gap: 22px;
   align-items: start;
 }
 
-.submission-form,
-.submission-panel {
+.submission-form {
   padding: 24px;
 }
 
@@ -1229,6 +1272,18 @@ textarea:focus {
   color: #4d5b5f;
   background: rgba(255, 253, 249, 0.78);
   line-height: 1.7;
+}
+
+.form-status.success {
+  border-color: var(--mint);
+  color: #2d6b63;
+  background: rgba(143, 210, 200, 0.14);
+}
+
+.form-status.error {
+  border-color: var(--coral);
+  color: #8b3a2a;
+  background: rgba(233, 143, 115, 0.12);
 }
 
 .consent-check {
@@ -1284,6 +1339,113 @@ textarea:focus {
 
 .submission-card {
   min-height: auto;
+}
+
+/* ---- 照片上传 ---- */
+.photo-uploads {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.photo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.photo-drop {
+  position: relative;
+  aspect-ratio: 1;
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.4);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.photo-drop:hover {
+  border-color: var(--mint);
+  background: rgba(143, 210, 200, 0.08);
+}
+
+.photo-drop.drag-over {
+  border-color: var(--mint);
+  background: rgba(143, 210, 200, 0.14);
+}
+
+.photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.photo-icon {
+  font-size: 2rem;
+  opacity: 0.6;
+}
+
+.photo-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.photo-remove:hover {
+  background: rgba(200, 60, 60, 0.85);
+}
+
+/* 预览中的照片缩略图 */
+.preview-photos {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+  overflow-x: auto;
+}
+
+.preview-thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line);
 }
 
 .empty {
@@ -1400,6 +1562,18 @@ textarea:focus {
   background: rgba(26, 29, 33, 0.7);
 }
 
+[data-theme="dark"] .form-status.success {
+  border-color: var(--mint);
+  color: #8fd2c8;
+  background: rgba(106, 184, 175, 0.12);
+}
+
+[data-theme="dark"] .form-status.error {
+  border-color: var(--coral);
+  color: #e98f73;
+  background: rgba(212, 122, 94, 0.12);
+}
+
 [data-theme="dark"] input,
 [data-theme="dark"] select,
 [data-theme="dark"] textarea {
@@ -1409,16 +1583,58 @@ textarea:focus {
 }
 
 [data-theme="dark"] input:focus,
-[data-theme="dark"] select:focus,
 [data-theme="dark"] textarea:focus {
   border-color: var(--coral);
   box-shadow: 0 0 0 4px rgba(212, 122, 94, 0.25);
+}
+
+[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239a978f' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] select:hover {
+  border-color: var(--mint);
+  background-color: #1e2826;
+}
+
+[data-theme="dark"] select:focus {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 4px rgba(212, 122, 94, 0.25);
+  background-color: #1a1d21;
+}
+
+[data-theme="dark"] select option {
+  background: #1e2228;
+  color: #e8e4dd;
+}
+
+[data-theme="dark"] select option:checked {
+  background: var(--mint);
+  color: #0d2b26;
+}
+
+[data-theme="dark"] select optgroup {
+  color: #8a8780;
 }
 
 [data-theme="dark"] .search-field span,
 [data-theme="dark"] .memory-form span,
 [data-theme="dark"] .submission-form span {
   color: #b0aaa0;
+}
+
+[data-theme="dark"] .photo-drop {
+  background: rgba(26, 29, 33, 0.5);
+  border-color: rgba(200, 195, 188, 0.18);
+}
+
+[data-theme="dark"] .photo-drop:hover {
+  border-color: var(--mint);
+  background: rgba(106, 184, 175, 0.1);
+}
+
+[data-theme="dark"] .photo-placeholder {
+  color: #8a8780;
 }
 
 [data-theme="dark"] .site-footer {

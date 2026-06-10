@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>鼠鼠星球 | 投稿原型</title>
+  <title>鼠鼠星球 | 投稿</title>
   <link rel="stylesheet" href="./src/styles.css" />
   <script>
     (function () { try { var t = localStorage.getItem("shushu-planet.theme.v1"); if (!t && window.matchMedia("(prefers-color-scheme: dark)").matches) t = "dark"; if (t === "dark") document.documentElement.setAttribute("data-theme", "dark") } catch (e) { } })()
@@ -18,27 +18,48 @@
       <a href="./index.html">首页</a>
       <a href="./map.html">星球地图</a>
       <a href="./planet-wall.html">纪念星河</a>
-      <a class="active" href="./submit.html" aria-current="page">投稿原型</a>
+      <a class="active" href="./submit.html" aria-current="page">投稿</a>
     </nav>
     <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">🌙</button>
   </header>
 
   <main class="shell page-shell">
     <section class="page-hero" aria-labelledby="submit-title">
-      <p class="eyebrow">Submission Prototype</p>
+      <p class="eyebrow">Submission</p>
       <h1 id="submit-title">把鼠鼠送到星球</h1>
       <p class="lede">
-        这里是未来玩家投稿流程的静态原型。当前页面不会上传、保存或公开任何内容，只用于确认一份鼠鼠档案被收录前应该包含什么。
+        填写下方表单，把鼠鼠的纪念档案提交到鼠鼠星球。提交后进入待审核状态，管理员审核通过后将出现在纪念星河。
       </p>
     </section>
 
-    <section class="submit-layout" aria-label="玩家投稿流程原型">
-      <form id="submission-form" class="submission-form">
+    <section class="submit-layout" aria-label="玩家投稿">
+      <form id="submission-form" class="submission-form" enctype="multipart/form-data">
+
+        <!-- 鼠家长信息（选填） -->
         <div class="section-heading">
-          <p class="eyebrow">Archive Draft</p>
-          <h2>待审核纪念档案</h2>
+          <p class="eyebrow">Owner Info</p>
+          <h2>鼠家长的信息 <small style="font-weight:400;font-size:0.85rem;color:var(--muted)">（选填）</small></h2>
+        </div>
+        <div class="form-grid">
+          <label>
+            <span>抖音号</span>
+            <input name="douyin" maxlength="40" placeholder="比如：@奶盖的日常" />
+          </label>
+          <label>
+            <span>小红书号</span>
+            <input name="xiaohongshu" maxlength="40" placeholder="比如：@养鼠日记" />
+          </label>
+          <label>
+            <span>B站号</span>
+            <input name="bilibili" maxlength="40" placeholder="比如：@仓鼠星球" />
+          </label>
         </div>
 
+        <!-- 基本信息 -->
+        <div class="section-heading">
+          <p class="eyebrow">Basic Info</p>
+          <h2>鼠鼠的基本信息</h2>
+        </div>
         <div class="form-grid">
           <label>
             <span>玩家昵称</span>
@@ -49,15 +70,82 @@
             <input name="name" required maxlength="16" placeholder="比如：奶盖" />
           </label>
           <label>
-            <span>鼠鼠昵称</span>
-            <input name="nickname" maxlength="20" placeholder="比如：盖盖" />
+            <span>鼠鼠种类</span>
+            <select name="breedCategory" id="breed-category">
+              <option value="">请先选择大类</option>
+              <option value="叙利亚仓鼠（金丝熊）">叙利亚仓鼠（金丝熊）</option>
+              <option value="加卡利亚仓鼠（三线）">加卡利亚仓鼠（三线）</option>
+              <option value="坎贝尔仓鼠（一线）">坎贝尔仓鼠（一线）</option>
+              <option value="罗伯罗夫斯基仓鼠（公婆）">罗伯罗夫斯基仓鼠（公婆）</option>
+              <option value="其他">其他 / 不确定</option>
+            </select>
+          </label>
+          <label>
+            <span>具体品种</span>
+            <select name="breed" id="breed-select">
+              <option value="">请先选择大类</option>
+            </select>
+            <input name="breedCustom" id="breed-custom" maxlength="20" placeholder="或手动输入品种" style="margin-top:6px;display:none" />
           </label>
           <label>
             <span>抵达鼠星日期</span>
             <input name="arrivedAt" type="date" required />
           </label>
+        </div>
+
+        <!-- 照片上传 -->
+        <div class="section-heading">
+          <p class="eyebrow">Photos</p>
+          <h2>鼠鼠的照片（最多三张）</h2>
+          <p class="lede">每张照片不超过 5MB，支持 JPG/PNG/WebP 格式。</p>
+        </div>
+        <div class="photo-uploads">
+          <label class="photo-field" id="photo-field-0">
+            <span class="photo-label">🐹 鼠鼠睡觉的照片</span>
+            <div class="photo-drop">
+              <input type="file" name="photos" accept="image/*" data-photo-index="0" hidden />
+              <div class="photo-placeholder">
+                <span class="photo-icon">📷</span>
+                <span>点击上传或拖拽图片</span>
+              </div>
+              <img class="photo-preview" src="" alt="" hidden />
+              <button type="button" class="photo-remove" hidden aria-label="移除照片">✕</button>
+            </div>
+          </label>
+          <label class="photo-field" id="photo-field-1">
+            <span class="photo-label">🤲 鼠鼠躺手的照片</span>
+            <div class="photo-drop">
+              <input type="file" name="photos" accept="image/*" data-photo-index="1" hidden />
+              <div class="photo-placeholder">
+                <span class="photo-icon">📷</span>
+                <span>点击上传或拖拽图片</span>
+              </div>
+              <img class="photo-preview" src="" alt="" hidden />
+              <button type="button" class="photo-remove" hidden aria-label="移除照片">✕</button>
+            </div>
+          </label>
+          <label class="photo-field" id="photo-field-2">
+            <span class="photo-label">🏃 鼠鼠越狱中的照片</span>
+            <div class="photo-drop">
+              <input type="file" name="photos" accept="image/*" data-photo-index="2" hidden />
+              <div class="photo-placeholder">
+                <span class="photo-icon">📷</span>
+                <span>点击上传或拖拽图片</span>
+              </div>
+              <img class="photo-preview" src="" alt="" hidden />
+              <button type="button" class="photo-remove" hidden aria-label="移除照片">✕</button>
+            </div>
+          </label>
+        </div>
+
+        <!-- 故事与地区 -->
+        <div class="section-heading">
+          <p class="eyebrow">Story &amp; Region</p>
+          <h2>鼠鼠和我的故事</h2>
+        </div>
+        <div class="form-grid">
           <label>
-            <span>所在区域</span>
+            <span>入驻鼠星的地区</span>
             <select name="region">
               <option>月光谷</option>
               <option>瓜子环</option>
@@ -68,47 +156,42 @@
             </select>
           </label>
           <label>
-            <span>爱吃的</span>
-            <input name="food" maxlength="20" placeholder="比如：南瓜籽" />
+            <span>爱吃的零食</span>
+            <input name="food" maxlength="20" placeholder="比如：南瓜籽、苹果干" />
           </label>
           <label>
             <span>性格标签</span>
             <input name="traits" maxlength="60" placeholder="用逗号分隔，比如：亲人, 爱跑轮, 会洗脸" />
           </label>
           <label>
-            <span>公开意愿</span>
-            <select name="visibility">
-              <option value="private">先保持私密</option>
-              <option value="review">愿意未来公开收录，进入待审核</option>
-            </select>
+            <span>头像颜色</span>
+            <input name="color" type="color" value="#8fd2c8" />
           </label>
           <label class="full-field">
-            <span>想留下的一段纪念</span>
-            <textarea name="memory" required maxlength="180" placeholder="写下最想让鼠鼠星球记住的那一幕"></textarea>
+            <span>鼠鼠和我的故事</span>
+            <textarea name="memory" required maxlength="2000" rows="6"
+              placeholder="写下你和鼠鼠之间最难忘的故事。它怎么来到你身边的？它有什么小习惯？它最喜欢做什么？那些闪闪发亮的小瞬间，都值得被记住……"></textarea>
           </label>
         </div>
 
+        <!-- 确认 -->
+        <label class="consent-check">
+          <input name="publicConsent" type="checkbox" />
+          <span>我同意将这份档案公开展示在纪念星河。未勾选将无法通过审核。</span>
+        </label>
         <label class="consent-check">
           <input name="confirm" type="checkbox" required />
-          <span>我知道当前只是静态原型，不会上传内容；未来真实公开前，需要再次确认并经过审核。</span>
+          <span>我确认以上信息真实，并理解提交后将进入待审核状态，审核通过后公开展示在纪念星河。</span>
         </label>
 
         <div class="form-actions">
-          <button class="button primary" type="submit">生成待审核预览</button>
+          <button class="button primary" type="submit">提交到鼠鼠星球</button>
           <button class="button ghost" type="reset">清空草稿</button>
         </div>
-      </form>
-
-      <aside class="submission-panel" aria-live="polite">
-        <p class="map-kicker">预览状态</p>
-        <h3 id="submission-status">还没有生成档案</h3>
-        <p id="submission-copy">
-          填好左侧表单后，可以生成一张待审核预览。它只会显示在当前页面，不会写入本地档案，也不会提交到服务器。
+        <p id="submission-status" class="form-status" aria-live="polite">
+          填好表单并提交后，档案将进入待审核状态。审核通过后，鼠鼠会出现在纪念星河。
         </p>
-        <div id="submission-preview" class="submission-preview">
-          <p class="empty compact">待审核预览会出现在这里。</p>
-        </div>
-      </aside>
+      </form>
     </section>
   </main>
 

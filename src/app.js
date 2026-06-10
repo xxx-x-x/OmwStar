@@ -12,8 +12,6 @@ const clearLocalButton = document.querySelector("#clear-local");
 const memoryFormStatusEl = document.querySelector("#memory-form-status");
 const submissionForm = document.querySelector("#submission-form");
 const submissionStatusEl = document.querySelector("#submission-status");
-const submissionCopyEl = document.querySelector("#submission-copy");
-const submissionPreviewEl = document.querySelector("#submission-preview");
 const wallCardsEl = document.querySelector("#wall-cards");
 const wallStarCountEl = document.querySelector("#wall-star-count");
 const wallLightTotalEl = document.querySelector("#wall-light-total");
@@ -962,95 +960,75 @@ function deleteMemory(id) {
 
 async function renderSubmissionPreview(event) {
   event.preventDefault();
-  if (!submissionForm || !submissionStatusEl || !submissionCopyEl || !submissionPreviewEl) return;
+  if (!submissionForm || !submissionStatusEl) return;
 
   const data = new FormData(submissionForm);
   const playerName = data.get("playerName").toString().trim();
   const name = data.get("name").toString().trim();
-  const nickname = data.get("nickname").toString().trim() || "还没有昵称";
-  const region = data.get("region").toString();
   const arrivedAt = data.get("arrivedAt").toString();
-  const food = data.get("food").toString().trim() || "小零食";
   const memory = data.get("memory").toString().trim();
-  const visibility = data.get("visibility").toString();
-  const traits = data
-    .get("traits")
-    .toString()
-    .split(/[,，]/)
-    .map((trait) => trait.trim())
-    .filter(Boolean);
+  const publicConsent = data.get("publicConsent") === "on";
 
-  if (!playerName || !name || !arrivedAt || !memory) return;
+  if (!playerName || !name || !arrivedAt || !memory) {
+    submissionStatusEl.textContent = "请填写玩家昵称、鼠鼠名字、抵达日期和故事。";
+    submissionStatusEl.className = "form-status error";
+    return;
+  }
 
-  const safePlayerName = escapeHtml(playerName);
-  const safeName = escapeHtml(name);
-  const safeNickname = escapeHtml(nickname);
-  const safeRegion = escapeHtml(region);
-  const safeFood = escapeHtml(food);
-  const safeMemory = escapeHtml(memory);
-  const safeTraits = traits.map(escapeHtml);
-  const visibilityText = visibility === "review" ? "愿意公开，等待审核" : "先保持私密";
-
-  submissionStatusEl.textContent = "正在送往鼠鼠星球";
-  submissionCopyEl.textContent = "正在保存这份待审核档案。";
-
-  submissionPreviewEl.innerHTML = `
-    <article class="card submission-card">
-      <div class="card-top">
-        <span class="avatar" style="background:#8fd2c8" aria-hidden="true"></span>
-        <div>
-          <h3>${safeName}</h3>
-          <small>${safeNickname} · ${safeRegion}</small>
-        </div>
-      </div>
-      <ul class="tags">
-        <li>${escapeHtml(visibilityText)}</li>
-        <li>玩家 ${safePlayerName}</li>
-        <li>爱吃 ${safeFood}</li>
-        ${safeTraits.map((trait) => `<li>${trait}</li>`).join("")}
-      </ul>
-      <p class="resident-subtitle">${formatDate(arrivedAt)} 抵达鼠星</p>
-      <p class="memory">${safeMemory}</p>
-    </article>
-  `;
+  submissionStatusEl.textContent = "正在送往鼠鼠星球……";
+  submissionStatusEl.className = "form-status";
 
   try {
-    const result = await fetchJson(`${apiBase}/submissions`, {
+    const response = await fetch(`${apiBase}/submissions`, {
       method: "POST",
-      body: JSON.stringify({
-        playerName,
-        name,
-        nickname,
-        region,
-        arrivedAt,
-        food,
-        color: "#8fd2c8",
-        traits,
-        memory,
-        photos: [],
-        publicConsent: visibility === "review",
-      }),
+      body: data,
     });
+    const result = await response.json().catch(() => ({}));
 
-    submissionStatusEl.textContent = "已进入待审核";
-    submissionCopyEl.textContent =
-      visibility === "review"
-        ? `档案编号 ${result.id} 已保存。未来审核通过后，它会进入纪念星河。`
-        : `档案编号 ${result.id} 已保存为私密意愿。未主动确认公开前，不会进入公开收录。`;
+    if (!response.ok) {
+      throw new Error(result.error || "提交失败。");
+    }
+
+    submissionStatusEl.textContent = publicConsent
+      ? `已提交！档案编号 ${result.id}。审核通过后会出现在纪念星河。`
+      : `已保存（编号 ${result.id}），但你未勾选同意公开展示，管理员无法审核通过。`;
+    submissionStatusEl.className = "form-status success";
+    submissionForm.reset();
+    // 清除照片预览
+    document.querySelectorAll(".photo-drop").forEach((drop) => {
+      const input = drop.querySelector('input[type="file"]');
+      const placeholder = drop.querySelector(".photo-placeholder");
+      const preview = drop.querySelector(".photo-preview");
+      const removeBtn = drop.querySelector(".photo-remove");
+      if (input) input.value = "";
+      if (preview) { preview.src = ""; preview.hidden = true; }
+      if (placeholder) placeholder.hidden = false;
+      if (removeBtn) removeBtn.hidden = true;
+    });
   } catch (error) {
-    submissionStatusEl.textContent = "暂时没有保存成功";
-    submissionCopyEl.textContent =
-      error.message || "后端或数据库暂时不可用。预览已经生成，你可以稍后再试。";
+    submissionStatusEl.textContent = error.message || "后端暂时不可用，请稍后再试。";
+    submissionStatusEl.className = "form-status error";
   }
 }
 
 function resetSubmissionPreview() {
-  if (!submissionStatusEl || !submissionCopyEl || !submissionPreviewEl) return;
+  if (!submissionStatusEl) return;
 
-  submissionStatusEl.textContent = "还没有生成档案";
-  submissionCopyEl.textContent =
-    "填好左侧表单后，可以生成一张待审核预览。它只会显示在当前页面，不会写入本地档案，也不会提交到服务器。";
-  submissionPreviewEl.innerHTML = `<p class="empty compact">待审核预览会出现在这里。</p>`;
+  submissionStatusEl.textContent =
+    "填好表单并提交后，档案将进入待审核状态。审核通过后，鼠鼠会出现在纪念星河。";
+  submissionStatusEl.className = "form-status";
+
+  // 清除所有照片预览
+  document.querySelectorAll(".photo-drop").forEach((drop) => {
+    const input = drop.querySelector('input[type="file"]');
+    const placeholder = drop.querySelector(".photo-placeholder");
+    const preview = drop.querySelector(".photo-preview");
+    const removeBtn = drop.querySelector(".photo-remove");
+    if (input) input.value = "";
+    if (preview) { preview.src = ""; preview.hidden = true; }
+    if (placeholder) placeholder.hidden = false;
+    if (removeBtn) removeBtn.hidden = true;
+  });
 }
 
 function clearLocalMemories() {
@@ -1092,6 +1070,123 @@ window.addEventListener("hashchange", handleHashRoute);
 document.addEventListener("planet:region-click", (event) => {
   setMapRegion(event.detail.region);
 });
+
+// 照片上传：点击区域触发文件选择，预览图片，支持拖拽
+document.querySelectorAll(".photo-drop").forEach((drop) => {
+  const input = drop.querySelector('input[type="file"]');
+  const placeholder = drop.querySelector(".photo-placeholder");
+  const preview = drop.querySelector(".photo-preview");
+  const removeBtn = drop.querySelector(".photo-remove");
+
+  if (!input) return;
+
+  // 点击上传区域
+  drop.addEventListener("click", (e) => {
+    if (e.target === removeBtn) return;
+    input.click();
+  });
+
+  // 文件选择后预览
+  input.addEventListener("change", () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (preview) {
+        preview.src = reader.result;
+        preview.hidden = false;
+      }
+      if (placeholder) placeholder.hidden = true;
+      if (removeBtn) removeBtn.hidden = false;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // 移除照片
+  if (removeBtn) {
+    removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      input.value = "";
+      if (preview) {
+        preview.src = "";
+        preview.hidden = true;
+      }
+      if (placeholder) placeholder.hidden = false;
+      if (removeBtn) removeBtn.hidden = true;
+    });
+  }
+
+  // 拖拽支持
+  drop.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    drop.classList.add("drag-over");
+  });
+  drop.addEventListener("dragleave", () => {
+    drop.classList.remove("drag-over");
+  });
+  drop.addEventListener("drop", (e) => {
+    e.preventDefault();
+    drop.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    input.dispatchEvent(new Event("change"));
+  });
+});
+
+// 鼠鼠种类级联下拉
+(function initBreedCascade() {
+  const breedCategory = document.querySelector("#breed-category");
+  const breedSelect = document.querySelector("#breed-select");
+  const breedCustom = document.querySelector("#breed-custom");
+
+  if (!breedCategory || !breedSelect) return;
+
+  const breedMap = {
+    "叙利亚仓鼠（金丝熊）": ["金丝熊", "黑熊", "白熊", "米熊", "眼圈熊", "花仓", "奶牛仓鼠", "象牙白", "卷毛熊", "长毛熊", "短毛熊", "金狐", "琥珀"],
+    "加卡利亚仓鼠（三线）": ["三线仓鼠", "银狐仓鼠", "布丁仓鼠", "奶茶仓鼠", "紫仓", "蓝宝石仓鼠", "冬白"],
+    "坎贝尔仓鼠（一线）": ["一线仓鼠", "斑块一线", "紫衣一线", "暗化一线"],
+    "罗伯罗夫斯基仓鼠（公婆）": ["老婆婆仓鼠", "公公仓鼠"],
+  };
+
+  breedCategory.addEventListener("change", () => {
+    const category = breedCategory.value;
+    breedSelect.innerHTML = "";
+
+    if (category === "其他") {
+      breedSelect.innerHTML = '<option value="">手动输入</option>';
+      breedSelect.disabled = true;
+      if (breedCustom) {
+        breedCustom.style.display = "block";
+        breedCustom.value = "";
+        breedCustom.focus();
+      }
+    } else if (breedMap[category]) {
+      breedSelect.disabled = false;
+      if (breedCustom) breedCustom.style.display = "none";
+      breedSelect.appendChild(new Option("请选择具体品种", ""));
+      breedMap[category].forEach((breed) => {
+        breedSelect.appendChild(new Option(breed, breed));
+      });
+    } else {
+      breedSelect.disabled = true;
+      if (breedCustom) breedCustom.style.display = "none";
+      breedSelect.innerHTML = '<option value="">请先选择大类</option>';
+    }
+  });
+
+  // 选择"其他"时的手动输入同步到 breed 字段
+  if (breedCustom) {
+    breedCustom.addEventListener("input", () => {
+      // 动态更新 breed select 的值用于表单提交
+      if (!breedSelect.querySelector(`option[value="${breedCustom.value}"]`)) {
+        breedSelect.innerHTML = `<option value="${breedCustom.value}" selected>${breedCustom.value}</option>`;
+      }
+    });
+  }
+})();
 
 renderAll();
 handleHashRoute();

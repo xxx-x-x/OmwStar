@@ -76,6 +76,132 @@ function toggleTheme() {
   updateToggleButton(newTheme);
 }
 
+// ---- 自定义下拉组件 ----
+function initCustomSelect(nativeSelect) {
+  if (!nativeSelect || nativeSelect.dataset.customized === "1") return;
+  nativeSelect.dataset.customized = "1";
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "custom-select";
+
+  // 触发器
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "custom-select-trigger";
+  trigger.innerHTML = `<span class="custom-select-text"></span><span class="custom-select-arrow"></span>`;
+
+  // 下拉面板
+  const panel = document.createElement("div");
+  panel.className = "custom-select-panel";
+  panel.setAttribute("role", "listbox");
+
+  // 填充选项
+  const renderOptions = () => {
+    panel.innerHTML = "";
+    for (const opt of nativeSelect.options) {
+      if (opt.tagName === "OPTGROUP") continue; // skip optgroups for now
+      const item = document.createElement("div");
+      item.className = "custom-select-option";
+      item.setAttribute("role", "option");
+      item.dataset.value = opt.value;
+      item.textContent = opt.textContent;
+      if (opt.value === nativeSelect.value) {
+        item.classList.add("active");
+        item.setAttribute("aria-selected", "true");
+      }
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        nativeSelect.value = opt.value;
+        nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        closePanel();
+      });
+      panel.appendChild(item);
+    }
+  };
+
+  const updateTrigger = () => {
+    const idx = nativeSelect.selectedIndex;
+    const selected = idx >= 0 ? nativeSelect.options[idx] : null;
+    trigger.querySelector(".custom-select-text").textContent = selected ? selected.textContent : "";
+    trigger.classList.toggle("disabled", nativeSelect.disabled);
+    // 更新面板高亮
+    panel.querySelectorAll(".custom-select-option").forEach((item) => {
+      const active = item.dataset.value === nativeSelect.value;
+      item.classList.toggle("active", active);
+      item.setAttribute("aria-selected", active ? "true" : "false");
+    });
+  };
+
+  const openPanel = () => {
+    if (nativeSelect.disabled) return;
+    renderOptions();
+    updateTrigger();
+    panel.classList.add("open");
+    trigger.classList.add("open");
+    // 滚动到选中项
+    const activeItem = panel.querySelector(".custom-select-option.active");
+    if (activeItem) activeItem.scrollIntoView({ block: "nearest" });
+  };
+
+  const closePanel = () => {
+    panel.classList.remove("open");
+    trigger.classList.remove("open");
+  };
+
+  trigger.addEventListener("click", () => {
+    if (panel.classList.contains("open")) closePanel();
+    else openPanel();
+  });
+
+  // 点击外部关闭
+  document.addEventListener("click", (e) => {
+    if (!wrapper.contains(e.target)) closePanel();
+  });
+
+  // 键盘
+  trigger.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!panel.classList.contains("open")) openPanel();
+      const items = [...panel.querySelectorAll(".custom-select-option")];
+      const idx = items.findIndex((item) => item.classList.contains("active"));
+      const next = e.key === "ArrowDown" ? Math.min(idx + 1, items.length - 1) : Math.max(idx - 1, 0);
+      if (items[next]) {
+        items[next].classList.add("active");
+        items[next].scrollIntoView({ block: "nearest" });
+        if (idx >= 0) items[idx].classList.remove("active");
+      }
+    } else if (e.key === "Enter" && panel.classList.contains("open")) {
+      e.preventDefault();
+      const activeItem = panel.querySelector(".custom-select-option.active");
+      if (activeItem) {
+        nativeSelect.value = activeItem.dataset.value;
+        nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        closePanel();
+      }
+    } else if (e.key === "Escape") {
+      closePanel();
+    }
+  });
+
+  nativeSelect.addEventListener("change", updateTrigger);
+
+  // 监听原生 select 的选项变化（级联更新时自动刷新面板）
+  const observer = new MutationObserver(() => {
+    updateTrigger();
+  });
+  observer.observe(nativeSelect, { childList: true, subtree: true });
+
+  // 插入 DOM
+  nativeSelect.parentNode.insertBefore(wrapper, nativeSelect);
+  wrapper.appendChild(trigger);
+  wrapper.appendChild(panel);
+  nativeSelect.hidden = true;
+  wrapper.appendChild(nativeSelect); // 移到 wrapper 内
+
+  updateTrigger();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   const toggleBtn = document.querySelector("#theme-toggle");
@@ -970,11 +1096,13 @@ async function renderSubmissionPreview(event) {
   const publicConsent = data.get("publicConsent") === "on";
 
   if (!playerName || !name || !arrivedAt || !memory) {
+    submissionStatusEl.hidden = false;
     submissionStatusEl.textContent = "请填写玩家昵称、鼠鼠名字、抵达日期和故事。";
     submissionStatusEl.className = "form-status error";
     return;
   }
 
+  submissionStatusEl.hidden = false;
   submissionStatusEl.textContent = "正在送往鼠鼠星球……";
   submissionStatusEl.className = "form-status";
 
@@ -989,6 +1117,7 @@ async function renderSubmissionPreview(event) {
       throw new Error(result.error || "提交失败。");
     }
 
+    submissionStatusEl.hidden = false;
     submissionStatusEl.textContent = publicConsent
       ? `已提交！档案编号 ${result.id}。审核通过后会出现在纪念星河。`
       : `已保存（编号 ${result.id}），但你未勾选同意公开展示，管理员无法审核通过。`;
@@ -1006,6 +1135,7 @@ async function renderSubmissionPreview(event) {
       if (removeBtn) removeBtn.hidden = true;
     });
   } catch (error) {
+    submissionStatusEl.hidden = false;
     submissionStatusEl.textContent = error.message || "后端暂时不可用，请稍后再试。";
     submissionStatusEl.className = "form-status error";
   }
@@ -1014,8 +1144,8 @@ async function renderSubmissionPreview(event) {
 function resetSubmissionPreview() {
   if (!submissionStatusEl) return;
 
-  submissionStatusEl.textContent =
-    "填好表单并提交后，档案将进入待审核状态。审核通过后，鼠鼠会出现在纪念星河。";
+  submissionStatusEl.hidden = true;
+  submissionStatusEl.textContent = "";
   submissionStatusEl.className = "form-status";
 
   // 清除所有照片预览
@@ -1187,6 +1317,9 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
     });
   }
 })();
+
+// 初始化自定义下拉组件（所有 select 统一替换原生外观）
+document.querySelectorAll("select").forEach((sel) => initCustomSelect(sel));
 
 renderAll();
 handleHashRoute();

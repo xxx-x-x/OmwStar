@@ -8,6 +8,7 @@ function getCacheTtl() {
 }
 
 async function getRedisClient() {
+  if (process.env.REDIS_ENABLED === "false" || process.env.REDIS_ENABLED === "0") return null;
   if (!process.env.REDIS_URL) return null;
 
   if (!client) {

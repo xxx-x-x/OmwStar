@@ -85,7 +85,8 @@
             <select name="breed" id="breed-select">
               <option value="">请先选择大类</option>
             </select>
-            <input name="breedCustom" id="breed-custom" maxlength="20" placeholder="或手动输入品种" style="margin-top:6px;display:none" />
+            <input name="breedCustom" id="breed-custom" maxlength="20" placeholder="或手动输入品种"
+              style="margin-top:6px;display:none" />
           </label>
           <label>
             <span>抵达鼠星日期</span>
@@ -183,22 +184,31 @@
           <input name="confirm" type="checkbox" required />
           <span>我确认以上信息真实，并理解提交后将进入待审核状态，审核通过后公开展示在纪念星河。</span>
         </label>
+        <label class="consent-check">
+          <input name="originalConfirm" type="checkbox" required />
+          <span>我承诺以上文字和照片均为本人原创或已获得授权，不侵犯他人权益。</span>
+        </label>
 
         <div class="form-actions">
           <button class="button primary" type="submit">提交到鼠鼠星球</button>
           <button class="button ghost" type="reset">清空草稿</button>
         </div>
-        <p id="submission-status" class="form-status" aria-live="polite">
-          填好表单并提交后，档案将进入待审核状态。审核通过后，鼠鼠会出现在纪念星河。
-        </p>
+        <p id="submission-status" class="form-status" aria-live="polite" hidden></p>
       </form>
     </section>
   </main>
 
   <footer class="site-footer" aria-label="网站备案信息">
-    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">晋ICP备2022009437号-1</a>
-    <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=14042702000017" target="_blank"
-      rel="noopener">晋公网安备14042702000017号</a>
+    <p class="footer-copy">© 2026 Omw. 保留所有权利.</p>
+    <div class="footer-links">
+      <a href="./privacy.html">隐私政策</a>
+      <a href="./terms.html">用户协议</a>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">晋ICP备2022009437号-1</a>
+      <span class="footer-sep">|</span>
+      <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=14042702000017" target="_blank"
+        rel="noopener"><img class="gongan-icon" src="./assets/公安标识.png" alt="" width="16"
+          height="16" />晋公网安备14042702000017号</a>
+    </div>
   </footer>
 
   <script src="./data/memories.js"></script>

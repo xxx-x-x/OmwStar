@@ -2,7 +2,7 @@ window.shushuSeedMemories = [
   {
     id: 1,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "芝麻",
     nickname: "黑芝麻汤圆",
@@ -19,7 +19,7 @@ window.shushuSeedMemories = [
   {
     id: 2,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "奶盖",
     nickname: "盖盖",
@@ -36,7 +36,7 @@ window.shushuSeedMemories = [
   {
     id: 3,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "团子",
     nickname: "白糯米",
@@ -53,7 +53,7 @@ window.shushuSeedMemories = [
   {
     id: 4,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "栗子",
     nickname: "小栗",
@@ -70,7 +70,7 @@ window.shushuSeedMemories = [
   {
     id: 5,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "小星星",
     nickname: "星宝",
@@ -87,7 +87,7 @@ window.shushuSeedMemories = [
   {
     id: 6,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "海苔",
     nickname: "苔苔",
@@ -104,7 +104,7 @@ window.shushuSeedMemories = [
   {
     id: 7,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "布丁",
     nickname: "小布",
@@ -121,7 +121,7 @@ window.shushuSeedMemories = [
   {
     id: 8,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "焦糖",
     nickname: "糖糖",
@@ -138,7 +138,7 @@ window.shushuSeedMemories = [
   {
     id: 9,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "年糕",
     nickname: "黏黏",
@@ -155,7 +155,7 @@ window.shushuSeedMemories = [
   {
     id: 10,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "棉花",
     nickname: "绒绒",
@@ -172,7 +172,7 @@ window.shushuSeedMemories = [
   {
     id: 11,
     ownerId: null,
-    visibility: "private",
+    visibility: "public",
     playerName: "示例玩家",
     name: "豆沙",
     nickname: "沙沙",

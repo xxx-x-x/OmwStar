@@ -1,28 +1,19 @@
-const cardsEl = document.querySelector("#cards");
-const searchInput = document.querySelector("#search-input");
-const filterButtons = [...document.querySelectorAll("[data-filter]")];
 const totalCountEl = document.querySelector("#total-count");
 const favoriteFoodEl = document.querySelector("#favorite-food");
 const latestArrivalEl = document.querySelector("#latest-arrival");
-const form = document.querySelector("#memory-form");
-const addTitleEl = document.querySelector("#add-title");
-const memorySubmitButton = document.querySelector("#memory-submit");
-const cancelEditButton = document.querySelector("#cancel-edit");
-const clearLocalButton = document.querySelector("#clear-local");
-const memoryFormStatusEl = document.querySelector("#memory-form-status");
 const submissionForm = document.querySelector("#submission-form");
 const submissionStatusEl = document.querySelector("#submission-status");
 const wallCardsEl = document.querySelector("#wall-cards");
 const wallStarCountEl = document.querySelector("#wall-star-count");
 const wallLightTotalEl = document.querySelector("#wall-light-total");
 const wallFilterButtons = [...document.querySelectorAll("[data-wall-filter]")];
-const residentDetailEl = document.querySelector("#resident-detail");
 const singleResidentEl = document.querySelector("#single-resident");
 const mapRegionEyebrowEl = document.querySelector("#map-region-eyebrow");
 const mapRegionTitleEl = document.querySelector("#map-region-title");
 const mapRegionDescEl = document.querySelector("#map-region-desc");
 const mapResidentsEl = document.querySelector("#map-residents");
-const localStorageKey = "shushu-planet.memories.v1";
+const residentDetailEl = document.querySelector("#resident-detail");
+const timelineContainerEl = document.querySelector("#timeline-container");
 const lightsStorageKey = "shushu-planet.wall-lights.v1";
 const themeStorageKey = "shushu-planet.theme.v1";
 const apiBase = "/api";
@@ -212,11 +203,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const seedMemories = Array.isArray(window.shushuSeedMemories) ? window.shushuSeedMemories : [];
 
-let memories = loadMemories();
-let activeRegion = "all";
+let memories = [];
 let wallActiveRegion = "all";
 let mapRegion = null;
-let editingMemoryId = null;
 let apiResidentsLoaded = false;
 
 function normalizeMemory(memory) {
@@ -240,33 +229,7 @@ function normalizeMemory(memory) {
     photos: Array.isArray(memory.photos) ? memory.photos : [],
     createdAt,
     updatedAt: memory.updatedAt || createdAt,
-    saved: Boolean(memory.saved),
   };
-}
-
-function getSeedMemories() {
-  return seedMemories.map(normalizeMemory);
-}
-
-function getLocalMemories() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(localStorageKey) || "[]");
-    return Array.isArray(saved) ? saved.map(normalizeMemory) : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadMemories() {
-  return [...getLocalMemories(), ...getSeedMemories()];
-}
-
-function getSavedMemories() {
-  return memories.filter((memory) => memory.saved);
-}
-
-function saveMemories() {
-  localStorage.setItem(localStorageKey, JSON.stringify(getSavedMemories()));
 }
 
 async function fetchJson(url, options) {
@@ -291,7 +254,7 @@ async function loadApiResidents() {
     const data = await fetchJson(`${apiBase}/residents`);
     const publicResidents = Array.isArray(data.residents) ? data.residents.map(normalizeMemory) : [];
     apiResidentsLoaded = true;
-    memories = [...getLocalMemories(), ...publicResidents];
+    memories = publicResidents;
     renderAll();
   } catch {
     apiResidentsLoaded = false;
@@ -334,30 +297,6 @@ function getResidentSlug(memory) {
 
 function getResidentPageUrl(id) {
   return `./resident.html?id=${encodeURIComponent(id)}`;
-}
-
-function getSearchText(memory) {
-  return [
-    memory.name,
-    memory.nickname,
-    memory.playerName,
-    memory.region,
-    memory.food,
-    memory.memory,
-    ...memory.traits,
-  ]
-    .join(" ")
-    .toLowerCase();
-}
-
-function getVisibleMemories() {
-  const keyword = searchInput.value.trim().toLowerCase();
-
-  return memories.filter((memory) => {
-    const matchesRegion = activeRegion === "all" || memory.region === activeRegion;
-    const matchesKeyword = !keyword || getSearchText(memory).includes(keyword);
-    return matchesRegion && matchesKeyword;
-  });
 }
 
 function renderStats() {
@@ -404,7 +343,7 @@ function renderMap() {
   if (!regionResidents.length) {
     const empty = document.createElement("p");
     empty.className = "empty";
-    empty.innerHTML = `这片星域还在等待第一位小居民。<a href="./residents.html#add-memory">去新增鼠鼠</a>`;
+    empty.innerHTML = `这片星域还在等待第一位小居民。<a href="./submit.html">去投稿</a>`;
     mapResidentsEl.append(empty);
     return;
   }
@@ -609,18 +548,9 @@ function createCard(memory) {
     <p class="memory">${safeMemory}</p>
     <div class="card-actions">
       <a class="button ghost" href="${getResidentPageUrl(memory.id)}">查看纪念页</a>
-      ${memory.saved
-      ? `
-            <button class="button ghost" type="button" data-action="edit" data-id="${memory.id}">编辑</button>
-            <button class="button ghost danger" type="button" data-action="delete" data-id="${memory.id}">删除</button>
-          `
-      : ""
-    }
     </div>
   `;
 
-  article.querySelector("[data-action='edit']")?.addEventListener("click", () => startEditMemory(memory.id));
-  article.querySelector("[data-action='delete']")?.addEventListener("click", () => deleteMemory(memory.id));
   return article;
 }
 
@@ -675,23 +605,6 @@ function createWallCard(memory, index) {
   });
 
   return article;
-}
-
-function renderCards() {
-  if (!cardsEl || !searchInput) return;
-
-  const visibleMemories = getVisibleMemories();
-  cardsEl.innerHTML = "";
-
-  if (!visibleMemories.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty";
-    empty.textContent = "这片星域暂时还没有找到对应的鼠鼠。换个关键词再看看。";
-    cardsEl.append(empty);
-    return;
-  }
-
-  cardsEl.append(...visibleMemories.map(createCard));
 }
 
 function getWallLights() {
@@ -854,7 +767,7 @@ function renderSingleResidentPage() {
         <p class="eyebrow">Resident Not Found</p>
         <h1 id="missing-resident-title">没有找到这颗星</h1>
         <p class="lede">这位鼠鼠可能只保存在另一台设备或另一个浏览器里。你可以回到星球居民页继续查看当前浏览器里的档案。</p>
-        <a class="button primary" href="./residents.html">回到星球居民</a>
+        <a class="button primary" href="./planet-wall.html">回到纪念星河</a>
       </section>
     `;
     return;
@@ -871,7 +784,7 @@ function renderSingleResidentPage() {
   document.title = `鼠鼠星球 | ${memory.name} 的纪念页`;
   singleResidentEl.innerHTML = `
     <section class="single-hero" aria-labelledby="single-resident-title">
-      <a class="back-link" href="./residents.html">返回星球居民</a>
+      <a class="back-link" href="./planet-wall.html">返回纪念星河</a>
       <div class="single-portrait">
         <span class="avatar memorial-avatar" style="background:${memory.color}" aria-hidden="true"></span>
       </div>
@@ -940,148 +853,11 @@ function handleHashRoute() {
   if (id) openResidentPage(id, false);
 }
 
-function setActiveFilter(region) {
-  if (!filterButtons.length) return;
-
-  activeRegion = region;
-  filterButtons.forEach((button) => {
-    const isActive = button.dataset.filter === activeRegion;
-    button.classList.toggle("active", isActive);
-    button.setAttribute("aria-pressed", isActive.toString());
-  });
-  renderCards();
-}
-
 function setMapRegion(region) {
   mapRegion = region;
   renderMap();
   // 滚动到区域居民面板
   document.querySelector(".map-region-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function setMemoryFormStatus(message) {
-  if (!memoryFormStatusEl) return;
-  memoryFormStatusEl.textContent = message;
-}
-
-function resetMemoryForm() {
-  if (!form) return;
-  form.reset();
-  editingMemoryId = null;
-  if (addTitleEl) addTitleEl.textContent = "新增一张本地纪念卡";
-  if (memorySubmitButton) memorySubmitButton.textContent = "点亮这颗星";
-  if (cancelEditButton) cancelEditButton.hidden = true;
-  setMemoryFormStatus("新增内容只保存在当前浏览器，之后可以编辑或删除。");
-}
-
-function getMemoryFormPayload(existingMemory) {
-  const data = new FormData(form);
-  const name = data.get("name").toString().trim();
-  const playerName = data.get("playerName").toString().trim();
-  const nickname = data.get("nickname").toString().trim() || "新来的星星";
-  const arrivedAt = data.get("arrivedAt").toString() || new Date().toISOString().slice(0, 10);
-  const food = data.get("food").toString().trim() || "小零食";
-  const memory = data.get("memory").toString().trim();
-  const now = new Date().toISOString();
-
-  if (!name || !memory) return null;
-
-  return {
-    id: existingMemory?.id || Date.now(),
-    ownerId: existingMemory?.ownerId ?? null,
-    visibility: existingMemory?.visibility || "private",
-    playerName,
-    name,
-    nickname,
-    region: data.get("region").toString(),
-    arrivedAt,
-    food,
-    color: data.get("color").toString() || existingMemory?.color || "#8fd2c8",
-    traits: parseTraits(data.get("traits").toString()),
-    memory,
-    photos: existingMemory?.photos || [],
-    createdAt: existingMemory?.createdAt || now,
-    updatedAt: now,
-    saved: true,
-  };
-}
-
-function addMemory(event) {
-  event.preventDefault();
-
-  const existingMemory = editingMemoryId
-    ? memories.find((memory) => memory.saved && memory.id.toString() === editingMemoryId.toString())
-    : null;
-  const payload = getMemoryFormPayload(existingMemory);
-
-  if (!payload) return;
-
-  if (existingMemory) {
-    memories = memories.map((memory) =>
-      memory.id.toString() === editingMemoryId.toString() ? payload : memory,
-    );
-    setMemoryFormStatus(`已更新 ${payload.name} 的本地纪念卡。`);
-  } else {
-    memories = [payload, ...memories];
-    setMemoryFormStatus(`已点亮 ${payload.name} 这颗星。`);
-  }
-
-  saveMemories();
-  editingMemoryId = null;
-  form.reset();
-  if (memorySubmitButton) memorySubmitButton.textContent = "点亮这颗星";
-  if (addTitleEl) addTitleEl.textContent = "新增一张本地纪念卡";
-  if (cancelEditButton) cancelEditButton.hidden = true;
-  if (searchInput) searchInput.value = "";
-  setActiveFilter("all");
-  renderStats();
-  renderCards();
-  renderMap();
-  document.querySelector("#archive")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function startEditMemory(id) {
-  if (!form) return;
-
-  const memory = memories.find((item) => item.saved && item.id.toString() === id.toString());
-  if (!memory) return;
-
-  editingMemoryId = memory.id;
-  form.elements.playerName.value = memory.playerName || "";
-  form.elements.name.value = memory.name;
-  form.elements.nickname.value = memory.nickname || "";
-  form.elements.arrivedAt.value = memory.arrivedAt || "";
-  form.elements.region.value = memory.region;
-  form.elements.food.value = memory.food || "";
-  form.elements.color.value = memory.color || "#8fd2c8";
-  form.elements.traits.value = memory.traits.join(", ");
-  form.elements.memory.value = memory.memory || "";
-
-  if (addTitleEl) addTitleEl.textContent = `编辑 ${memory.name} 的本地纪念卡`;
-  if (memorySubmitButton) memorySubmitButton.textContent = "保存修改";
-  if (cancelEditButton) cancelEditButton.hidden = false;
-  setMemoryFormStatus("正在编辑本地档案。修改只会保存在当前浏览器。");
-  document.querySelector("#add-memory")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function deleteMemory(id) {
-  const memory = memories.find((item) => item.saved && item.id.toString() === id.toString());
-  if (!memory) return;
-
-  const confirmed = window.confirm(`确定删除 ${memory.name} 的本地纪念卡吗？这个操作只会删除浏览器本地新增内容。`);
-  if (!confirmed) return;
-
-  memories = memories.filter((item) => item.id.toString() !== id.toString());
-  if (editingMemoryId?.toString() === id.toString()) resetMemoryForm();
-  if (residentDetailEl && location.hash === `#${getResidentSlug(memory)}`) {
-    residentDetailEl.hidden = true;
-    history.pushState(null, "", location.pathname);
-  }
-  saveMemories();
-  renderStats();
-  renderCards();
-  renderMap();
-  setMemoryFormStatus(`已删除 ${memory.name} 的本地纪念卡。`);
 }
 
 async function renderSubmissionPreview(event) {
@@ -1161,39 +937,79 @@ function resetSubmissionPreview() {
   });
 }
 
-function clearLocalMemories() {
-  localStorage.removeItem(localStorageKey);
-  memories = apiResidentsLoaded ? memories.filter((memory) => !memory.saved) : getSeedMemories();
-  resetMemoryForm();
-  if (searchInput) searchInput.value = "";
-  if (residentDetailEl) residentDetailEl.hidden = true;
-  setActiveFilter("all");
-  renderStats();
-  renderMap();
+function renderTimeline() {
+  if (!timelineContainerEl) return;
+
+  const residents = apiResidentsLoaded
+    ? memories
+    : seedMemories.map(normalizeMemory);
+
+  if (!residents.length) {
+    timelineContainerEl.innerHTML = `<p class="empty">时光轴上还没有记录。等鼠鼠们抵达鼠星之后，这里会亮起来。</p>`;
+    return;
+  }
+
+  const sorted = [...residents].sort(
+    (a, b) => new Date(b.arrivedAt) - new Date(a.arrivedAt)
+  );
+
+  // 按年份分组
+  const groups = new Map();
+  sorted.forEach((m) => {
+    const year = new Date(m.arrivedAt).getFullYear();
+    if (!groups.has(year)) groups.set(year, []);
+    groups.get(year).push(m);
+  });
+
+  const years = [...groups.keys()].sort((a, b) => b - a);
+
+  let html = "";
+  years.forEach((year) => {
+    html += `<div class="timeline-year"><span class="timeline-year-label">${year} 年</span></div>`;
+    const entries = groups.get(year);
+    entries.forEach((m, i) => {
+      const side = i % 2 === 0 ? "left" : "right";
+      const safeName = escapeHtml(m.name);
+      const safeNickname = escapeHtml(m.nickname);
+      const safeRegion = escapeHtml(m.region);
+      const safeMemory = escapeHtml(m.memory);
+      const shortMemory = safeMemory.length > 60 ? safeMemory.slice(0, 60) + "……" : safeMemory;
+
+      html += `
+        <div class="timeline-entry ${side}">
+          <div class="timeline-dot" style="background:${m.color}" aria-hidden="true"></div>
+          <a class="timeline-card" href="./resident.html?id=${encodeURIComponent(m.id)}">
+            <span class="timeline-date">${formatDate(m.arrivedAt)}</span>
+            <div class="timeline-card-top">
+              <span class="avatar" style="background:${m.color}" aria-hidden="true"></span>
+              <div>
+                <h3>${safeName}</h3>
+                <small>${safeNickname} · ${safeRegion}</small>
+              </div>
+            </div>
+            <p class="timeline-memory">${shortMemory}</p>
+          </a>
+        </div>`;
+    });
+  });
+
+  timelineContainerEl.innerHTML = html;
 }
 
 function renderAll() {
   renderStats();
   renderMap();
-  renderCards();
+  renderTimeline();
   renderWall();
   renderSingleResidentPage();
 }
-
-filterButtons.forEach((button) => {
-  button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
-});
 
 wallFilterButtons.forEach((button) => {
   button.addEventListener("click", () => setWallFilter(button.dataset.wallFilter));
 });
 
-searchInput?.addEventListener("input", renderCards);
-form?.addEventListener("submit", addMemory);
-cancelEditButton?.addEventListener("click", resetMemoryForm);
 submissionForm?.addEventListener("submit", renderSubmissionPreview);
 submissionForm?.addEventListener("reset", resetSubmissionPreview);
-clearLocalButton?.addEventListener("click", clearLocalMemories);
 window.addEventListener("hashchange", handleHashRoute);
 
 // 星球地图：监听区域点击事件

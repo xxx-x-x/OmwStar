@@ -12,6 +12,10 @@
   --shadow: 0 18px 60px rgba(38, 53, 61, 0.12);
   --topbar-bg: rgba(246, 251, 248, 0.82);
   --topnav-bg: rgba(255, 255, 255, 0.74);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --surface-bg: rgba(255, 253, 249, 0.78);
+  --surface-soft-bg: rgba(255, 255, 255, 0.72);
+  --text-soft: #3f4e52;
   --body-bg:
     radial-gradient(circle at 18% 14%, rgba(143, 210, 200, 0.38), transparent 25rem),
     radial-gradient(circle at 82% 10%, rgba(242, 195, 107, 0.32), transparent 22rem),
@@ -35,6 +39,10 @@
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
   --topbar-bg: rgba(26, 29, 33, 0.86);
   --topnav-bg: rgba(33, 37, 43, 0.82);
+  --glass-bg: rgba(33, 37, 43, 0.9);
+  --surface-bg: rgba(26, 29, 33, 0.82);
+  --surface-soft-bg: rgba(33, 37, 43, 0.74);
+  --text-soft: #b0aaa0;
   --body-bg:
     radial-gradient(circle at 18% 14%, rgba(106, 184, 175, 0.18), transparent 25rem),
     radial-gradient(circle at 82% 10%, rgba(212, 168, 75, 0.15), transparent 22rem),
@@ -441,7 +449,7 @@ h2 {
 .submission-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--glass-bg);
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
 }
@@ -1217,6 +1225,7 @@ textarea:focus {
 
 .single-resident {
   padding: 26px;
+  backdrop-filter: none;
 }
 
 .single-hero {
@@ -1256,7 +1265,7 @@ textarea:focus {
 .single-memory {
   max-width: 680px;
   margin: 24px 0;
-  color: #3f4e52;
+  color: var(--text-soft);
   font-size: clamp(1.18rem, 2.4vw, 1.45rem);
   line-height: 1.9;
 }
@@ -1275,9 +1284,9 @@ textarea:focus {
 .memorial-note,
 .share-preview {
   margin-top: 22px;
-  border: 1px solid rgba(39, 48, 51, 0.1);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 253, 249, 0.78);
+  background: var(--surface-bg);
 }
 
 .memorial-note {
@@ -1287,6 +1296,7 @@ textarea:focus {
 }
 
 .memorial-note article {
+  min-width: 0;
   padding: 18px;
   border-right: 1px solid var(--line);
 }
@@ -1304,7 +1314,11 @@ textarea:focus {
 }
 
 .memorial-note strong {
+  display: block;
+  max-width: 100%;
   font-size: 1.12rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .share-preview {
@@ -1319,7 +1333,7 @@ textarea:focus {
   border: 1px solid rgba(39, 48, 51, 0.1);
   border-radius: 8px;
   padding: 22px;
-  background: rgba(255, 253, 249, 0.78);
+  background: var(--surface-bg);
 }
 
 .world-panel {
@@ -1330,7 +1344,7 @@ textarea:focus {
   overflow: hidden;
   background:
     radial-gradient(circle at 86% 38%, rgba(138, 106, 168, 0.16), transparent 0 30%),
-    linear-gradient(135deg, rgba(255, 253, 249, 0.88), rgba(242, 195, 107, 0.12));
+    linear-gradient(135deg, var(--surface-bg), rgba(242, 195, 107, 0.12));
 }
 
 .world-panel h2 {
@@ -1379,7 +1393,7 @@ textarea:focus {
   overflow: hidden;
   background:
     radial-gradient(circle at 82% 26%, rgba(242, 195, 107, 0.2), transparent 0 26%),
-    linear-gradient(135deg, rgba(255, 253, 249, 0.88), rgba(143, 210, 200, 0.14));
+    linear-gradient(135deg, var(--surface-bg), rgba(143, 210, 200, 0.14));
 }
 
 .ritual-panel h2,
@@ -1409,7 +1423,6 @@ textarea:focus {
   background: var(--gold);
   clip-path: polygon(50% 0, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0 50%, 38% 36%);
   filter: drop-shadow(0 0 12px rgba(242, 195, 107, 0.75));
-  animation: twinkle 2.8s ease-in-out infinite;
 }
 
 .ritual-stars span:nth-child(1) {
@@ -1469,12 +1482,12 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--surface-soft-bg);
 }
 
 .memory-note-card p {
   margin: 0 0 12px;
-  color: #3f4e52;
+  color: var(--text-soft);
   line-height: 1.8;
 }
 
@@ -1520,8 +1533,8 @@ textarea:focus {
   padding: 18px;
   overflow-x: auto;
   white-space: pre-wrap;
-  color: #3f4e52;
-  background: #fff;
+  color: var(--text-soft);
+  background: var(--panel);
   font: inherit;
   line-height: 1.8;
 }
@@ -2279,7 +2292,7 @@ textarea:focus {
 [data-theme="dark"] .faq-list details,
 [data-theme="dark"] .guardian-panel,
 [data-theme="dark"] .admin-card {
-  background: rgba(33, 37, 43, 0.78);
+  background: var(--glass-bg);
 }
 
 [data-theme="dark"] .card,
@@ -2302,8 +2315,6 @@ textarea:focus {
 }
 
 [data-theme="dark"] .resident-notes article,
-[data-theme="dark"] .memorial-note,
-[data-theme="dark"] .share-preview,
 [data-theme="dark"] .form-status,
 [data-theme="dark"] .consent-check {
   background: rgba(26, 29, 33, 0.7);
@@ -2462,9 +2473,9 @@ textarea:focus {
 }
 
 [data-theme="dark"] .share-preview pre {
-  background: #1a1d21;
+  background: var(--paper);
   border-color: rgba(200, 195, 188, 0.18);
-  color: #b0aaa0;
+  color: var(--text-soft);
 }
 
 [data-theme="dark"] .submission-panel p,
@@ -2539,13 +2550,8 @@ textarea:focus {
     linear-gradient(135deg, rgba(143, 210, 200, 0.14), rgba(242, 195, 107, 0.1));
 }
 
-[data-theme="dark"] .memorial-note,
-[data-theme="dark"] .share-preview {
-  background: rgba(26, 29, 33, 0.7);
-}
-
 [data-theme="dark"] .single-memory {
-  color: #b0aaa0;
+  color: var(--text-soft);
 }
 
 [data-theme="dark"] .memorial-note article,
@@ -2571,6 +2577,24 @@ textarea:focus {
 [data-theme="dark"] .wall-card.lit {
   border-color: rgba(212, 168, 75, 0.55);
   box-shadow: 0 18px 48px rgba(212, 168, 75, 0.12);
+}
+
+[data-theme="dark"] .world-panel {
+  background:
+    radial-gradient(circle at 86% 38%, rgba(155, 126, 196, 0.12), transparent 0 30%),
+    linear-gradient(135deg, rgba(26, 29, 33, 0.92), rgba(212, 168, 75, 0.08));
+}
+
+[data-theme="dark"] .ritual-panel {
+  background:
+    radial-gradient(circle at 82% 26%, rgba(212, 168, 75, 0.12), transparent 0 26%),
+    linear-gradient(135deg, rgba(26, 29, 33, 0.92), rgba(106, 184, 175, 0.08));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 

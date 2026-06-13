@@ -939,7 +939,7 @@ function renderSingleResidentPage() {
       <section class="page-hero compact-hero" aria-labelledby="missing-resident-title">
         <p class="eyebrow">Resident Not Found</p>
         <h1 id="missing-resident-title">没有找到这颗星</h1>
-        <p class="lede">这位鼠鼠可能只保存在另一台设备或另一个浏览器里。你可以回到星球居民页继续查看当前浏览器里的档案。</p>
+        <p class="lede">这颗星可能来自旧缓存里的示例链接，或者对应档案已经被移除。现在鼠鼠星球只展示真实收录的鼠鼠。</p>
         <a class="button primary" href="./planet-wall.html">回到纪念星河</a>
       </section>
     `;
@@ -954,6 +954,9 @@ function renderSingleResidentPage() {
   const safeId = escapeHtml(memory.id);
   const safeTraits = memory.traits.map(escapeHtml);
   const safeMemory = escapeHtml(memory.memory);
+  const starCalendar = getMouseStarCalendar(memory.arrivedAt);
+  const lightTotal = Math.max(Number(memory.lightCount || 0), getLightCount(memory.id));
+  const safeTomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   document.title = `鼠鼠星球 | ${memory.name} 的纪念页`;
   singleResidentEl.innerHTML = `

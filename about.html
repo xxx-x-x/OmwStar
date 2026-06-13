@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>鼠鼠星球 | 关于我们</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script>
+        (function () { try { var t = localStorage.getItem("shushu-planet.theme.v1"); if (!t && window.matchMedia("(prefers-color-scheme: dark)").matches) t = "dark"; if (t === "dark") document.documentElement.setAttribute("data-theme", "dark") } catch (e) { } })()
+    </script>
+</head>
+
+<body>
+    <header class="topbar">
+        <a class="brand" href="./index.html">鼠鼠星球</a>
+        <nav class="topnav" aria-label="主导航">
+            <a href="./index.html">首页</a>
+            <a href="./map.html">星球地图</a>
+            <a href="./timeline.html">时光轴</a>
+            <a href="./planet-wall.html">纪念星河</a>
+            <a href="./submit.html">投稿</a>
+            <a class="active" href="./about.html" aria-current="page">关于我们</a>
+        </nav>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换深色/浅色模式"
+            title="切换深色/浅色模式">🌙</button>
+    </header>
+
+    <main class="shell page-shell about-shell">
+        <section class="page-hero about-hero" aria-labelledby="about-title">
+            <div>
+                <p class="eyebrow">About Mouse Star</p>
+                <h1 id="about-title">关于鼠鼠星球</h1>
+                <p class="lede">
+                    鼠鼠星球是一个给离开人间的小仓鼠留下名字、故事和星光的纪念空间。这里不做排名，不制造焦虑，只希望每一只被认真爱过的小鼠，都能有一个温柔安静的归档处。
+                </p>
+                <div class="hero-actions">
+                    <a class="button primary" href="./planet-wall.html">看看纪念星河</a>
+                    <a class="button ghost" href="./submit.html">为鼠鼠投稿</a>
+                </div>
+            </div>
+            <div class="about-orbit" aria-hidden="true">
+                <span class="about-planet">鼠星</span>
+                <span class="about-moon"></span>
+                <span class="about-star about-star-one"></span>
+                <span class="about-star about-star-two"></span>
+            </div>
+        </section>
+
+        <section class="about-grid" aria-label="鼠鼠星球介绍">
+            <article class="about-card">
+                <p class="eyebrow">What</p>
+                <h2>鼠鼠星球是什么？</h2>
+                <p>它是一座玩家共同维护的鼠鼠纪念档案馆。你可以为鼠鼠建立纪念页，记录名字、性格、爱吃的东西、抵达鼠星的日子，以及想对它说的话。</p>
+            </article>
+            <article class="about-card">
+                <p class="eyebrow">Why</p>
+                <h2>为什么要做这个？</h2>
+                <p>很多小动物陪伴我们的时间不长，但它们留下的爱很真实。我们想把这种想念从社交平台的短暂动态里留出来，变成一个可以慢慢回看的地方。</p>
+            </article>
+            <article class="about-card">
+                <p class="eyebrow">Promise</p>
+                <h2>我们的底线</h2>
+                <p>基础收录、访问纪念页、查看星河永远免费。任何支持都只用于服务器、维护和未来功能，不会影响普通纪念的展示机会。</p>
+            </article>
+        </section>
+
+        <section class="about-section" aria-labelledby="ritual-title">
+            <div class="section-heading">
+                <p class="eyebrow">Ritual</p>
+                <h2 id="ritual-title">这里可以做什么？</h2>
+            </div>
+            <div class="about-steps">
+                <article>
+                    <span>01</span>
+                    <h3>建立纪念页</h3>
+                    <p>提交鼠鼠资料，通过审核后会出现在纪念星河。</p>
+                </article>
+                <article>
+                    <span>02</span>
+                    <h3>点亮一盏灯</h3>
+                    <p>回到纪念页时，可以为它留下一盏安静的小星灯。</p>
+                </article>
+                <article>
+                    <span>03</span>
+                    <h3>写下回忆便签</h3>
+                    <p>便签会先进入审核，避免恶意留言打扰纪念空间。</p>
+                </article>
+                <article>
+                    <span>04</span>
+                    <h3>寄出时间胶囊</h3>
+                    <p>把今天的想念寄给未来的自己，等某一天再打开。</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="about-section faq-section" aria-labelledby="faq-title">
+            <div class="section-heading">
+                <p class="eyebrow">FAQ</p>
+                <h2 id="faq-title">常见问题</h2>
+            </div>
+            <div class="faq-list">
+                <details open>
+                    <summary>投稿后会立刻展示吗？</summary>
+                    <p>不会。投稿和回忆便签都会先进入审核，通过后才会公开显示，这是为了保护纪念页不被恶意内容打扰。</p>
+                </details>
+                <details>
+                    <summary>一定要写真名或联系方式吗？</summary>
+                    <p>不需要。玩家昵称可以使用网名，联系方式和社交账号都尽量保持选填。请不要提交不想公开的隐私信息。</p>
+                </details>
+                <details>
+                    <summary>为什么会有“星球守护者”？</summary>
+                    <p>服务器、域名和维护都需要成本。守护者是自愿支持这些成本的朋友，但基础纪念功能不会因为是否支持而区别对待。</p>
+                </details>
+                <details>
+                    <summary>可以修改或删除纪念页吗？</summary>
+                    <p>可以。后续会逐步完善自助修改流程。在此之前，可以通过站点维护者提供的联系方式发起修改或删除请求。</p>
+                </details>
+            </div>
+        </section>
+
+        <section class="guardian-panel about-guardian" aria-labelledby="guardian-title">
+            <div>
+                <p class="eyebrow">Planet Guardians</p>
+                <h2 id="guardian-title">星球守护者</h2>
+                <p>感谢自愿支持服务器与维护成本的朋友。鼠鼠星球会坚持基础纪念永久免费，也会尽量公开、克制地使用每一份支持。</p>
+            </div>
+            <ul id="guardian-list" class="guardian-list" aria-label="守护者名单">
+                <li>等待第一位守护者</li>
+                <li>服务器星灯</li>
+                <li>鼠星维护中</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="site-footer" aria-label="网站备案信息">
+        <p class="footer-copy">© 2026 Omw. 保留所有权利.</p>
+        <div class="footer-links">
+            <a href="./privacy.html">隐私政策</a>
+            <a href="./terms.html">用户协议</a>
+            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">晋ICP备2022009437号-1</a>
+            <span class="footer-sep">|</span>
+            <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=14042702000017" target="_blank"
+                rel="noopener"><img class="gongan-icon" src="./assets/公安标识.png" alt="" width="16"
+                    height="16" />晋公网安备14042702000017号</a>
+        </div>
+    </footer>
+
+    <script src="./data/memories.js"></script>
+    <script src="./src/app.js"></script>
+</body>
+
+</html>

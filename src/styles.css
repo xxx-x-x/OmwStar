@@ -424,6 +424,12 @@ h2 {
   font-weight: 700;
 }
 
+.subtle {
+  color: var(--muted);
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.48);
+}
+
 .stats,
 .toolbar,
 .wall-notice,
@@ -525,6 +531,164 @@ h2 {
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 700;
+}
+
+.about-shell {
+  display: grid;
+  gap: 24px;
+}
+
+.about-hero {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 32px;
+  align-items: center;
+  background:
+    radial-gradient(circle at 86% 20%, rgba(242, 195, 107, 0.2), transparent 0 28%),
+    rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.about-hero h1 {
+  max-width: 780px;
+}
+
+.about-orbit {
+  position: relative;
+  width: min(100%, 250px);
+  aspect-ratio: 1;
+  justify-self: center;
+  border: 1px dashed rgba(138, 106, 168, 0.36);
+  border-radius: 50%;
+}
+
+.about-planet {
+  position: absolute;
+  inset: 54px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #172326;
+  background: linear-gradient(135deg, var(--mint), var(--gold));
+  box-shadow: 0 22px 52px rgba(38, 53, 61, 0.16);
+  font-weight: 950;
+}
+
+.about-moon,
+.about-star {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.about-moon {
+  top: 34px;
+  right: 34px;
+  width: 28px;
+  aspect-ratio: 1;
+  background: var(--coral);
+  box-shadow: 0 0 18px rgba(233, 143, 115, 0.54);
+}
+
+.about-star {
+  width: 9px;
+  aspect-ratio: 1;
+  background: var(--gold);
+  box-shadow: 0 0 14px rgba(242, 195, 107, 0.72);
+}
+
+.about-star-one {
+  left: 34px;
+  top: 66px;
+}
+
+.about-star-two {
+  right: 74px;
+  bottom: 34px;
+}
+
+.about-grid,
+.about-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.about-card,
+.about-section,
+.about-steps article,
+.faq-list details {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.about-card,
+.about-steps article {
+  padding: 22px;
+}
+
+.about-card h2,
+.about-section h2 {
+  font-size: clamp(1.45rem, 3vw, 2.1rem);
+}
+
+.about-card p,
+.about-steps p,
+.faq-list p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.78;
+}
+
+.about-section {
+  padding: 26px;
+}
+
+.about-steps {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.about-steps span {
+  display: inline-grid;
+  width: 40px;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  color: #172326;
+  background: var(--gold);
+  font-weight: 950;
+}
+
+.about-steps h3 {
+  margin: 16px 0 0;
+  font-size: 1.08rem;
+}
+
+.faq-list {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.faq-list details {
+  padding: 18px 20px;
+}
+
+.faq-list summary {
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.about-guardian {
+  margin-top: 0;
 }
 
 .site-footer {
@@ -2078,7 +2242,8 @@ textarea:focus {
 }
 
 [data-theme="dark"] .button,
-[data-theme="dark"] .filter {
+[data-theme="dark"] .filter,
+[data-theme="dark"] .subtle {
   background: rgba(33, 37, 43, 0.78);
   color: #d5d0c8;
 }
@@ -2107,6 +2272,12 @@ textarea:focus {
 [data-theme="dark"] .add-memory,
 [data-theme="dark"] .submission-form,
 [data-theme="dark"] .submission-panel,
+[data-theme="dark"] .about-hero,
+[data-theme="dark"] .about-card,
+[data-theme="dark"] .about-section,
+[data-theme="dark"] .about-steps article,
+[data-theme="dark"] .faq-list details,
+[data-theme="dark"] .guardian-panel,
 [data-theme="dark"] .admin-card {
   background: rgba(33, 37, 43, 0.78);
 }
@@ -2449,9 +2620,19 @@ textarea:focus {
   .resident-hero,
   .single-hero,
   .home-gateway,
+  .about-hero,
+  .about-grid,
   .guardian-panel,
   .submit-layout {
     grid-template-columns: 1fr;
+  }
+
+  .about-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about-orbit {
+    width: min(72vw, 240px);
   }
 
   .submission-panel {
@@ -2564,6 +2745,7 @@ textarea:focus {
   .form-grid,
   .note-form,
   .capsule-form,
+  .about-steps,
   .resident-notes {
     grid-template-columns: 1fr;
   }
@@ -2592,6 +2774,9 @@ textarea:focus {
   .add-memory,
   .submission-form,
   .submission-panel,
+  .about-hero,
+  .about-card,
+  .about-section,
   .admin-card {
     padding: 18px;
   }

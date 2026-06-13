@@ -97,7 +97,7 @@ app.use(express.static(root, {
   extensions: ["html"],
   maxAge: "7d",
   setHeaders(response, filePath) {
-    if (filePath.endsWith(".html")) {
+    if (/\.(html|js|css|json)$/.test(filePath)) {
       response.setHeader("Cache-Control", "no-store");
     }
   },

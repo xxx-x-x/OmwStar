@@ -793,6 +793,10 @@ function addLight(memoryId) {
   } catch { /* 忽略存储错误 */ }
 }
 
+function getSeedMemories() {
+  return seedMemories.map(normalizeMemory);
+}
+
 function getWallMemories() {
   const baseMemories = apiResidentsLoaded
     ? memories.filter((memory) => !memory.saved)

@@ -81,6 +81,13 @@ async function main() {
             await pool.execute(statement);
         }
 
+        const [cleanupResult] = await pool.execute(
+            `DELETE FROM residents WHERE source = 'seed' AND public_id LIKE 'seed-%'`,
+        );
+        if (cleanupResult.affectedRows) {
+            console.log(`清理: 已移除 ${cleanupResult.affectedRows} 条示例居民。`);
+        }
+
         await pool.execute(
             `ALTER TABLE resident_notes MODIFY status ENUM('pending', 'approved', 'hidden') NOT NULL DEFAULT 'pending'`,
         );

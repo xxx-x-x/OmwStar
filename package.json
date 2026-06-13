@@ -5,14 +5,20 @@
   "description": "鼠鼠星球网站后端和静态页面",
   "scripts": {
     "start": "NODE_ENV=production node server/app.cjs",
-    "dev": "node dev-server.cjs",
-    "db:init": "node server/scripts/init-db.cjs"
+    "dev": "node server/app.cjs",
+    "dev:static": "node dev-server.cjs",
+    "db:init": "node server/scripts/init-db.cjs",
+    "db:migrate": "node server/scripts/migrate.cjs",
+    "send:time-capsules": "node server/scripts/send-capsules.cjs",
+    "check": "node --check server/app.cjs && node --check server/cache.cjs && node --check server/db.cjs && node --check server/repositories.cjs && node --check server/scripts/init-db.cjs && node --check server/scripts/migrate.cjs && node --check server/scripts/send-capsules.cjs && node --check dev-server.cjs && node --check src/admin.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "helmet": "^8.2.0",
     "multer": "^2.1.1",
     "mysql2": "^3.11.5",
+    "nodemailer": "^6.9.16",
     "redis": "^4.7.0"
   }
 }

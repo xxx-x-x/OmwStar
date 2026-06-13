@@ -62,6 +62,53 @@ CREATE TABLE IF NOT EXISTS submissions (
     ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS resident_lights (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  resident_id BIGINT UNSIGNED NOT NULL,
+  visitor_key CHAR(64) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uniq_resident_lights_visitor (resident_id, visitor_key),
+  KEY idx_resident_lights_created (created_at),
+  CONSTRAINT fk_resident_lights_resident
+    FOREIGN KEY (resident_id) REFERENCES residents(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS resident_notes (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  public_id VARCHAR(32) NOT NULL,
+  resident_id BIGINT UNSIGNED NOT NULL,
+  author VARCHAR(32) NOT NULL DEFAULT '匿名旅鼠',
+  message VARCHAR(280) NOT NULL,
+  status ENUM('pending', 'approved', 'hidden') NOT NULL DEFAULT 'pending',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uniq_resident_notes_public_id (public_id),
+  KEY idx_resident_notes_resident_status (resident_id, status, created_at),
+  CONSTRAINT fk_resident_notes_resident
+    FOREIGN KEY (resident_id) REFERENCES residents(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS time_capsules (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  public_id VARCHAR(32) NOT NULL,
+  resident_id BIGINT UNSIGNED NOT NULL,
+  email VARCHAR(160) NOT NULL,
+  message TEXT NOT NULL,
+  deliver_at DATE NOT NULL,
+  status ENUM('pending', 'sent', 'canceled') NOT NULL DEFAULT 'pending',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  sent_at DATETIME NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uniq_time_capsules_public_id (public_id),
+  KEY idx_time_capsules_due (status, deliver_at),
+  CONSTRAINT fk_time_capsules_resident
+    FOREIGN KEY (resident_id) REFERENCES residents(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT IGNORE INTO residents
   (public_id, name, nickname, player_name, region, arrived_at, food, color, traits, memory, photos, visibility, source, published_at)
 VALUES

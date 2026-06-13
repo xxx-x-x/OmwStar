@@ -9,6 +9,8 @@
 ```bash
 cd /home/ubuntu/OmwStar
 npm install
+npm run db:init
+npm run db:migrate
 sudo mkdir -p /var/www/certbot
 sudo cp /home/ubuntu/OmwStar/deploy/systemd/omwstar.service /etc/systemd/system/omwstar.service
 sudo systemctl daemon-reload

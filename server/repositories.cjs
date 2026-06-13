@@ -35,12 +35,25 @@ function toResident(row) {
     memory: row.memory,
     photos: parseJsonField(row.photos, []),
     visibility: row.visibility,
+    lightCount: Number(row.light_count || 0),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     publishedAt: row.published_at,
     douyin: row.douyin || "",
     xiaohongshu: row.xiaohongshu || "",
     bilibili: row.bilibili || "",
+  };
+}
+
+function toResidentNote(row) {
+  return {
+    id: row.public_id,
+    author: row.author || "匿名旅鼠",
+    message: row.message,
+    status: row.status,
+    residentId: row.resident_public_id || "",
+    residentName: row.resident_name || "",
+    createdAt: row.created_at,
   };
 }
 
@@ -76,10 +89,15 @@ async function listPublicResidents() {
   if (cached) return cached;
 
   const [rows] = await getPool().execute(
-    `SELECT *
-       FROM residents
-      WHERE visibility = 'public'
-      ORDER BY published_at DESC, created_at DESC
+    `SELECT r.*, COALESCE(l.light_count, 0) AS light_count
+       FROM residents r
+       LEFT JOIN (
+         SELECT resident_id, COUNT(*) AS light_count
+           FROM resident_lights
+          GROUP BY resident_id
+       ) l ON l.resident_id = r.id
+      WHERE r.visibility = 'public'
+      ORDER BY r.published_at DESC, r.created_at DESC
       LIMIT 200`,
   );
   const residents = rows.map(toResident);
@@ -93,15 +111,242 @@ async function getPublicResident(publicId) {
   if (cached) return cached;
 
   const [rows] = await getPool().execute(
-    `SELECT *
-       FROM residents
-      WHERE public_id = :publicId AND visibility = 'public'
+    `SELECT r.*, COALESCE(l.light_count, 0) AS light_count
+       FROM residents r
+       LEFT JOIN (
+         SELECT resident_id, COUNT(*) AS light_count
+           FROM resident_lights
+          GROUP BY resident_id
+       ) l ON l.resident_id = r.id
+      WHERE r.public_id = :publicId AND r.visibility = 'public'
       LIMIT 1`,
     { publicId },
   );
   const resident = rows[0] ? toResident(rows[0]) : null;
   if (resident) await setJson(cacheKey, resident);
   return resident;
+}
+
+async function addResidentLight(publicId, visitorKey) {
+  const pool = getPool();
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    const [residentRows] = await connection.execute(
+      `SELECT id, public_id
+         FROM residents
+        WHERE public_id = :publicId AND visibility = 'public'
+        LIMIT 1`,
+      { publicId },
+    );
+    const resident = residentRows[0];
+
+    if (!resident) {
+      await connection.rollback();
+      return null;
+    }
+
+    const [result] = await connection.execute(
+      `INSERT IGNORE INTO resident_lights (resident_id, visitor_key)
+       VALUES (:residentId, :visitorKey)`,
+      { residentId: resident.id, visitorKey },
+    );
+    const [countRows] = await connection.execute(
+      `SELECT COUNT(*) AS light_count
+         FROM resident_lights
+        WHERE resident_id = :residentId`,
+      { residentId: resident.id },
+    );
+
+    await connection.commit();
+    await deleteKeys([publicResidentsCacheKey, `resident:public:${publicId}`]);
+    return {
+      lightCount: Number(countRows[0]?.light_count || 0),
+      alreadyLit: result.affectedRows === 0,
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function listResidentNotes(publicId) {
+  const [rows] = await getPool().execute(
+    `SELECT n.*
+       FROM resident_notes n
+       INNER JOIN residents r ON r.id = n.resident_id
+      WHERE r.public_id = :publicId
+        AND r.visibility = 'public'
+        AND n.status = 'approved'
+      ORDER BY n.created_at DESC
+      LIMIT 50`,
+    { publicId },
+  );
+  return rows.map(toResidentNote);
+}
+
+async function listAdminResidentNotes(status = "pending") {
+  const validStatuses = new Set(["pending", "approved", "hidden"]);
+  const normalizedStatus = validStatuses.has(status) ? status : "pending";
+  const [rows] = await getPool().execute(
+    `SELECT n.*, r.public_id AS resident_public_id, r.name AS resident_name
+       FROM resident_notes n
+       INNER JOIN residents r ON r.id = n.resident_id
+      WHERE n.status = :status
+      ORDER BY n.created_at ASC
+      LIMIT 200`,
+    { status: normalizedStatus },
+  );
+  return rows.map(toResidentNote);
+}
+
+async function createResidentNote(publicId, payload) {
+  const pool = getPool();
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    const [residentRows] = await connection.execute(
+      `SELECT id
+         FROM residents
+        WHERE public_id = :publicId AND visibility = 'public'
+        LIMIT 1`,
+      { publicId },
+    );
+    const resident = residentRows[0];
+
+    if (!resident) {
+      await connection.rollback();
+      return null;
+    }
+
+    const notePublicId = createPublicId();
+    await connection.execute(
+      `INSERT INTO resident_notes (public_id, resident_id, author, message)
+       VALUES (:notePublicId, :residentId, :author, :message)`,
+      {
+        notePublicId,
+        residentId: resident.id,
+        author: payload.author,
+        message: payload.message,
+      },
+    );
+    const [noteRows] = await connection.execute(
+      `SELECT * FROM resident_notes WHERE public_id = :notePublicId LIMIT 1`,
+      { notePublicId },
+    );
+
+    await connection.commit();
+    return toResidentNote(noteRows[0]);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function reviewResidentNote(publicId, action) {
+  const status = action === "approve" ? "approved" : "hidden";
+  const [result] = await getPool().execute(
+    `UPDATE resident_notes
+        SET status = :status
+      WHERE public_id = :publicId`,
+    { publicId, status },
+  );
+
+  if (!result.affectedRows) return null;
+  const [rows] = await getPool().execute(
+    `SELECT n.*, r.public_id AS resident_public_id, r.name AS resident_name
+       FROM resident_notes n
+       INNER JOIN residents r ON r.id = n.resident_id
+      WHERE n.public_id = :publicId
+      LIMIT 1`,
+    { publicId },
+  );
+  return rows[0] ? toResidentNote(rows[0]) : null;
+}
+
+async function createTimeCapsule(publicId, payload) {
+  const pool = getPool();
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    const [residentRows] = await connection.execute(
+      `SELECT id
+         FROM residents
+        WHERE public_id = :publicId AND visibility = 'public'
+        LIMIT 1`,
+      { publicId },
+    );
+    const resident = residentRows[0];
+
+    if (!resident) {
+      await connection.rollback();
+      return null;
+    }
+
+    const capsulePublicId = createPublicId();
+    await connection.execute(
+      `INSERT INTO time_capsules (public_id, resident_id, email, message, deliver_at)
+       VALUES (:capsulePublicId, :residentId, :email, :message, :deliverAt)`,
+      {
+        capsulePublicId,
+        residentId: resident.id,
+        email: payload.email,
+        message: payload.message,
+        deliverAt: payload.deliverAt,
+      },
+    );
+
+    await connection.commit();
+    return { id: capsulePublicId, deliverAt: payload.deliverAt };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function listDueTimeCapsules(limit = 50) {
+  const [rows] = await getPool().execute(
+    `SELECT c.*, r.public_id AS resident_public_id, r.name AS resident_name, r.nickname, r.arrived_at, r.memory
+       FROM time_capsules c
+       INNER JOIN residents r ON r.id = c.resident_id
+      WHERE c.status = 'pending'
+        AND c.deliver_at <= CURDATE()
+        AND r.visibility = 'public'
+      ORDER BY c.deliver_at ASC, c.created_at ASC
+      LIMIT :limit`,
+    { limit: Number(limit) || 50 },
+  );
+
+  return rows.map((row) => ({
+    id: row.public_id,
+    databaseId: row.id,
+    email: row.email,
+    message: row.message,
+    deliverAt: row.deliver_at,
+    residentId: row.resident_public_id,
+    residentName: row.resident_name,
+    residentNickname: row.nickname,
+    residentArrivedAt: row.arrived_at,
+    residentMemory: row.memory,
+  }));
+}
+
+async function markTimeCapsuleSent(publicId) {
+  await getPool().execute(
+    `UPDATE time_capsules
+        SET status = 'sent', sent_at = NOW()
+      WHERE public_id = :publicId AND status = 'pending'`,
+    { publicId },
+  );
 }
 
 async function createSubmission(payload) {
@@ -255,8 +500,16 @@ async function reviewSubmission(publicId, action, reviewerNote = "") {
 
 module.exports = {
   createSubmission,
+  addResidentLight,
+  createResidentNote,
+  createTimeCapsule,
   getPublicResident,
+  listAdminResidentNotes,
+  listDueTimeCapsules,
+  listResidentNotes,
   listPublicResidents,
   listSubmissions,
+  markTimeCapsuleSent,
+  reviewResidentNote,
   reviewSubmission,
 };

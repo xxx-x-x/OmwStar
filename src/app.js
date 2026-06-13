@@ -14,6 +14,7 @@ const mapRegionDescEl = document.querySelector("#map-region-desc");
 const mapResidentsEl = document.querySelector("#map-residents");
 const residentDetailEl = document.querySelector("#resident-detail");
 const timelineContainerEl = document.querySelector("#timeline-container");
+const guardianListEl = document.querySelector("#guardian-list");
 const lightsStorageKey = "shushu-planet.wall-lights.v1";
 const themeStorageKey = "shushu-planet.theme.v1";
 const apiBase = "/api";
@@ -208,6 +209,10 @@ let wallActiveRegion = "all";
 let mapRegion = null;
 let apiResidentsLoaded = false;
 
+function normalizeColor(value) {
+  return /^#[0-9a-fA-F]{6}$/.test(value || "") ? value : "#8fd2c8";
+}
+
 function normalizeMemory(memory) {
   const arrivedAt = memory.arrivedAt || new Date().toISOString().slice(0, 10);
   const createdAt = memory.createdAt || `${arrivedAt}T00:00:00.000Z`;
@@ -223,10 +228,11 @@ function normalizeMemory(memory) {
     region: memory.region || defaultRegion,
     arrivedAt: arrivedAt?.toString().slice(0, 10),
     food: memory.food || "小零食",
-    color: memory.color || "#8fd2c8",
+    color: normalizeColor(memory.color),
     traits: Array.isArray(memory.traits) ? memory.traits : [],
     memory: memory.memory || "",
     photos: Array.isArray(memory.photos) ? memory.photos : [],
+    lightCount: Number(memory.lightCount || 0),
     createdAt,
     updatedAt: memory.updatedAt || createdAt,
   };
@@ -261,12 +267,51 @@ async function loadApiResidents() {
   }
 }
 
+async function loadGuardians() {
+  if (!guardianListEl) return;
+
+  try {
+    const response = await fetch("./data/guardians.json", { cache: "no-store" });
+    const guardians = await response.json();
+    if (!response.ok || !Array.isArray(guardians)) throw new Error("守护者配置不可用");
+
+    guardianListEl.innerHTML = guardians.map((guardian) => `
+      <li>
+        <strong>${escapeHtml(guardian.name || "匿名守护者")}</strong>
+        <span>${escapeHtml(guardian.note || "谢谢你点亮鼠鼠星球")}</span>
+      </li>
+    `).join("");
+  } catch {
+    // 保留 HTML 中的默认占位名单。
+  }
+}
+
 function formatDate(dateValue) {
   return new Intl.DateTimeFormat("zh-CN", {
     year: "numeric",
     month: "long",
     day: "numeric",
   }).format(new Date(dateValue));
+}
+
+function getMouseStarCalendar(dateValue) {
+  const arrivedDate = new Date(dateValue);
+  const now = new Date();
+  const monthDiff = Math.max(0,
+    (now.getFullYear() - arrivedDate.getFullYear()) * 12
+    + now.getMonth() - arrivedDate.getMonth()
+    + (now.getDate() >= arrivedDate.getDate() ? 0 : -1),
+  );
+  const starDay = monthDiff + 1;
+  const seasonNames = ["月光汛", "瓜子风", "棉花雪", "星砂潮", "蜜糖晴", "软绒夜"];
+  const season = seasonNames[(starDay - 1) % seasonNames.length];
+
+  return {
+    starDay,
+    season,
+    label: `鼠星第 ${starDay} 日 · ${season}`,
+    rule: "鼠星一日，约等于人间一月。",
+  };
 }
 
 function getMemoryById(id) {
@@ -521,6 +566,122 @@ async function copyResidentShareText(memory, statusEl) {
   }
 }
 
+async function lightResident(memory, countEl, buttonEl, statusEl) {
+  buttonEl.disabled = true;
+
+  try {
+    const data = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/lights`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    memory.lightCount = Number(data.lightCount || memory.lightCount || 0);
+    countEl.textContent = `${memory.lightCount} 盏归家星灯`;
+    buttonEl.textContent = data.alreadyLit ? "你已点亮过" : `第 ${memory.lightCount} 位点亮归途的旅鼠`;
+    buttonEl.setAttribute("aria-pressed", "true");
+    if (statusEl) statusEl.textContent = data.alreadyLit ? "这盏星灯一直亮着。" : "星灯已点亮，它的归途又亮了一点。";
+  } catch (error) {
+    const savedLights = getLightCount(memory.id);
+    addLight(memory.id);
+    const totalLights = Math.max(memory.lightCount || 0, savedLights + 1);
+    countEl.textContent = `${totalLights} 盏归家星灯`;
+    buttonEl.textContent = "已点亮";
+    buttonEl.setAttribute("aria-pressed", "true");
+    if (statusEl) statusEl.textContent = "后端暂时不可用，已先在当前浏览器点亮。";
+  }
+}
+
+function renderResidentNotes(notesEl, notes) {
+  if (!notesEl) return;
+
+  if (!notes.length) {
+    notesEl.innerHTML = `<p class="empty">还没有便签。你可以成为第一个轻轻说话的人。</p>`;
+    return;
+  }
+
+  notesEl.innerHTML = notes.map((note) => `
+    <article class="memory-note-card">
+      <p>${escapeHtml(note.message)}</p>
+      <span>${escapeHtml(note.author || "匿名旅鼠")} · ${formatDate(note.createdAt)}</span>
+    </article>
+  `).join("");
+}
+
+async function loadResidentNotes(memory, notesEl) {
+  if (!notesEl) return;
+  if (!apiResidentsLoaded) {
+    renderResidentNotes(notesEl, []);
+    return;
+  }
+
+  try {
+    const data = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/notes`);
+    renderResidentNotes(notesEl, Array.isArray(data.notes) ? data.notes : []);
+  } catch {
+    renderResidentNotes(notesEl, []);
+  }
+}
+
+async function submitResidentNote(event, memory, notesEl, statusEl) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = new FormData(form);
+  const payload = {
+    author: data.get("author")?.toString().trim() || "匿名旅鼠",
+    message: data.get("message")?.toString().trim() || "",
+  };
+
+  if (!payload.message) {
+    statusEl.textContent = "请先写下一张便签。";
+    statusEl.className = "form-status error";
+    return;
+  }
+
+  statusEl.textContent = "正在把便签贴到星灯旁……";
+  statusEl.className = "form-status";
+
+  try {
+    const result = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/notes`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    form.reset();
+    statusEl.textContent = "便签已送去审核，通过后会贴在纪念页。";
+    statusEl.className = "form-status success";
+    await loadResidentNotes(memory, notesEl);
+    if (!apiResidentsLoaded && result.note?.status === "approved") renderResidentNotes(notesEl, [result.note]);
+  } catch (error) {
+    statusEl.textContent = error.message || "便签暂时没有贴上，请稍后再试。";
+    statusEl.className = "form-status error";
+  }
+}
+
+async function submitTimeCapsule(event, memory, statusEl) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = new FormData(form);
+  const payload = {
+    email: data.get("email")?.toString().trim() || "",
+    deliverAt: data.get("deliverAt")?.toString() || "",
+    message: data.get("message")?.toString().trim() || "",
+  };
+
+  statusEl.textContent = "正在把时间胶囊送进星轨……";
+  statusEl.className = "form-status";
+
+  try {
+    const result = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/time-capsules`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    form.reset();
+    statusEl.textContent = result.message || "时间胶囊已寄存。";
+    statusEl.className = "form-status success";
+  } catch (error) {
+    statusEl.textContent = error.message || "时间胶囊暂时没有寄存成功。";
+    statusEl.className = "form-status error";
+  }
+}
+
 function createCard(memory) {
   const safeName = escapeHtml(memory.name);
   const safeNickname = escapeHtml(memory.nickname);
@@ -563,7 +724,7 @@ function createWallCard(memory, index) {
   const safeMemory = escapeHtml(memory.memory);
   const safeTraits = memory.traits.map(escapeHtml);
   const savedLights = getLightCount(memory.id);
-  const baseLights = 8 + index * 3;
+  const baseLights = memory.lightCount || (8 + index * 3);
   const totalLights = baseLights + savedLights;
   const wasLit = savedLights > 0;
 
@@ -602,6 +763,10 @@ function createWallCard(memory, index) {
     lightCountEl.textContent = `${newTotal} 盏小灯`;
     article.classList.add("lit");
     updateWallStats();
+  });
+
+  article.querySelector(".card-top")?.addEventListener("click", () => {
+    window.location.href = getResidentPageUrl(memory.id);
   });
 
   return article;
@@ -652,9 +817,9 @@ function updateWallStats() {
   allMemories.forEach((m) => {
     totalLights += lights[m.id] || 0;
   });
-  // 加上基础灯数（每个 seed memory 有 baseLights）
+  // 加上后端灯数；种子数据无后端时保留基础灯数
   allMemories.forEach((m, i) => {
-    if (!lights[m.id]) totalLights += 8 + i * 3;
+    totalLights += m.lightCount || (lights[m.id] ? 0 : 8 + i * 3);
   });
   wallLightTotalEl.textContent = totalLights;
 }
@@ -703,8 +868,12 @@ function openResidentPage(id, shouldUpdateHash = true) {
   const safeRegion = escapeHtml(memory.region);
   const safeFood = escapeHtml(memory.food);
   const safePlayerName = escapeHtml(memory.playerName || "本地记录");
+  const safeId = escapeHtml(memory.id);
   const safeTraits = memory.traits.map(escapeHtml);
   const safeMemory = escapeHtml(memory.memory);
+  const safeTomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const lightTotal = Math.max(Number(memory.lightCount || 0), getLightCount(memory.id));
+  const starCalendar = getMouseStarCalendar(memory.arrivedAt);
   const hasArchive = Boolean(document.querySelector("#archive"));
   const backHref = hasArchive ? "#archive" : "#planet-map";
   const backText = hasArchive ? "返回档案列表" : "返回星球地图";
@@ -742,7 +911,7 @@ function openResidentPage(id, shouldUpdateHash = true) {
       </article>
       <article>
         <span>档案编号</span>
-        <strong>#${memory.id}</strong>
+        <strong>#${safeId}</strong>
       </article>
     </div>
   `;
@@ -778,6 +947,7 @@ function renderSingleResidentPage() {
   const safeRegion = escapeHtml(memory.region);
   const safeFood = escapeHtml(memory.food);
   const safePlayerName = escapeHtml(memory.playerName || "本地记录");
+  const safeId = escapeHtml(memory.id);
   const safeTraits = memory.traits.map(escapeHtml);
   const safeMemory = escapeHtml(memory.memory);
 
@@ -792,12 +962,14 @@ function renderSingleResidentPage() {
         <p class="eyebrow">${safeRegion}</p>
         <h1 id="single-resident-title">${safeName}</h1>
         <p class="resident-subtitle">${safeNickname} · ${safePlayerName} · ${formatDate(memory.arrivedAt)} 抵达鼠星</p>
+        <p class="star-calendar-pill">${escapeHtml(starCalendar.label)} · ${escapeHtml(starCalendar.rule)}</p>
         <p class="single-memory">${safeMemory}</p>
         <ul class="tags">
           <li>爱吃 ${safeFood}</li>
           ${safeTraits.map((trait) => `<li>${trait}</li>`).join("")}
         </ul>
         <div class="share-actions" aria-label="纪念页分享操作">
+          <button class="button primary resident-light-button" id="resident-light" type="button" aria-pressed="false">点亮归家星灯</button>
           <button class="button primary" id="copy-share" type="button">复制分享文案</button>
           <button class="button ghost" id="download-card" type="button">生成纪念卡图片</button>
         </div>
@@ -822,8 +994,92 @@ function renderSingleResidentPage() {
       </article>
       <article>
         <span>档案编号</span>
-        <strong>#${memory.id}</strong>
+        <strong>#${safeId}</strong>
       </article>
+      <article>
+        <span>归家星灯</span>
+        <strong id="resident-light-count">${lightTotal} 盏</strong>
+      </article>
+      <article>
+        <span>鼠星历</span>
+        <strong>${escapeHtml(starCalendar.label)}</strong>
+      </article>
+    </section>
+
+    <section class="world-panel" aria-labelledby="world-title">
+      <div>
+        <p class="eyebrow">Mouse Star Lore</p>
+        <h2 id="world-title">它在鼠星的今天</h2>
+        <p>按照鼠星历，${safeName} 正住在「${safeRegion}」的 ${escapeHtml(starCalendar.season)} 里。人间每过一个月，鼠星就翻过一天；想念不是倒计时，而是一盏慢慢亮着的灯。</p>
+      </div>
+      <div class="world-orbit" aria-hidden="true">
+        <span></span>
+      </div>
+    </section>
+
+    <section class="ritual-panel" aria-labelledby="ritual-title">
+      <div>
+        <p class="eyebrow">Home Star</p>
+        <h2 id="ritual-title">归家星灯</h2>
+        <p>轻轻点亮一盏灯，告诉它：还有人记得这条回家的路。</p>
+      </div>
+      <div class="ritual-stars" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p class="form-status" id="ritual-status" aria-live="polite">你将成为点亮归途的旅鼠之一。</p>
+    </section>
+
+    <section class="memory-board" aria-labelledby="notes-title">
+      <div class="memory-board-head">
+        <div>
+          <p class="eyebrow">Memory Notes</p>
+          <h2 id="notes-title">回忆便签</h2>
+        </div>
+        <p>匿名、轻声、真诚地留下一句话。</p>
+      </div>
+      <div class="memory-notes-list" id="resident-notes" aria-live="polite">
+        <p class="empty">正在翻找贴在星灯旁的便签。</p>
+      </div>
+      <form class="note-form" id="resident-note-form">
+        <label>
+          <span>署名（可留空）</span>
+          <input name="author" maxlength="32" placeholder="匿名旅鼠" />
+        </label>
+        <label class="full-field">
+          <span>便签内容</span>
+          <textarea name="message" maxlength="280" required placeholder="例如：在鼠星记得吃胖点，也要继续做快乐的小星星。"></textarea>
+        </label>
+        <div class="form-actions">
+          <button class="button primary" type="submit">贴上便签</button>
+        </div>
+        <p class="form-status" id="note-status" aria-live="polite">便签会公开显示，请不要留下隐私信息。</p>
+      </form>
+    </section>
+
+    <section class="time-capsule-panel" aria-labelledby="capsule-title">
+      <div>
+        <p class="eyebrow">Time Capsule</p>
+        <h2 id="capsule-title">时间胶囊</h2>
+        <p>把今天没说完的话寄给未来的自己。到日期后，可由服务器定时任务发送邮件。</p>
+      </div>
+      <form class="capsule-form" id="time-capsule-form">
+        <label>
+          <span>接收邮箱</span>
+          <input name="email" type="email" maxlength="160" required placeholder="you@example.com" />
+        </label>
+        <label>
+          <span>投递日期</span>
+          <input name="deliverAt" type="date" min="${safeTomorrow}" required />
+        </label>
+        <label class="full-field">
+          <span>写给未来的话</span>
+          <textarea name="message" maxlength="2000" required placeholder="一年后，如果你还想它，就回来看看这颗星。"></textarea>
+        </label>
+        <div class="form-actions">
+          <button class="button primary" type="submit">封存时间胶囊</button>
+        </div>
+        <p class="form-status" id="capsule-status" aria-live="polite">邮箱仅用于这封未来邮件。</p>
+      </form>
     </section>
 
     <section class="share-preview" aria-labelledby="share-preview-title">
@@ -836,6 +1092,15 @@ function renderSingleResidentPage() {
   `;
 
   const statusEl = singleResidentEl.querySelector("#share-status");
+  const ritualStatusEl = singleResidentEl.querySelector("#ritual-status");
+  const lightCountEl = singleResidentEl.querySelector("#resident-light-count");
+  const lightButtonEl = singleResidentEl.querySelector("#resident-light");
+  const notesEl = singleResidentEl.querySelector("#resident-notes");
+  const noteStatusEl = singleResidentEl.querySelector("#note-status");
+  const capsuleStatusEl = singleResidentEl.querySelector("#capsule-status");
+  lightButtonEl?.addEventListener("click", () => {
+    lightResident(memory, lightCountEl, lightButtonEl, ritualStatusEl);
+  });
   singleResidentEl.querySelector("#copy-share")?.addEventListener("click", () => {
     copyResidentShareText(memory, statusEl);
   });
@@ -843,6 +1108,13 @@ function renderSingleResidentPage() {
     downloadResidentCard(memory);
     statusEl.textContent = "纪念卡图片已生成。";
   });
+  singleResidentEl.querySelector("#resident-note-form")?.addEventListener("submit", (event) => {
+    submitResidentNote(event, memory, notesEl, noteStatusEl);
+  });
+  singleResidentEl.querySelector("#time-capsule-form")?.addEventListener("submit", (event) => {
+    submitTimeCapsule(event, memory, capsuleStatusEl);
+  });
+  loadResidentNotes(memory, notesEl);
 }
 
 function handleHashRoute() {
@@ -1127,8 +1399,14 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
   if (breedCustom) {
     breedCustom.addEventListener("input", () => {
       // 动态更新 breed select 的值用于表单提交
-      if (!breedSelect.querySelector(`option[value="${breedCustom.value}"]`)) {
-        breedSelect.innerHTML = `<option value="${breedCustom.value}" selected>${breedCustom.value}</option>`;
+      const customBreed = breedCustom.value.trim();
+      if (!customBreed) {
+        breedSelect.replaceChildren(new Option("手动输入", ""));
+        return;
+      }
+
+      if (breedSelect.value !== customBreed) {
+        breedSelect.replaceChildren(new Option(customBreed, customBreed, true, true));
       }
     });
   }
@@ -1139,4 +1417,5 @@ document.querySelectorAll("select").forEach((sel) => initCustomSelect(sel));
 
 renderAll();
 handleHashRoute();
+loadGuardians();
 loadApiResidents();

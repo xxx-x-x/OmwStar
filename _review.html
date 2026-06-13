@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>鼠鼠星球 | 审核后台</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script>
+        (function () { try { var t = localStorage.getItem("shushu-planet.theme.v1"); if (!t && window.matchMedia("(prefers-color-scheme: dark)").matches) t = "dark"; if (t === "dark") document.documentElement.setAttribute("data-theme", "dark") } catch (e) { } })()
+    </script>
+</head>
+
+<body>
+    <header class="topbar admin-topbar">
+        <a class="brand" href="./index.html">鼠鼠星球</a>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换深色/浅色模式"
+            title="切换深色/浅色模式">🌙</button>
+    </header>
+
+    <main class="shell page-shell admin-shell">
+        <section class="page-hero" aria-labelledby="admin-title">
+            <p class="eyebrow">Hidden Review</p>
+            <h1 id="admin-title">内容审核后台</h1>
+            <p class="lede">隐藏页面，仅管理员账号可登录。审核投稿和回忆便签，保证纪念页保持安静、温柔。</p>
+        </section>
+
+        <section id="admin-login-panel" class="submission-form admin-login-panel" aria-label="后台登录">
+            <form id="admin-login-form" class="admin-login-form">
+                <div class="section-heading">
+                    <p class="eyebrow">Admin Login</p>
+                    <h2>输入账号密码</h2>
+                </div>
+                <div class="form-grid">
+                    <label>
+                        <span>账号</span>
+                        <input name="username" autocomplete="username" required placeholder="管理员账号" />
+                    </label>
+                    <label>
+                        <span>密码</span>
+                        <input name="password" type="password" autocomplete="current-password" required
+                            placeholder="管理员密码" />
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button class="button primary" type="submit">登录后台</button>
+                </div>
+                <p id="admin-login-status" class="form-status" role="status">请使用管理员账号登录。</p>
+            </form>
+        </section>
+
+        <section id="admin-review-panel" class="admin-review-panel" hidden aria-label="投稿审核列表">
+            <div class="toolbar admin-toolbar">
+                <label class="search-field">
+                    <span>内容类型</span>
+                    <select id="admin-content-type">
+                        <option value="submissions">投稿</option>
+                        <option value="notes">回忆便签</option>
+                    </select>
+                </label>
+                <label class="search-field">
+                    <span>审核状态</span>
+                    <select id="admin-status-filter">
+                        <option value="pending">待审核</option>
+                        <option value="approved">已通过</option>
+                        <option value="rejected">已拒绝</option>
+                    </select>
+                </label>
+                <div class="admin-toolbar-actions">
+                    <button id="admin-refresh" class="button ghost" type="button">刷新列表</button>
+                    <button id="admin-logout" class="button ghost" type="button">退出登录</button>
+                </div>
+            </div>
+            <p id="admin-review-status" class="form-status" role="status">正在读取内容...</p>
+            <div id="admin-submissions" class="admin-submissions"></div>
+        </section>
+    </main>
+
+    <script src="./src/app.js"></script>
+    <script src="./src/admin.js"></script>
+</body>
+
+</html>

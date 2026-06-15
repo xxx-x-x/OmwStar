@@ -208,6 +208,7 @@ let memories = [];
 let wallActiveRegion = "all";
 let mapRegion = null;
 let apiResidentsLoaded = false;
+let apiResidentsSettled = false;
 
 function normalizeColor(value) {
   return /^#[0-9a-fA-F]{6}$/.test(value || "") ? value : "#8fd2c8";
@@ -260,10 +261,13 @@ async function loadApiResidents() {
     const data = await fetchJson(`${apiBase}/residents`);
     const publicResidents = Array.isArray(data.residents) ? data.residents.map(normalizeMemory) : [];
     apiResidentsLoaded = true;
+    apiResidentsSettled = true;
     memories = publicResidents;
     renderAll();
   } catch {
     apiResidentsLoaded = false;
+    apiResidentsSettled = true;
+    renderAll();
   }
 }
 
@@ -342,6 +346,21 @@ function getResidentSlug(memory) {
 
 function getResidentPageUrl(id) {
   return `./resident.html?id=${encodeURIComponent(id)}`;
+}
+
+function getResidentLoadingHtml() {
+  return `
+    <section class="resident-loader" aria-label="正在加载鼠鼠纪念页">
+      <div class="resident-loader-card">
+        <div class="resident-loader-face" aria-hidden="true">🐹</div>
+        <p class="eyebrow">Loading Resident</p>
+        <p class="resident-loader-text" aria-live="polite"></p>
+        <div class="resident-loader-track" aria-hidden="true">
+          <span></span>
+        </div>
+      </div>
+    </section>
+  `;
 }
 
 function renderStats() {
@@ -932,6 +951,12 @@ function renderSingleResidentPage() {
   const params = new URLSearchParams(location.search);
   const id = params.get("id") || decodeURIComponent(location.hash.replace("#resident-", ""));
   const memory = id ? getMemoryById(id) : null;
+
+  if (id && !memory && !apiResidentsSettled) {
+    document.title = "鼠鼠星球 | 正在寻找这颗星";
+    singleResidentEl.innerHTML = getResidentLoadingHtml();
+    return;
+  }
 
   if (!memory) {
     document.title = "鼠鼠星球 | 没有找到这颗星";

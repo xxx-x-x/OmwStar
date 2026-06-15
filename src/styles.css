@@ -1262,6 +1262,68 @@ textarea:focus {
   font-size: clamp(3rem, 9vw, 6rem);
 }
 
+.resident-loader {
+  min-height: min(56vh, 520px);
+  display: grid;
+  place-items: center;
+}
+
+.resident-loader-card {
+  width: min(100%, 460px);
+  border: 1px solid rgba(39, 48, 51, 0.1);
+  border-radius: 18px;
+  padding: 34px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 24% 18%, rgba(242, 195, 107, 0.25), transparent 0 28%),
+    radial-gradient(circle at 82% 22%, rgba(143, 210, 200, 0.28), transparent 0 24%),
+    rgba(255, 255, 255, 0.72);
+  box-shadow: 0 22px 70px rgba(35, 44, 48, 0.12);
+}
+
+.resident-loader-face {
+  width: 86px;
+  height: 86px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff6df;
+  box-shadow: inset 0 -8px 0 rgba(242, 195, 107, 0.2), 0 12px 32px rgba(35, 44, 48, 0.12);
+  font-size: 2.7rem;
+  animation: resident-loader-bob 1.8s ease-in-out infinite;
+}
+
+.resident-loader-text {
+  min-height: 1.8em;
+  margin: 10px 0 20px;
+  color: var(--ink);
+  font-weight: 900;
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+}
+
+.resident-loader-text::after {
+  content: "鼠鼠正在起床……";
+  animation: resident-loader-copy 6s steps(1, end) infinite;
+}
+
+.resident-loader-track {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(39, 48, 51, 0.08);
+}
+
+.resident-loader-track span {
+  display: block;
+  height: 100%;
+  width: 42%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f2c36b, #8fd2c8, #e98f73);
+  box-shadow: 0 0 18px rgba(143, 210, 200, 0.45);
+  animation: resident-loader-progress 1.45s ease-in-out infinite;
+}
+
 .single-memory {
   max-width: 680px;
   margin: 24px 0;
@@ -2609,6 +2671,54 @@ textarea:focus {
   50% {
     opacity: 1;
     scale: 1.12;
+  }
+}
+
+@keyframes resident-loader-bob {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+  }
+}
+
+@keyframes resident-loader-progress {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  55% {
+    transform: translateX(80%);
+  }
+
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes resident-loader-copy {
+  0% {
+    content: "鼠鼠正在起床……";
+  }
+
+  20% {
+    content: "鼠鼠正在洗澡……";
+  }
+
+  40% {
+    content: "鼠鼠正在梳毛毛……";
+  }
+
+  60% {
+    content: "鼠鼠正在找瓜子……";
+  }
+
+  80% {
+    content: "鼠鼠正在跑向你……";
   }
 }
 

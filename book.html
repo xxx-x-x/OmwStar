@@ -2,10 +2,42 @@
 <html lang="zh-CN">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>鼠鼠星球 | 鼠鼠纪念页</title>
-  <link rel="stylesheet" href="./src/styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>鼠鼠星球 | 鼠鼠绘本</title>
+  <meta name="description" content="在翻页画册中探索鼠鼠星球。">
+  <link rel="stylesheet" href="./src/styles.css">
+  <style>
+    html,
+    body {
+      margin: 0;
+      min-width: 320px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100svh;
+    }
+
+    .book-content {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      overflow: hidden;
+    }
+
+    iframe {
+      display: block;
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      border: 0;
+      overflow: hidden;
+    }
+  </style>
 </head>
 
 <body>
@@ -17,15 +49,13 @@
       <a href="./timeline.html">时光轴</a>
       <a href="./planet-wall.html">纪念星河</a>
       <a href="./momo.html">摸摸鼠鼠</a>
-      <a href="./book.html">鼠鼠绘本</a>
+      <a href="./book.html" class="active" aria-current="page">鼠鼠绘本</a>
       <a href="./submit.html">投稿</a>
     </nav>
   </header>
 
-  <main class="shell page-shell">
-    <section id="single-resident" class="single-resident" aria-live="polite">
-      <p class="empty">正在寻找这位鼠鼠的小星星。</p>
-    </section>
+  <main class="book-content">
+    <iframe src="/sketchbook/index.html" title="鼠鼠绘本"></iframe>
   </main>
 
   <footer class="site-footer" aria-label="网站备案信息">
@@ -38,12 +68,9 @@
       <span class="footer-sep">|</span>
       <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=14042702000017" target="_blank"
         rel="noopener"><img class="gongan-icon" src="./assets/公安标识.png" alt="" width="16"
-          height="16" />晋公网安备14042702000117号</a>
+          height="16">晋公网安备14042702000117号</a>
     </div>
   </footer>
-
-  <script src="./data/memories.js"></script>
-  <script src="./src/app.js"></script>
 </body>
 
 </html>

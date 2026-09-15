@@ -16,57 +16,8 @@ const residentDetailEl = document.querySelector("#resident-detail");
 const timelineContainerEl = document.querySelector("#timeline-container");
 const guardianListEl = document.querySelector("#guardian-list");
 const lightsStorageKey = "shushu-planet.wall-lights.v1";
-const themeStorageKey = "shushu-planet.theme.v1";
 const apiBase = "/api";
 const defaultRegion = "月光谷";
-
-// ---- 主题切换 ----
-function getSavedTheme() {
-  try {
-    return localStorage.getItem(themeStorageKey);
-  } catch {
-    return null;
-  }
-}
-
-function saveTheme(theme) {
-  try {
-    localStorage.setItem(themeStorageKey, theme);
-  } catch {
-    // 忽略存储错误
-  }
-}
-
-function applyTheme(theme) {
-  const html = document.documentElement;
-  if (theme === "dark") {
-    html.setAttribute("data-theme", "dark");
-  } else {
-    html.removeAttribute("data-theme");
-  }
-}
-
-function updateToggleButton(theme) {
-  const btn = document.querySelector("#theme-toggle");
-  if (!btn) return;
-  btn.textContent = theme === "dark" ? "☀️" : "🌙";
-}
-
-function initTheme() {
-  const saved = getSavedTheme();
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const theme = saved || (prefersDark ? "dark" : "light");
-  applyTheme(theme);
-  updateToggleButton(theme);
-}
-
-function toggleTheme() {
-  const isDark = document.documentElement.hasAttribute("data-theme");
-  const newTheme = isDark ? "light" : "dark";
-  applyTheme(newTheme);
-  saveTheme(newTheme);
-  updateToggleButton(newTheme);
-}
 
 // ---- 自定义下拉组件 ----
 function initCustomSelect(nativeSelect) {
@@ -193,14 +144,6 @@ function initCustomSelect(nativeSelect) {
 
   updateTrigger();
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  initTheme();
-  const toggleBtn = document.querySelector("#theme-toggle");
-  if (toggleBtn) {
-    toggleBtn.addEventListener("click", toggleTheme);
-  }
-});
 
 const seedMemories = Array.isArray(window.shushuSeedMemories) ? window.shushuSeedMemories : [];
 

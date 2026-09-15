@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f2eb" />
+  <meta name="description" content="摸摸鼠鼠，按住捏一捏、拖动拉伸、挠痒痒或抛一下，让今天变得柔软一点。" />
+  <title>鼠鼠星球 | 摸摸鼠鼠</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+  <link rel="stylesheet" href="./src/momo-soft.css?v=centered-stage-1" />
+</head>
+
+<body class="momo-experience-page">
+  <header class="topbar site-topbar">
+    <a class="brand" href="./index.html" aria-label="鼠鼠星球首页">鼠鼠星球</a>
+    <button id="mobile-menu-toggle" class="mobile-menu-toggle" type="button" aria-label="展开顶部工具栏" aria-expanded="false">
+      <span aria-hidden="true">☰</span><span class="mobile-menu-label">菜单</span>
+    </button>
+    <div id="mobile-menu-panel" class="mobile-menu-panel">
+      <nav class="topnav" aria-label="主导航">
+        <a href="./index.html">首页</a>
+        <a href="./map.html">星球地图</a>
+        <a href="./timeline.html">时光轴</a>
+        <a href="./planet-wall.html">纪念星河</a>
+        <a class="active" href="./momo.html" aria-current="page">摸摸鼠鼠</a>
+        <a href="./submit.html">投稿</a>
+        <a href="./about.html">关于我们</a>
+      </nav>
+      <div class="header-actions">
+        <button id="sound" class="round-control" aria-label="关闭声音" aria-pressed="true"><span>声音开</span></button>
+        <button id="settings-toggle" class="round-control" aria-label="打开触感设置"
+          aria-expanded="false"><span>调一调</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="experience">
+    <div class="headline">
+      <div class="eyebrow"><span class="edition-dot"></span> 一只没什么脾气的小鼠鼠</div>
+      <h1>把今天，<br>摸软一点</h1>
+      <p>它负责软乎乎，你负责做自己</p>
+    </div>
+    <div class="spec-label"><span>MEET SHUSHU</span><strong>珍珠软胶 · 云朵性格</strong><small>NO 002 / SHUSHU PLANET</small>
+    </div>
+
+    <div id="stage" class="stage">
+      <div class="floor-shadow" id="shadow"></div>
+      <canvas id="toy" tabindex="0" role="button" aria-label="鼠鼠互动软物，按住捏一捏，拖动拉伸；键盘空格按压，方向键移动"></canvas>
+      <canvas id="effects" aria-hidden="true"></canvas>
+      <div id="loading" class="loading"><span></span>鼠鼠正在慢慢醒来</div>
+      <div id="speech" class="speech" role="status">戳一下认识，双击有小惊喜</div>
+    </div>
+
+    <nav class="tools" aria-label="选择玩法">
+      <button class="tool active" data-mode="squish" aria-pressed="true"><span>捏一捏</span><small>01</small></button>
+      <button class="tool" data-mode="stretch" aria-pressed="false"><span>拉长长</span><small>02</small></button>
+      <button class="tool" data-mode="tickle" aria-pressed="false"><span>挠痒痒</span><small>03</small></button>
+      <button class="tool" data-mode="toss" aria-pressed="false"><span>抛一下</span><small>04</small></button>
+    </nav>
+
+    <div class="object-caption"><span class="name">SHUSHU</span><span id="mood">正在偷偷期待被你摸</span></div>
+    <div class="side-note"><span class="note-symbol">✳</span>
+      <p>不必很厉害<br>今天，够可爱就好</p><button id="surprise">给我一个小惊喜 <span>↗</span></button>
+    </div>
+    <div class="bottom-bar">
+      <div class="gesture-hint"><span class="keycap">↔</span><span id="hint">按住捏一捏，松手回弹，试试双指拉长它</span><button id="reset"
+          aria-label="让鼠鼠回到中间">归位 ↺</button></div><button id="checkin" class="collect"><span class="count-label"><b
+            id="count">0</b> 次小快乐</span><span class="collect-label">收藏这一刻 <span>↗</span></span></button>
+    </div>
+  </main>
+
+  <footer class="site-footer" aria-label="网站备案信息">
+    <p class="footer-copy">© 2026 Omw. 保留所有权利.</p>
+    <div class="footer-links">
+      <a href="./privacy.html">隐私政策</a>
+      <a href="./terms.html">用户协议</a>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">晋ICP备2022009437号-3</a>
+      <span class="footer-sep">|</span>
+      <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=14042702000017" target="_blank"
+        rel="noopener"><img class="gongan-icon" src="./assets/公安标识.png" alt="" width="16"
+          height="16" />晋公网安备14042702000117号</a>
+    </div>
+  </footer>
+
+  <dialog id="settings-dialog" class="settings-dialog">
+    <div class="panel-heading">
+      <div><span class="eyebrow">MAKE IT YOURS</span>
+        <h2>软乎乎，也有个性</h2>
+      </div><button id="settings-close" class="close" aria-label="关闭设置">×</button>
+    </div>
+    <div class="setting-group">
+      <h3>今天的颜色 <span id="color-name">奶油卡其</span></h3>
+      <div class="swatches" role="group" aria-label="选择颜色"><button data-color="0" class="swatch selected"
+          aria-label="奶油卡其" aria-pressed="true" style="--swatch:#eae0cf"></button><button data-color="1" class="swatch"
+          aria-label="暖象牙白" aria-pressed="false" style="--swatch:#faf5e9"></button><button data-color="2" class="swatch"
+          aria-label="燕麦米" aria-pressed="false" style="--swatch:#d8c9b2"></button><button data-color="3" class="swatch"
+          aria-label="香槟奶霜" aria-pressed="false" style="--swatch:#e7d4b4"></button></div>
+    </div>
+    <div class="setting-group">
+      <h3>指尖的材质</h3>
+      <div class="segments" role="group" aria-label="选择材质"><button data-material="0" class="selected"
+          aria-pressed="true">珍珠软胶</button><button data-material="1" aria-pressed="false">绵绵奶冻</button><button
+          data-material="2" aria-pressed="false">细砂陶感</button></div>
+      <p id="material-note">微透的边缘，藏着一小团月光</p>
+    </div>
+    <div class="setting-row">
+      <div>
+        <h3>软糯程度</h3>
+        <p id="soft-label">软到心里</p>
+      </div>
+      <div class="stepper"><button data-step="soft:-1" aria-label="减少软糯程度">−</button><output
+          id="soft-value">75</output><button data-step="soft:1" aria-label="增加软糯程度">＋</button></div>
+    </div>
+    <div class="setting-row">
+      <div>
+        <h3>可爱尺寸</h3>
+        <p>小小只，也能抱个满怀</p>
+      </div>
+      <div class="stepper"><button data-step="size:-1" aria-label="缩小鼠鼠">−</button><output
+          id="size-value">100%</output><button data-step="size:1" aria-label="放大鼠鼠">＋</button></div>
+    </div>
+    <div class="setting-row">
+      <div>
+        <h3>声音的性格</h3>
+        <p>捏、拉、挠、弹，各有小表情</p>
+      </div><button id="sound-style" class="mini-button">咕叽水滴 ↻</button>
+    </div>
+    <div class="setting-row">
+      <div>
+        <h3>轻轻震一下</h3>
+        <p>在支持的手机上感受触碰</p>
+      </div><button id="haptic" class="switch" role="switch" aria-label="触感反馈" aria-checked="true"><i></i></button>
+    </div>
+    <button id="settings-done" class="primary wide">调好了，去摸摸</button>
+  </dialog>
+
+  <dialog id="card-dialog" class="card-dialog"><button id="card-close" class="close" aria-label="关闭收藏卡">×</button>
+    <div class="eyebrow">A LITTLE PROOF OF HAPPINESS</div>
+    <h2>今天的快乐，有形状了</h2><img id="card-image" alt="鼠鼠今日收藏卡">
+    <div class="card-actions"><button id="download" class="secondary">保存收藏卡 ↓</button><button id="share"
+        class="primary">分享快乐 ↗</button></div>
+    <p id="share-status" role="status">送给那个也需要软乎乎一下的人</p>
+  </dialog>
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="./src/app.js"></script>
+  <script type="module" src="./src/momo-app.js"></script>
+</body>
+
+</html>

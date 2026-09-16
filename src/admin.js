@@ -114,6 +114,7 @@ function renderSubmission(submission) {
         </div>
         <div class="admin-photos">
           ${photos.length ? photos.map((photo) => `<a href="${escapeHtml(photo)}" target="_blank" rel="noopener"><img src="${escapeHtml(photo)}" alt="${escapeHtml(submission.name)} 的投稿照片" /></a>`).join("") : "<p class=\"empty compact\">没有上传照片</p>"}
+          ${submission.spreadImage ? `<a class="admin-spread" href="${escapeHtml(submission.spreadImage)}" target="_blank" rel="noopener"><img src="${escapeHtml(submission.spreadImage)}" alt="${escapeHtml(submission.name)} 的跨页图" /><span>1760×1240 跨页图</span></a>` : ""}
         </div>
       </div>
       <label class="admin-note">

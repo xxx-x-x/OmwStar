@@ -176,6 +176,7 @@ function normalizeMemory(memory) {
     traits: Array.isArray(memory.traits) ? memory.traits : [],
     memory: memory.memory || "",
     photos: Array.isArray(memory.photos) ? memory.photos : [],
+    spreadImage: memory.spreadImage || "",
     lightCount: Number(memory.lightCount || 0),
     createdAt,
     updatedAt: memory.updatedAt || createdAt,
@@ -1282,17 +1283,62 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
   // 文件选择后预览
   input.addEventListener("change", () => {
     const file = input.files[0];
+    const statusEl = drop.parentElement?.querySelector(".spread-status");
+    if (statusEl) {
+      statusEl.hidden = true;
+      statusEl.textContent = "";
+    }
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (preview) {
-        preview.src = reader.result;
-        preview.hidden = false;
-      }
-      if (placeholder) placeholder.hidden = true;
-      if (removeBtn) removeBtn.hidden = false;
+
+    const requiredSize = input.dataset.requiredSize;
+    const showPreview = () => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (preview) {
+          preview.src = reader.result;
+          preview.hidden = false;
+        }
+        if (placeholder) placeholder.hidden = true;
+        if (removeBtn) removeBtn.hidden = false;
+      };
+      reader.readAsDataURL(file);
     };
-    reader.readAsDataURL(file);
+
+    if (!requiredSize) {
+      showPreview();
+      return;
+    }
+
+    const [requiredWidth, requiredHeight] = requiredSize.split("x").map(Number);
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      if (image.naturalWidth !== requiredWidth || image.naturalHeight !== requiredHeight) {
+        input.value = "";
+        if (preview) {
+          preview.src = "";
+          preview.hidden = true;
+        }
+        if (placeholder) placeholder.hidden = false;
+        if (removeBtn) removeBtn.hidden = true;
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.textContent = `这张图是 ${image.naturalWidth}×${image.naturalHeight}，必须正好是 ${requiredWidth}×${requiredHeight}。`;
+        }
+        return;
+      }
+      showPreview();
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      input.value = "";
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.textContent = "无法读取这张图片，请换一张再试。";
+      }
+    };
+    image.src = objectUrl;
   });
 
   // 移除照片

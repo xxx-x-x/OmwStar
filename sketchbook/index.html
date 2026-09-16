@@ -962,7 +962,7 @@
       width: min(1080px, 86vw);
       margin: clamp(30px, 6vh, 64px) auto;
       height: clamp(26px, 4vw, 46px);
-      background: url(sketchbook/divider.png) center / 100% auto no-repeat;
+      background: url(sketchbook/divider.webp) center / 100% auto no-repeat;
       opacity: .5;
     }
 
@@ -1208,8 +1208,8 @@
     </header>
 
     <section id="sketchbook" class="hero">
-      <img class="botany l" src="sketchbook/botany-left.png" alt="" aria-hidden="true">
-      <img class="botany r" src="sketchbook/botany-right.png" alt="" aria-hidden="true">
+      <img class="botany l" src="sketchbook/botany-left.webp" alt="" aria-hidden="true">
+      <img class="botany r" src="sketchbook/botany-right.webp" alt="" aria-hidden="true">
 
       <p class="hero-kicker">Designer / Creator / AI Educator / Founder @ Singapore</p>
 
@@ -1325,7 +1325,7 @@
   <script>
     /* =====================================================================
        Meng To — sketchbook hero.
-       Spreads are transparent PNGs of an open sketchbook generated with
+      Spreads are transparent WebP images of an open sketchbook generated with
        Higgsfield.  The leaf that turns is a real curved surface: a chain of
        nested strips whose tangent sweeps through an arc, so the page bends
        the way paper bends instead of pivoting like a flat door.
@@ -1333,15 +1333,15 @@
     const Q = new URLSearchParams(location.search);
     const DIR = 'sketchbook/';
     const PAGES = [
-      { file: 'marina-bay-sands.png', title: 'Marina Bay Sands', place: 'Bayfront' },
-      { file: 'gardens-by-the-bay.png', title: 'Gardens by the Bay', place: 'Supertree Grove' },
-      { file: 'merlion.png', title: 'The Merlion', place: 'Merlion Park' },
-      { file: 'buddha-tooth.png', title: 'Buddha Tooth Relic Temple', place: 'Chinatown' },
-      { file: 'joo-chiat.png', title: 'Joo Chiat Shophouses', place: 'Katong' },
-      { file: 'lau-pa-sat.png', title: 'Lau Pa Sat', place: 'Raffles Quay' },
-      { file: 'marina-bay-skyline.png', title: 'Marina Bay Skyline', place: 'The Bay' },
-      { file: 'singapore-river.png', title: 'Singapore River', place: 'Boat Quay' },
-      { file: 'botanic-gardens.png', title: 'Botanic Gardens', place: 'Tanglin' }
+      { file: 'marina-bay-sands.webp', title: 'Marina Bay Sands', place: 'Bayfront' },
+      { file: 'gardens-by-the-bay.webp', title: 'Gardens by the Bay', place: 'Supertree Grove' },
+      { file: 'merlion.webp', title: 'The Merlion', place: 'Merlion Park' },
+      { file: 'buddha-tooth.webp', title: 'Buddha Tooth Relic Temple', place: 'Chinatown' },
+      { file: 'joo-chiat.webp', title: 'Joo Chiat Shophouses', place: 'Katong' },
+      { file: 'lau-pa-sat.webp', title: 'Lau Pa Sat', place: 'Raffles Quay' },
+      { file: 'marina-bay-skyline.webp', title: 'Marina Bay Skyline', place: 'The Bay' },
+      { file: 'singapore-river.webp', title: 'Singapore River', place: 'Boat Quay' },
+      { file: 'botanic-gardens.webp', title: 'Botanic Gardens', place: 'Tanglin' }
     ];
     PAGES.forEach(p => p.url = DIR + p.file);
     const M = PAGES.length, LAND = 6;

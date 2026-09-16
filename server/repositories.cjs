@@ -34,6 +34,7 @@ function toResident(row) {
     traits: parseJsonField(row.traits, []),
     memory: row.memory,
     photos: parseJsonField(row.photos, []),
+    spreadImage: row.spread_image || "",
     visibility: row.visibility,
     lightCount: Number(row.light_count || 0),
     createdAt: row.created_at,
@@ -74,6 +75,7 @@ function toSubmission(row) {
     traits: parseJsonField(row.traits, []),
     memory: row.memory,
     photos: parseJsonField(row.photos, []),
+    spreadImage: row.spread_image || "",
     publicConsent: Boolean(row.public_consent),
     reviewerNote: row.reviewer_note,
     createdAt: row.created_at,
@@ -353,9 +355,9 @@ async function createSubmission(payload) {
   const publicId = createPublicId();
   await getPool().execute(
     `INSERT INTO submissions
-      (public_id, status, player_name, name, nickname, breed, region, arrived_at, food, color, traits, memory, photos, public_consent, douyin, xiaohongshu, bilibili)
+      (public_id, status, player_name, name, nickname, breed, region, arrived_at, food, color, traits, memory, photos, spread_image, public_consent, douyin, xiaohongshu, bilibili)
      VALUES
-      (:publicId, 'pending', :playerName, :name, :nickname, :breed, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), :publicConsent, :douyin, :xiaohongshu, :bilibili)`,
+      (:publicId, 'pending', :playerName, :name, :nickname, :breed, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), :spreadImage, :publicConsent, :douyin, :xiaohongshu, :bilibili)`,
     {
       publicId,
       playerName: payload.playerName,
@@ -369,6 +371,7 @@ async function createSubmission(payload) {
       traits: JSON.stringify(payload.traits),
       memory: payload.memory,
       photos: JSON.stringify(payload.photos || []),
+      spreadImage: payload.spreadImage || "",
       publicConsent: payload.publicConsent ? 1 : 0,
       douyin: payload.douyin || "",
       xiaohongshu: payload.xiaohongshu || "",
@@ -447,9 +450,9 @@ async function reviewSubmission(publicId, action, reviewerNote = "") {
     const residentPublicId = createPublicId();
     const [residentResult] = await connection.execute(
       `INSERT INTO residents
-        (public_id, name, nickname, breed, player_name, region, arrived_at, food, color, traits, memory, photos, visibility, source, published_at, douyin, xiaohongshu, bilibili)
+        (public_id, name, nickname, breed, player_name, region, arrived_at, food, color, traits, memory, photos, spread_image, visibility, source, published_at, douyin, xiaohongshu, bilibili)
        VALUES
-        (:residentPublicId, :name, :nickname, :breed, :playerName, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), 'public', 'submission', NOW(), :douyin, :xiaohongshu, :bilibili)`,
+        (:residentPublicId, :name, :nickname, :breed, :playerName, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), :spreadImage, 'public', 'submission', NOW(), :douyin, :xiaohongshu, :bilibili)`,
       {
         residentPublicId,
         name: submission.name,
@@ -463,6 +466,7 @@ async function reviewSubmission(publicId, action, reviewerNote = "") {
         traits: JSON.stringify(parseJsonField(submission.traits, [])),
         memory: submission.memory,
         photos: JSON.stringify(parseJsonField(submission.photos, [])),
+        spreadImage: submission.spread_image || "",
         douyin: submission.douyin || "",
         xiaohongshu: submission.xiaohongshu || "",
         bilibili: submission.bilibili || "",

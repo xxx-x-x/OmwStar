@@ -3,12 +3,12 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>鼠鼠星球 | 投稿</title>
   <link rel="stylesheet" href="./src/styles.css" />
 </head>
 
-<body>
+<body class="submit-page">
   <header class="topbar">
     <a class="brand" href="./index.html">鼠鼠星球</a>
     <nav class="topnav" aria-label="主导航">
@@ -24,11 +24,9 @@
 
   <main class="shell page-shell">
     <section class="page-hero" aria-labelledby="submit-title">
-      <p class="eyebrow">Submission</p>
-      <h1 id="submit-title">把鼠鼠送到星球</h1>
-      <p class="lede">
-        填写下方表单，把鼠鼠的纪念档案提交到鼠鼠星球。提交后进入待审核状态，管理员审核通过后将出现在纪念星河。
-      </p>
+      <p class="eyebrow"><span class="edition-dot" aria-hidden="true"></span> 一份要被温柔收下的纪念</p>
+      <h1 id="submit-title">把鼠鼠，<br>送到星球</h1>
+      <p class="lede">慢慢写就好。提交后会先安静地等审核，通过后才会出现在纪念星河。</p>
     </section>
 
     <section class="submit-layout" aria-label="玩家投稿">
@@ -37,7 +35,7 @@
         <!-- 鼠家长信息（选填） -->
         <div class="section-heading">
           <p class="eyebrow">Owner Info</p>
-          <h2>鼠家长的信息 <small style="font-weight:400;font-size:0.85rem;color:var(--muted)">（选填）</small></h2>
+          <h2>鼠家长的信息 <small>（选填）</small></h2>
         </div>
         <div class="form-grid">
           <label>
@@ -96,8 +94,8 @@
         <!-- 照片上传 -->
         <div class="section-heading">
           <p class="eyebrow">Photos</p>
-          <h2>鼠鼠的照片（最多三张）</h2>
-          <p class="lede">每张照片不超过 5MB，支持 JPG/PNG/WebP 格式。</p>
+          <h2>鼠鼠的照片</h2>
+          <p class="lede">最多三张，每张不超过 5MB。JPG、PNG、WebP 都可以。</p>
         </div>
         <div class="photo-uploads">
           <label class="photo-field" id="photo-field-0">
@@ -135,6 +133,28 @@
               <img class="photo-preview" src="" alt="" hidden />
               <button type="button" class="photo-remove" hidden aria-label="移除照片">✕</button>
             </div>
+          </label>
+        </div>
+
+        <div class="section-heading">
+          <p class="eyebrow">Spread Image</p>
+          <h2>绘本跨页图 <small>（选填）</small></h2>
+          <p class="lede">必须正好是 1760×1240 像素。这张图会单独保存，不和上面的纪念照片混在一起。</p>
+        </div>
+        <div class="spread-upload">
+          <label class="photo-field spread-field" id="spread-field">
+            <span class="photo-label">📖 1760×1240 跨页图</span>
+            <div class="photo-drop spread-drop">
+              <input type="file" name="spreadImage" accept="image/jpeg,image/png,image/webp,image/gif"
+                data-required-size="1760x1240" hidden />
+              <div class="photo-placeholder">
+                <span class="photo-icon">📷</span>
+                <span>可选，尺寸必须是 1760×1240</span>
+              </div>
+              <img class="photo-preview" src="" alt="" hidden />
+              <button type="button" class="photo-remove" hidden aria-label="移除跨页图">✕</button>
+            </div>
+            <p class="spread-status" id="spread-status" hidden></p>
           </label>
         </div>
 

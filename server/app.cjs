@@ -48,7 +48,7 @@ const upload = multer({
       cb(null, `${unique}${ext}`);
     },
   }),
-  limits: { fileSize: uploadMaxFileSizeBytes, files: 3 },
+  limits: { fileSize: uploadMaxFileSizeBytes, files: 4 },
   fileFilter(_req, file, cb) {
     if (!imageExtensionsByMime[file.mimetype]) {
       cb(new Error("只允许上传 JPG、PNG、WebP 或 GIF 图片。"));
@@ -150,6 +150,7 @@ function normalizeSubmissionPayload(body) {
     traits: normalizeTraits(body.traits),
     memory: cleanText(body.memory, 2000),
     photos: Array.isArray(body.photos) ? body.photos.slice(0, 6) : [],
+    spreadImage: cleanText(body.spreadImage, 255, ""),
     publicConsent: Boolean(body.publicConsent),
     douyin: cleanText(body.douyin, 40, ""),
     xiaohongshu: cleanText(body.xiaohongshu, 40, ""),
@@ -218,15 +219,82 @@ async function removeUploadedFiles(files) {
   await Promise.all((files || []).map((file) => fs.promises.unlink(file.path).catch(() => { })));
 }
 
-async function validateUploadedImages(files) {
+function readPngSize(buffer) {
+  if (buffer.length < 24) return null;
+  return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+}
+
+function readJpegSize(buffer) {
+  let offset = 2;
+  while (offset + 9 < buffer.length) {
+    if (buffer[offset] !== 0xff) return null;
+    const marker = buffer[offset + 1];
+    const length = buffer.readUInt16BE(offset + 2);
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      return { height: buffer.readUInt16BE(offset + 5), width: buffer.readUInt16BE(offset + 7) };
+    }
+    offset += 2 + length;
+  }
+  return null;
+}
+
+function readWebpSize(buffer) {
+  if (buffer.length < 30) return null;
+  const chunk = buffer.subarray(12, 16).toString("ascii");
+  if (chunk === "VP8X" && buffer.length >= 30) {
+    return {
+      width: 1 + buffer.readUIntLE(24, 3),
+      height: 1 + buffer.readUIntLE(27, 3),
+    };
+  }
+  if (chunk === "VP8 " && buffer.length >= 30) {
+    return {
+      width: buffer.readUInt16LE(26) & 0x3fff,
+      height: buffer.readUInt16LE(28) & 0x3fff,
+    };
+  }
+  if (chunk === "VP8L" && buffer.length >= 25) {
+    const bits = buffer.readUInt32LE(21);
+    return {
+      width: (bits & 0x3fff) + 1,
+      height: ((bits >> 14) & 0x3fff) + 1,
+    };
+  }
+  return null;
+}
+
+function readGifSize(buffer) {
+  if (buffer.length < 10) return null;
+  return { width: buffer.readUInt16LE(6), height: buffer.readUInt16LE(8) };
+}
+
+function readImageSize(buffer, mimetype) {
+  if (mimetype === "image/png") return readPngSize(buffer);
+  if (mimetype === "image/jpeg") return readJpegSize(buffer);
+  if (mimetype === "image/webp") return readWebpSize(buffer);
+  if (mimetype === "image/gif") return readGifSize(buffer);
+  return null;
+}
+
+async function validateUploadedImages(files, { requiredSize = null } = {}) {
   for (const file of files || []) {
     const handle = await fs.promises.open(file.path, "r");
     try {
-      const buffer = Buffer.alloc(12);
-      await handle.read(buffer, 0, buffer.length, 0);
-      if (!hasValidImageSignature(buffer, file.mimetype)) {
+      const header = Buffer.alloc(12);
+      await handle.read(header, 0, header.length, 0);
+      if (!hasValidImageSignature(header, file.mimetype)) {
         await removeUploadedFiles(files);
         return "图片文件内容与格式不匹配，请重新上传。";
+      }
+      if (requiredSize) {
+        const stat = await handle.stat();
+        const buffer = Buffer.alloc(stat.size);
+        await handle.read(buffer, 0, buffer.length, 0);
+        const size = readImageSize(buffer, file.mimetype);
+        if (!size || size.width !== requiredSize.width || size.height !== requiredSize.height) {
+          await removeUploadedFiles(files);
+          return `这张图必须是 ${requiredSize.width}×${requiredSize.height} 像素。`;
+        }
       }
     } finally {
       await handle.close();
@@ -344,23 +412,39 @@ app.post("/api/residents/:id/time-capsules", asyncRoute(async (request, response
   response.status(201).json({ capsule, message: "时间胶囊已寄存在鼠鼠星球。" });
 }));
 
-app.post("/api/submissions", upload.array("photos", 3), asyncRoute(async (request, response) => {
-  const uploadError = await validateUploadedImages(request.files);
-  if (uploadError) {
-    response.status(400).json({ error: uploadError });
+app.post("/api/submissions", upload.fields([
+  { name: "photos", maxCount: 3 },
+  { name: "spreadImage", maxCount: 1 },
+]), asyncRoute(async (request, response) => {
+  const photoFiles = request.files?.photos || [];
+  const spreadFiles = request.files?.spreadImage || [];
+  const allFiles = [...photoFiles, ...spreadFiles];
+
+  const photoError = await validateUploadedImages(photoFiles);
+  if (photoError) {
+    await removeUploadedFiles(spreadFiles);
+    response.status(400).json({ error: photoError });
     return;
   }
 
-  // 处理上传的文件路径
-  const photoPaths = (request.files || []).map((f) => `/uploads/${f.filename}`);
-  // 合并文本字段和文件路径
+  const spreadError = await validateUploadedImages(spreadFiles, {
+    requiredSize: { width: 1760, height: 1240 },
+  });
+  if (spreadError) {
+    await removeUploadedFiles(allFiles);
+    response.status(400).json({ error: spreadError });
+    return;
+  }
+
+  const photoPaths = photoFiles.map((f) => `/uploads/${f.filename}`);
+  const spreadImage = spreadFiles[0] ? `/uploads/${spreadFiles[0].filename}` : "";
   const body = {
     ...request.body,
     photos: photoPaths.length ? photoPaths : (() => {
       try { return JSON.parse(request.body.photos || "[]"); } catch { return []; }
     })(),
+    spreadImage,
   };
-  // 处理 checkbox（multipart 中未勾选时字段不存在）
   if (request.body.publicConsent === undefined) {
     body.publicConsent = false;
   }
@@ -368,6 +452,7 @@ app.post("/api/submissions", upload.array("photos", 3), asyncRoute(async (reques
   const { error, payload } = normalizeSubmissionPayload(body);
 
   if (error) {
+    await removeUploadedFiles(allFiles);
     response.status(400).json({ error });
     return;
   }

@@ -14,6 +14,8 @@ const migrations = [
     { table: "residents", col: "douyin", after: "published_at", type: "VARCHAR(40) NOT NULL DEFAULT ''" },
     { table: "residents", col: "xiaohongshu", after: "douyin", type: "VARCHAR(40) NOT NULL DEFAULT ''" },
     { table: "residents", col: "bilibili", after: "xiaohongshu", type: "VARCHAR(40) NOT NULL DEFAULT ''" },
+    { table: "submissions", col: "spread_image", after: "photos", type: "VARCHAR(255) NOT NULL DEFAULT ''" },
+    { table: "residents", col: "spread_image", after: "photos", type: "VARCHAR(255) NOT NULL DEFAULT ''" },
 ];
 
 const tableMigrations = [

@@ -22,7 +22,10 @@ export class SoftRenderer {
     canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.ready=false;});canvas.addEventListener('webglcontextrestored',()=>location.reload());
   }
   async load(src){
-    this.img=new Image();this.img.src=src;await this.img.decode();
+    const source=new Image();await new Promise((resolve,reject)=>{source.onload=resolve;source.onerror=reject;source.src=src;});
+    const side=Math.max(source.naturalWidth,source.naturalHeight),buffer=document.createElement('canvas');buffer.width=side;buffer.height=side;
+    const context=buffer.getContext('2d'),scale=Math.min(side/source.naturalWidth,side/source.naturalHeight),width=source.naturalWidth*scale,height=source.naturalHeight*scale;
+    context.drawImage(source,(side-width)/2,(side-height)/2,width,height);this.img=buffer;
     if(this.gl){const gl=this.gl;this.texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,this.texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,this.img);}
     this.ready=true;
   }

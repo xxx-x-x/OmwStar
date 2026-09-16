@@ -142,7 +142,7 @@ function animate(t) {
   requestAnimationFrame(animate);
 }
 requestAnimationFrame(animate);
-renderer.load('assets/momo-opal.png').then(() => { ready = true; $('#loading').hidden = true; layout(); }).catch(() => { $('#loading').textContent = '鼠鼠迷路了，刷新就能再见面'; });
+renderer.load('assets/水瓶耗耗.png').then(() => { ready = true; $('#loading').hidden = true; layout(); }).catch(() => { $('#loading').textContent = '鼠鼠迷路了，刷新就能再见面'; });
 
 // Compact controls keep the play surface free of sliders and tracks.
 function syncSettings() {

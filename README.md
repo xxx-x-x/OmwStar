@@ -10,7 +10,7 @@
 [![Redis](https://img.shields.io/badge/Redis-7+-DC382D.svg)](https://redis.io/)
 [![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey.svg)](#license)
 
-**A quiet archive for hamsters who have already reached the mouse star.**
+**A quiet archive for hamsters who were loved carefully — on the mouse star, or still on Earth.**
 
 English | [中文](README_CN.md) | [日本語](README_JA.md)
 
@@ -22,7 +22,7 @@ English | [中文](README_CN.md) | [日本語](README_JA.md)
 
 ## Overview
 
-鼠鼠星球 (OmwStar) is a lightweight memorial archive for hamsters. The long-term goal is to collect the hamsters players loved, so every small resident who has already arrived at the mouse star can be remembered gently.
+鼠鼠星球 (OmwStar) is a lightweight archive for hamsters. The long-term goal is to collect the hamsters players loved: residents who have already arrived at the mouse star, and earth letters from hamsters still living with their people.
 
 The current shape is **static memorial pages + Express backend + MySQL storage + Redis cache**. There is no account system. The core flow is:
 
@@ -34,12 +34,12 @@ There are no rankings and no pressure to perform. The site only wants a quiet pl
 
 ## Features
 
-- **Memorial archive** - Record a hamster's name, personality, favorite food, arrival date, and a message
+- **Quiet archive** - Record a hamster's name, personality, favorite food, a date, and a story. Star residents are remembered; earth letters stay in the present.
 - **Submission review** - Player submissions start as pending and become public only after admin approval
 - **Memorial galaxy** - Shows only approved public records, keeping a quiet memorial tone
 - **Individual memorial pages** - Each hamster has a shareable page, with copyable text and memorial-card generation
 - **Planet map** - A rotatable 3D map for browsing residents by region
-- **Timeline** - Memorials ordered by arrival date
+- **Timeline** - Stories ordered by the recorded date, with a light star / earth mark
 - **Light rituals** - Homecoming star lamps, anonymous notes, and time-capsule emails
 - **摸摸鼠鼠** - A squeeze, stretch, and tickle interaction page
 - **鼠鼠绘本** - A page-turning picture book

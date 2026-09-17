@@ -39,7 +39,9 @@ function createMail(capsule) {
     const text = [
         "一年也好，很多天也好，时间胶囊终于到了。",
         "",
-        `这封信和「${capsule.residentName}」有关。它在 ${formatDate(capsule.residentArrivedAt)} 抵达鼠星。`,
+        capsule.residentPresence === "earth"
+          ? `这封信和「${capsule.residentName}」有关。它在 ${formatDate(capsule.residentArrivedAt)} 来到你身边，此刻仍在地球。`
+          : `这封信和「${capsule.residentName}」有关。它在 ${formatDate(capsule.residentArrivedAt)} 抵达鼠星。`,
         "",
         "你当时写下：",
         capsule.message,
@@ -47,7 +49,11 @@ function createMail(capsule) {
         "那段最初的回忆是：",
         capsule.residentMemory,
         "",
-        residentUrl ? `回到它的纪念页：${residentUrl}` : "愿它在鼠星安睡，也愿你今天被温柔接住。",
+        residentUrl
+          ? `回到它的页面：${residentUrl}`
+          : capsule.residentPresence === "earth"
+            ? "愿它慢慢长大，也愿你今天被温柔接住。"
+            : "愿它在鼠星安睡，也愿你今天被温柔接住。",
     ].join("\n");
 
     return {

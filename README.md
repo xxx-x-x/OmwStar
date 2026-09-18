@@ -27,7 +27,7 @@ English | [中文](README_CN.md) | [日本語](README_JA.md)
 The current shape is **static memorial pages + Express backend + MySQL storage + Redis cache**. There is no account system. The core flow is:
 
 ```text
-A player submits a memorial → an admin reviews it → approved records enter the public memorial galaxy
+A player submits a memorial → an admin reviews it → approved star residents enter the memorial galaxy, earth letters enter their own page
 ```
 
 There are no rankings and no pressure to perform. The site only wants a quiet place for hamsters that were loved carefully.
@@ -36,10 +36,11 @@ There are no rankings and no pressure to perform. The site only wants a quiet pl
 
 - **Quiet archive** - Record a hamster's name, personality, favorite food, a date, and a story. Star residents are remembered; earth letters stay in the present.
 - **Submission review** - Player submissions start as pending and become public only after admin approval
-- **Memorial galaxy** - Shows only approved public records, keeping a quiet memorial tone
+- **Memorial galaxy** - Shows only approved star residents, keeping a quiet memorial tone
+- **Earth letters** - A separate wall for hamsters still living on Earth
 - **Individual memorial pages** - Each hamster has a shareable page, with copyable text and memorial-card generation
-- **Planet map** - A rotatable 3D map for browsing residents by region
-- **Timeline** - Stories ordered by the recorded date, with a light star / earth mark
+- **Planet map** - A rotatable 3D mouse star and Earth; tap a star region or Earth to browse residents
+- **Timeline** - Star residents ordered by arrival date
 - **Light rituals** - Homecoming star lamps, anonymous notes, and time-capsule emails
 - **摸摸鼠鼠** - A squeeze, stretch, and tickle interaction page
 - **鼠鼠绘本** - A page-turning picture book
@@ -49,30 +50,31 @@ There are no rankings and no pressure to perform. The site only wants a quiet pl
 
 ## Pages
 
-| Page | Path | Description |
-|------|------|------|
-| Home | [`index.html`](./index.html) | Planet entrance, overview stats, and guardian showcase |
-| Planet map | [`map.html`](./map.html) | Rotatable 3D map |
-| Timeline | [`timeline.html`](./timeline.html) | Ordered by arrival date |
-| Memorial galaxy | [`planet-wall.html`](./planet-wall.html) | Approved public archive wall |
-| 摸摸鼠鼠 | [`momo.html`](./momo.html) | Light interaction |
-| 鼠鼠绘本 | [`book.html`](./book.html) | Page-turning picture book |
-| Submit | [`submit.html`](./submit.html) | Player memorial submissions |
-| Memorial page | [`resident.html`](./resident.html) | One hamster's detail page, e.g. `resident.html?id=1` |
-| About | [`about.html`](./about.html) | Project introduction |
-| Privacy | [`privacy.html`](./privacy.html) | Privacy policy |
-| Terms | [`terms.html`](./terms.html) | Terms of use |
+| Page            | Path                                         | Description                                            |
+| --------------- | -------------------------------------------- | ------------------------------------------------------ |
+| Home            | [`index.html`](./index.html)                 | Planet entrance, overview stats, and guardian showcase |
+| Planet map      | [`map.html`](./map.html)                     | Rotatable 3D mouse star and Earth                      |
+| Timeline        | [`timeline.html`](./timeline.html)           | Ordered by arrival date                                |
+| Memorial galaxy | [`planet-wall.html`](./planet-wall.html)     | Approved star-resident wall                            |
+| Earth letters   | [`earth-letters.html`](./earth-letters.html) | Approved letters from hamsters still on Earth          |
+| 摸摸鼠鼠        | [`momo.html`](./momo.html)                   | Light interaction                                      |
+| 鼠鼠绘本        | [`book.html`](./book.html)                   | Page-turning picture book                              |
+| Submit          | [`submit.html`](./submit.html)               | Player memorial submissions                            |
+| Memorial page   | [`resident.html`](./resident.html)           | One hamster's detail page, e.g. `resident.html?id=1`   |
+| About           | [`about.html`](./about.html)                 | Project introduction                                   |
+| Privacy         | [`privacy.html`](./privacy.html)             | Privacy policy                                         |
+| Terms           | [`terms.html`](./terms.html)                 | Terms of use                                           |
 
 ## Tech Stack
 
-| Component | Technology |
-|------|------|
-| Runtime | Node.js 18+ |
-| Backend | Express 4, Helmet, Multer, Nodemailer |
-| Frontend | Vanilla HTML / CSS / JavaScript |
-| Database | MySQL 8+ (utf8mb4) |
-| Cache | Redis 7+ |
-| Deployment | systemd + nginx reverse proxy |
+| Component  | Technology                            |
+| ---------- | ------------------------------------- |
+| Runtime    | Node.js 18+                           |
+| Backend    | Express 4, Helmet, Multer, Nodemailer |
+| Frontend   | Vanilla HTML / CSS / JavaScript       |
+| Database   | MySQL 8+ (utf8mb4)                    |
+| Cache      | Redis 7+                              |
+| Deployment | systemd + nginx reverse proxy         |
 
 ## Quick Start
 
@@ -148,17 +150,17 @@ ADMIN_PASSWORD=replace-with-a-strong-admin-password
 ADMIN_TOKEN=replace-with-a-long-random-admin-token
 ```
 
-| Variable | Description |
-|------|------|
-| `PORT` / `HOST` | Listen address. Local default is `127.0.0.1:4173`; production can use `127.0.0.1:3004` via systemd |
-| `DB_*` | MySQL connection settings |
-| `REDIS_URL` | Redis connection string |
-| `CACHE_TTL_SECONDS` | Public resident list cache TTL |
-| `UPLOAD_MAX_FILE_SIZE_MB` | Max upload size for submission images |
-| `PUBLIC_SITE_URL` | Public site URL for share links and time-capsule emails |
-| `VISITOR_KEY_SALT` | Salt for visitor lamp identifiers |
-| `SMTP_*` / `CAPSULE_SEND_LIMIT` | Time-capsule email settings |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_TOKEN` | Admin review credentials |
+| Variable                                            | Description                                                                                        |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `PORT` / `HOST`                                     | Listen address. Local default is `127.0.0.1:4173`; production can use `127.0.0.1:3004` via systemd |
+| `DB_*`                                              | MySQL connection settings                                                                          |
+| `REDIS_URL`                                         | Redis connection string                                                                            |
+| `CACHE_TTL_SECONDS`                                 | Public resident list cache TTL                                                                     |
+| `UPLOAD_MAX_FILE_SIZE_MB`                           | Max upload size for submission images                                                              |
+| `PUBLIC_SITE_URL`                                   | Public site URL for share links and time-capsule emails                                            |
+| `VISITOR_KEY_SALT`                                  | Salt for visitor lamp identifiers                                                                  |
+| `SMTP_*` / `CAPSULE_SEND_LIMIT`                     | Time-capsule email settings                                                                        |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_TOKEN` | Admin review credentials                                                                           |
 
 Generate a long random salt or token:
 
@@ -289,6 +291,7 @@ OmwStar/
 ├── map.html                   # Planet map
 ├── timeline.html              # Timeline
 ├── planet-wall.html           # Memorial galaxy
+├── earth-letters.html         # Earth letters
 ├── momo.html                  # 摸摸鼠鼠
 ├── book.html                  # 鼠鼠绘本
 ├── submit.html                # Submissions
@@ -343,15 +346,15 @@ See [`ROADMAP.md`](./ROADMAP.md) for the fuller product cadence.
 
 ## Scripts
 
-| Command | Description |
-|------|------|
-| `npm run dev` | Start the full site (MySQL / Redis) |
-| `npm start` | Start in production mode |
-| `npm run dev:static` | Static preview only |
-| `npm run db:init` | Initialize the database |
-| `npm run db:migrate` | Run schema migrations |
-| `npm run send:time-capsules` | Send due time-capsule emails |
-| `npm run check` | Basic syntax check |
+| Command                      | Description                         |
+| ---------------------------- | ----------------------------------- |
+| `npm run dev`                | Start the full site (MySQL / Redis) |
+| `npm start`                  | Start in production mode            |
+| `npm run dev:static`         | Static preview only                 |
+| `npm run db:init`            | Initialize the database             |
+| `npm run db:migrate`         | Run schema migrations               |
+| `npm run send:time-capsules` | Send due time-capsule emails        |
+| `npm run check`              | Basic syntax check                  |
 
 ## License
 

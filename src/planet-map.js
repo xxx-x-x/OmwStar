@@ -1,6 +1,5 @@
 import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.min.js";
 
-const stage = document.querySelector("#three-planet-stage");
 const PLANET_RADIUS = 4;
 const TEXTURE_WIDTH = 2048;
 const TEXTURE_HEIGHT = 1024;
@@ -12,8 +11,23 @@ const LAND_REGIONS = [
   { name: "蜜糖丘", color: "#d0a8f8", x: 1220, y: 740, radiusX: 245, radiusY: 150, rotation: -0.24 },
   { name: "软绒原", color: "#f5d478", x: 1810, y: 780, radiusX: 175, radiusY: 104, rotation: 0.28 },
 ];
+const EARTH_LANDS = [
+  { x: 360, y: 300, radiusX: 210, radiusY: 130, rotation: -0.18, color: "#7fbf7a" },
+  { x: 620, y: 430, radiusX: 150, radiusY: 92, rotation: 0.22, color: "#8ecf88" },
+  { x: 1080, y: 280, radiusX: 280, radiusY: 150, rotation: 0.08, color: "#6fb36d" },
+  { x: 1480, y: 360, radiusX: 190, radiusY: 110, rotation: -0.12, color: "#86c97f" },
+  { x: 1760, y: 520, radiusX: 150, radiusY: 88, rotation: 0.3, color: "#97d48c" },
+  { x: 430, y: 720, radiusX: 240, radiusY: 120, rotation: 0.16, color: "#74b978" },
+  { x: 980, y: 760, radiusX: 170, radiusY: 90, rotation: -0.2, color: "#8dca82" },
+  { x: 1540, y: 780, radiusX: 210, radiusY: 108, rotation: 0.1, color: "#6eae6c" },
+];
 
-if (stage) {
+mountStarPlanet(document.querySelector("#three-planet-stage"));
+mountEarthPlanet(document.querySelector("#three-earth-stage"));
+
+function mountStarPlanet(stage) {
+  if (!stage) return;
+
   const fallback = stage.querySelector(".three-planet-fallback");
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
@@ -44,7 +58,6 @@ if (stage) {
   renderer.domElement.className = "three-planet-canvas";
   renderer.domElement.setAttribute("aria-label", "可以拖动旋转的三维鼠鼠星球");
 
-  // ---- 区域名称浮层 tooltip（必须在 replaceChildren 之后创建）----
   const tooltip = document.createElement("div");
   tooltip.className = "planet-tooltip";
   tooltip.setAttribute("aria-hidden", "true");
@@ -74,12 +87,10 @@ if (stage) {
   starGroup.add(starField);
   scene.add(starGroup);
 
-  const fairyTexture = createShushuPlanetTexture();
-
   const planet = new THREE.Mesh(
     new THREE.SphereGeometry(PLANET_RADIUS, 96, 96),
     new THREE.MeshLambertMaterial({
-      map: fairyTexture,
+      map: createShushuPlanetTexture(),
     }),
   );
   planetGroup.add(planet);
@@ -134,23 +145,11 @@ if (stage) {
   );
   planetGroup.add(rim);
 
-  const keyLight = new THREE.DirectionalLight("#fff8ed", 0.72);
-  keyLight.position.set(8, 7, 8);
-  scene.add(keyLight);
-
-  const pinkLight = new THREE.PointLight("#ff9ec1", 0.24, 40);
-  pinkLight.position.set(-7, 4, 5);
-  scene.add(pinkLight);
-
-  const blueLight = new THREE.PointLight("#85d8ff", 0.20, 40);
-  blueLight.position.set(6, -4, 6);
-  scene.add(blueLight);
-
-  scene.add(new THREE.AmbientLight("#8899aa", 0.26));
+  addPlanetLights(scene);
 
   function resize() {
     const rect = stage.getBoundingClientRect();
-    const size = Math.max(320, Math.min(rect.width, rect.height || rect.width));
+    const size = Math.max(280, Math.min(rect.width, rect.height || rect.width));
     renderer.setSize(size, size, false);
     camera.aspect = 1;
     camera.updateProjectionMatrix();
@@ -177,7 +176,6 @@ if (stage) {
       prevHoveredLand = hoveredLand;
       updateSelectableLands(selectableLands, hoveredLand);
     } else {
-      // Keep animating land transitions if any lift is still converging
       const anyAnimating = selectableLands.some((land) => {
         const lift = land.group.userData.lift ?? 0;
         const target = land === hoveredLand ? 1 : 0;
@@ -229,12 +227,11 @@ if (stage) {
     renderer.domElement.classList.remove("dragging");
     renderer.domElement.style.cursor = hoveredLand ? "pointer" : "grab";
 
-    // 点击（非拖拽）且悬停在陆地区块上 → 分发区域点击事件
     if (!wasDrag && hoveredLand) {
       stage.dispatchEvent(
         new CustomEvent("planet:region-click", {
           bubbles: true,
-          detail: { region: hoveredLand.region },
+          detail: { presence: "star", region: hoveredLand.region },
         }),
       );
     }
@@ -258,7 +255,7 @@ if (stage) {
         stage.dispatchEvent(
           new CustomEvent("planet:region-hover", {
             bubbles: true,
-            detail: { region: hoveredLand.region },
+            detail: { presence: "star", region: hoveredLand.region },
           }),
         );
       } else {
@@ -266,12 +263,11 @@ if (stage) {
         stage.dispatchEvent(
           new CustomEvent("planet:region-hover", {
             bubbles: true,
-            detail: { region: null },
+            detail: { presence: "star", region: null },
           }),
         );
       }
     } else if (hoveredLand && !pointerState.active) {
-      // 在同一区块内移动时更新 tooltip 位置（跟随 3D 色块）
       showTooltip(hoveredLand, event.clientX, event.clientY);
     }
     renderer.domElement.style.cursor = pointerState.active ? "grabbing" : hoveredLand ? "pointer" : "grab";
@@ -283,7 +279,6 @@ if (stage) {
     renderer.domElement.style.cursor = "grab";
   }
 
-  // Visibility API: pause when tab is hidden
   function onVisibilityChange() {
     if (document.hidden) {
       animPaused = true;
@@ -294,7 +289,6 @@ if (stage) {
   }
   document.addEventListener("visibilitychange", onVisibilityChange);
 
-  // IntersectionObserver: pause when canvas is scrolled out of viewport
   if (window.IntersectionObserver) {
     const visibilityObserver = new IntersectionObserver(
       (entries) => {
@@ -326,6 +320,288 @@ if (stage) {
   });
 }
 
+function mountEarthPlanet(stage) {
+  if (!stage) return;
+
+  const fallback = stage.querySelector(".three-planet-fallback");
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  const planetGroup = new THREE.Group();
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  const pointerState = {
+    active: false,
+    x: 0,
+    y: 0,
+    rotationX: 0,
+    rotationY: 0,
+  };
+
+  let frameId = null;
+  let hoveredEarth = false;
+  let animPaused = false;
+  let needsRender = true;
+  let pointerDownX = 0;
+  let pointerDownY = 0;
+
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  stage.replaceChildren(renderer.domElement);
+  renderer.domElement.className = "three-planet-canvas";
+  renderer.domElement.setAttribute("aria-label", "可以拖动旋转的三维地球");
+
+  const tooltip = document.createElement("div");
+  tooltip.className = "planet-tooltip";
+  tooltip.setAttribute("aria-hidden", "true");
+  tooltip.style.display = "none";
+  stage.appendChild(tooltip);
+
+  function showTooltip(clientX, clientY) {
+    const stageRect = stage.getBoundingClientRect();
+    tooltip.textContent = "地球";
+    tooltip.style.display = "block";
+    tooltip.style.left = `${clientX - stageRect.left}px`;
+    tooltip.style.top = `${clientY - stageRect.top - 18}px`;
+    tooltip.style.transform = "translate(-50%, -100%)";
+  }
+
+  function hideTooltip() {
+    tooltip.style.display = "none";
+    tooltip.style.transform = "none";
+  }
+
+  camera.position.set(0, 0.28, 14.6);
+  scene.add(camera);
+  scene.add(planetGroup);
+
+  const starField = createStarField();
+  const starGroup = new THREE.Group();
+  starGroup.add(starField);
+  scene.add(starGroup);
+
+  const earth = new THREE.Mesh(
+    new THREE.SphereGeometry(PLANET_RADIUS, 96, 96),
+    new THREE.MeshLambertMaterial({
+      map: createEarthTexture(),
+    }),
+  );
+  planetGroup.add(earth);
+
+  const clouds = new THREE.Mesh(
+    new THREE.SphereGeometry(PLANET_RADIUS + 0.08, 96, 96),
+    new THREE.MeshLambertMaterial({
+      map: createCloudTexture(),
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false,
+    }),
+  );
+  planetGroup.add(clouds);
+
+  const atmosphere = new THREE.Mesh(
+    new THREE.SphereGeometry(PLANET_RADIUS + 0.24, 96, 96),
+    new THREE.MeshBasicMaterial({
+      color: "#7ec8ff",
+      transparent: true,
+      opacity: 0.08,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+  planetGroup.add(atmosphere);
+
+  const rim = new THREE.Mesh(
+    new THREE.SphereGeometry(PLANET_RADIUS + 0.32, 96, 96),
+    new THREE.MeshBasicMaterial({
+      color: "#cfe8ff",
+      transparent: true,
+      opacity: 0.04,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+  planetGroup.add(rim);
+  if (fallback) fallback.textContent = "";
+
+  addPlanetLights(scene, {
+    key: "#fff6e8",
+    pink: "#9ad7ff",
+    blue: "#7ec8ff",
+  });
+
+  function resize() {
+    const rect = stage.getBoundingClientRect();
+    const size = Math.max(280, Math.min(rect.width, rect.height || rect.width));
+    renderer.setSize(size, size, false);
+    camera.aspect = 1;
+    camera.updateProjectionMatrix();
+    renderFrame();
+  }
+
+  function animate() {
+    frameId = requestAnimationFrame(animate);
+
+    if (animPaused) {
+      if (!needsRender) return;
+      needsRender = false;
+      renderer.render(scene, camera);
+      return;
+    }
+
+    if (!pointerState.active) {
+      planetGroup.rotation.y += 0.0015;
+      clouds.rotation.y += 0.0009;
+      starGroup.rotation.y += 0.00024;
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  function renderFrame() {
+    renderer.render(scene, camera);
+  }
+
+  function onPointerDown(event) {
+    pointerState.active = true;
+    pointerState.x = event.clientX;
+    pointerState.y = event.clientY;
+    pointerState.rotationX = planetGroup.rotation.x;
+    pointerState.rotationY = planetGroup.rotation.y;
+    pointerDownX = event.clientX;
+    pointerDownY = event.clientY;
+    hideTooltip();
+    renderer.domElement.setPointerCapture?.(event.pointerId);
+    renderer.domElement.classList.add("dragging");
+  }
+
+  function onPointerMove(event) {
+    if (pointerState.active) {
+      const deltaX = event.clientX - pointerState.x;
+      const deltaY = event.clientY - pointerState.y;
+      planetGroup.rotation.y = pointerState.rotationY + deltaX * 0.006;
+      planetGroup.rotation.x = Math.max(-0.62, Math.min(0.62, pointerState.rotationX + deltaY * 0.004));
+    } else {
+      updateHoveredEarth(event);
+    }
+  }
+
+  function onPointerUp(event) {
+    const dx = event.clientX - pointerDownX;
+    const dy = event.clientY - pointerDownY;
+    const wasDrag = Math.sqrt(dx * dx + dy * dy) > 5;
+
+    pointerState.active = false;
+    renderer.domElement.releasePointerCapture?.(event.pointerId);
+    renderer.domElement.classList.remove("dragging");
+    renderer.domElement.style.cursor = hoveredEarth ? "pointer" : "grab";
+
+    if (!wasDrag && hoveredEarth) {
+      stage.dispatchEvent(
+        new CustomEvent("planet:region-click", {
+          bubbles: true,
+          detail: { presence: "earth", region: null },
+        }),
+      );
+    }
+  }
+
+  function updateHoveredEarth(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+
+    const hits = raycaster.intersectObject(earth, false);
+    const nextHovered = hits.length > 0;
+    if (nextHovered !== hoveredEarth) {
+      hoveredEarth = nextHovered;
+      if (hoveredEarth) {
+        showTooltip(event.clientX, event.clientY);
+        stage.dispatchEvent(
+          new CustomEvent("planet:region-hover", {
+            bubbles: true,
+            detail: { presence: "earth", region: null },
+          }),
+        );
+      } else {
+        hideTooltip();
+        stage.dispatchEvent(
+          new CustomEvent("planet:region-hover", {
+            bubbles: true,
+            detail: { presence: null, region: null },
+          }),
+        );
+      }
+    } else if (hoveredEarth && !pointerState.active) {
+      showTooltip(event.clientX, event.clientY);
+    }
+    renderer.domElement.style.cursor = pointerState.active ? "grabbing" : hoveredEarth ? "pointer" : "grab";
+  }
+
+  function clearHoveredEarth() {
+    hoveredEarth = false;
+    hideTooltip();
+    renderer.domElement.style.cursor = "grab";
+  }
+
+  function onVisibilityChange() {
+    if (document.hidden) {
+      animPaused = true;
+    } else {
+      animPaused = false;
+      needsRender = true;
+    }
+  }
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  if (window.IntersectionObserver) {
+    const visibilityObserver = new IntersectionObserver(
+      (entries) => {
+        animPaused = !entries[0].isIntersecting;
+        if (!animPaused) needsRender = true;
+      },
+      { threshold: 0 },
+    );
+    visibilityObserver.observe(stage);
+  }
+
+  renderer.domElement.addEventListener("pointerdown", onPointerDown);
+  renderer.domElement.addEventListener("pointermove", onPointerMove);
+  renderer.domElement.addEventListener("pointerup", onPointerUp);
+  renderer.domElement.addEventListener("pointercancel", onPointerUp);
+  renderer.domElement.addEventListener("pointerleave", (event) => {
+    onPointerUp(event);
+    clearHoveredEarth();
+  });
+  window.addEventListener("resize", resize);
+
+  resize();
+  animate();
+
+  window.addEventListener("pagehide", () => {
+    if (frameId) cancelAnimationFrame(frameId);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    renderer.dispose();
+  });
+}
+
+function addPlanetLights(scene, colors = {}) {
+  const keyLight = new THREE.DirectionalLight(colors.key || "#fff8ed", 0.72);
+  keyLight.position.set(8, 7, 8);
+  scene.add(keyLight);
+
+  const pinkLight = new THREE.PointLight(colors.pink || "#ff9ec1", 0.24, 40);
+  pinkLight.position.set(-7, 4, 5);
+  scene.add(pinkLight);
+
+  const blueLight = new THREE.PointLight(colors.blue || "#85d8ff", 0.20, 40);
+  blueLight.position.set(6, -4, 6);
+  scene.add(blueLight);
+
+  scene.add(new THREE.AmbientLight("#8899aa", 0.26));
+}
+
 function createShushuPlanetTexture() {
   const canvas = document.createElement("canvas");
   canvas.width = TEXTURE_WIDTH;
@@ -350,6 +626,46 @@ function createShushuPlanetTexture() {
   drawPastelBands(context);
 
   context.globalAlpha = 1;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  return texture;
+}
+
+function createEarthTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = TEXTURE_WIDTH;
+  canvas.height = TEXTURE_HEIGHT;
+  const context = canvas.getContext("2d");
+  const ocean = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+
+  ocean.addColorStop(0, "#8ec8e8");
+  ocean.addColorStop(0.28, "#4f9fd4");
+  ocean.addColorStop(0.58, "#3b86c4");
+  ocean.addColorStop(0.82, "#2f6eaa");
+  ocean.addColorStop(1, "#3d7fb8");
+  context.fillStyle = ocean;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  EARTH_LANDS.forEach((land) => {
+    drawFairyLand(context, land);
+  });
+
+  drawSoftTextureSpeckles(context);
+
+  context.save();
+  context.globalAlpha = 0.18;
+  context.fillStyle = "#ffffff";
+  for (let i = 0; i < 18; i += 1) {
+    const x = (i * 311) % canvas.width;
+    const y = 70 + ((i * 97) % 180);
+    context.beginPath();
+    context.ellipse(x, y, 90 + (i % 4) * 18, 16 + (i % 3) * 6, 0.2, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.restore();
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;

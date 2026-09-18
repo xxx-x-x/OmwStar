@@ -27,7 +27,7 @@
 当前定位是：**静态纪念页面 + Express 后端 + MySQL 存储 + Redis 缓存**。不做账号系统，核心流程是：
 
 ```text
-玩家在页面投稿 → 管理员审核 → 审核通过后进入公开纪念星河
+玩家在页面投稿 → 管理员审核 → 鼠星居民进入纪念星河，地球来信进入独立来信页
 ```
 
 这里不做排名，不制造焦虑，只希望每一只被认真爱过的小鼠，都能有一个安静的归档处。
@@ -36,10 +36,11 @@
 
 - **安静档案** - 记录鼠鼠名字、性格、爱吃的东西、相关日期和故事。鼠星居民会被纪念，地球来信则保留此刻的语气
 - **投稿审核** - 玩家投稿默认进入待审核状态，管理员通过后才会公开展示
-- **纪念星河** - 只展示审核通过的公开档案，保持安静的纪念气质
+- **纪念星河** - 只展示审核通过的鼠星居民，保持安静的纪念气质
+- **地球来信** - 还在地球的鼠鼠有独立的来信页，不与纪念混排
 - **独立纪念页** - 每只鼠鼠都有可分享的独立页面，支持复制文案和生成纪念卡
-- **星球地图** - 3D 可旋转的鼠鼠星球地图，按区域浏览居民
-- **时光轴** - 按被记录的日期排列，并用很轻的标记区分鼠星居民与地球来信
+- **星球地图** - 3D 可旋转的鼠鼠星球和地球，点星域看鼠星居民，点地球看还在人间的鼠鼠
+- **时光轴** - 按抵达鼠星的日期排列鼠星居民
 - **轻仪式互动** - 归家星灯、匿名回忆便签、时间胶囊邮件
 - **摸摸鼠鼠** - 可捏、可拖、可挠痒的互动体验页
 - **鼠鼠绘本** - 可翻页的绘本画册
@@ -49,30 +50,31 @@
 
 ## 页面入口
 
-| 页面 | 路径 | 说明 |
-|------|------|------|
-| 首页 | [`index.html`](./index.html) | 星球入口、概览数据和守护者展示 |
-| 星球地图 | [`map.html`](./map.html) | 3D 可旋转地图 |
-| 时光轴 | [`timeline.html`](./timeline.html) | 按抵达日期排列 |
-| 纪念星河 | [`planet-wall.html`](./planet-wall.html) | 审核通过的公开档案墙 |
-| 摸摸鼠鼠 | [`momo.html`](./momo.html) | 轻互动体验 |
-| 鼠鼠绘本 | [`book.html`](./book.html) | 翻页画册 |
-| 投稿 | [`submit.html`](./submit.html) | 玩家提交纪念档案 |
-| 纪念页 | [`resident.html`](./resident.html) | 单只鼠鼠详情，例如 `resident.html?id=1` |
-| 关于我们 | [`about.html`](./about.html) | 项目介绍 |
-| 隐私政策 | [`privacy.html`](./privacy.html) | 隐私说明 |
-| 用户协议 | [`terms.html`](./terms.html) | 使用条款 |
+| 页面     | 路径                                         | 说明                                    |
+| -------- | -------------------------------------------- | --------------------------------------- |
+| 首页     | [`index.html`](./index.html)                 | 星球入口、概览数据和守护者展示          |
+| 星球地图 | [`map.html`](./map.html)                     | 3D 可旋转的鼠星与地球                   |
+| 时光轴   | [`timeline.html`](./timeline.html)           | 按抵达日期排列                          |
+| 纪念星河 | [`planet-wall.html`](./planet-wall.html)     | 审核通过的鼠星居民墙                    |
+| 地球来信 | [`earth-letters.html`](./earth-letters.html) | 还在地球的公开来信                      |
+| 摸摸鼠鼠 | [`momo.html`](./momo.html)                   | 轻互动体验                              |
+| 鼠鼠绘本 | [`book.html`](./book.html)                   | 翻页画册                                |
+| 投稿     | [`submit.html`](./submit.html)               | 玩家提交纪念档案                        |
+| 纪念页   | [`resident.html`](./resident.html)           | 单只鼠鼠详情，例如 `resident.html?id=1` |
+| 关于我们 | [`about.html`](./about.html)                 | 项目介绍                                |
+| 隐私政策 | [`privacy.html`](./privacy.html)             | 隐私说明                                |
+| 用户协议 | [`terms.html`](./terms.html)                 | 使用条款                                |
 
 ## 技术栈
 
-| 组件 | 技术 |
-|------|------|
-| 运行时 | Node.js 18+ |
-| 后端 | Express 4、Helmet、Multer、Nodemailer |
-| 前端 | 原生 HTML / CSS / JavaScript |
-| 数据库 | MySQL 8+（utf8mb4） |
-| 缓存 | Redis 7+ |
-| 部署 | systemd + nginx 反代 |
+| 组件   | 技术                                  |
+| ------ | ------------------------------------- |
+| 运行时 | Node.js 18+                           |
+| 后端   | Express 4、Helmet、Multer、Nodemailer |
+| 前端   | 原生 HTML / CSS / JavaScript          |
+| 数据库 | MySQL 8+（utf8mb4）                   |
+| 缓存   | Redis 7+                              |
+| 部署   | systemd + nginx 反代                  |
 
 ## 快速开始
 
@@ -148,17 +150,17 @@ ADMIN_PASSWORD=replace-with-a-strong-admin-password
 ADMIN_TOKEN=replace-with-a-long-random-admin-token
 ```
 
-| 变量 | 说明 |
-|------|------|
-| `PORT` / `HOST` | 应用监听地址。本地开发默认 `127.0.0.1:4173`，生产可由 systemd 设为 `127.0.0.1:3004` |
-| `DB_*` | MySQL 连接信息 |
-| `REDIS_URL` | Redis 连接串 |
-| `CACHE_TTL_SECONDS` | 公开居民列表缓存秒数 |
-| `UPLOAD_MAX_FILE_SIZE_MB` | 投稿图片大小上限 |
-| `PUBLIC_SITE_URL` | 对外站点地址，用于分享链接和时间胶囊邮件 |
-| `VISITOR_KEY_SALT` | 访客点灯标识盐值 |
-| `SMTP_*` / `CAPSULE_SEND_LIMIT` | 时间胶囊邮件发送配置 |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_TOKEN` | 管理审核凭证 |
+| 变量                                                | 说明                                                                                |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `PORT` / `HOST`                                     | 应用监听地址。本地开发默认 `127.0.0.1:4173`，生产可由 systemd 设为 `127.0.0.1:3004` |
+| `DB_*`                                              | MySQL 连接信息                                                                      |
+| `REDIS_URL`                                         | Redis 连接串                                                                        |
+| `CACHE_TTL_SECONDS`                                 | 公开居民列表缓存秒数                                                                |
+| `UPLOAD_MAX_FILE_SIZE_MB`                           | 投稿图片大小上限                                                                    |
+| `PUBLIC_SITE_URL`                                   | 对外站点地址，用于分享链接和时间胶囊邮件                                            |
+| `VISITOR_KEY_SALT`                                  | 访客点灯标识盐值                                                                    |
+| `SMTP_*` / `CAPSULE_SEND_LIMIT`                     | 时间胶囊邮件发送配置                                                                |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_TOKEN` | 管理审核凭证                                                                        |
 
 生成较长的随机盐值和口令：
 
@@ -289,6 +291,7 @@ OmwStar/
 ├── map.html                   # 星球地图
 ├── timeline.html              # 时光轴
 ├── planet-wall.html           # 纪念星河
+├── earth-letters.html         # 地球来信
 ├── momo.html                  # 摸摸鼠鼠
 ├── book.html                  # 鼠鼠绘本
 ├── submit.html                # 投稿
@@ -343,15 +346,15 @@ OmwStar/
 
 ## 常用脚本
 
-| 命令 | 说明 |
-|------|------|
-| `npm run dev` | 启动完整网站服务（连接 MySQL / Redis） |
-| `npm start` | 生产模式启动 |
-| `npm run dev:static` | 仅静态预览 |
-| `npm run db:init` | 初始化数据库 |
-| `npm run db:migrate` | 执行结构迁移 |
-| `npm run send:time-capsules` | 发送到期的时间胶囊邮件 |
-| `npm run check` | 基础语法校验 |
+| 命令                         | 说明                                   |
+| ---------------------------- | -------------------------------------- |
+| `npm run dev`                | 启动完整网站服务（连接 MySQL / Redis） |
+| `npm start`                  | 生产模式启动                           |
+| `npm run dev:static`         | 仅静态预览                             |
+| `npm run db:init`            | 初始化数据库                           |
+| `npm run db:migrate`         | 执行结构迁移                           |
+| `npm run send:time-capsules` | 发送到期的时间胶囊邮件                 |
+| `npm run check`              | 基础语法校验                           |
 
 ## 许可证
 

@@ -16,6 +16,7 @@
       <a href="./map.html">星球地图</a>
       <a href="./timeline.html">时光轴</a>
       <a href="./planet-wall.html">纪念星河</a>
+      <a href="./earth-letters.html">地球来信</a>
       <a href="./momo.html">摸摸鼠鼠</a>
       <a href="./book.html">鼠鼠绘本</a>
       <a class="active" href="./submit.html" aria-current="page">投稿</a>
@@ -26,7 +27,7 @@
     <section class="page-hero" aria-labelledby="submit-title">
       <p class="eyebrow"><span class="edition-dot" aria-hidden="true"></span> 一份要被温柔收下的故事</p>
       <h1 id="submit-title">把鼠鼠，<br>送到星球</h1>
-      <p class="lede">已经抵达鼠星的，会被轻轻记住；还在地球的，也可以先寄来一封信。提交后会先安静地等审核，通过后才会出现在纪念星河。</p>
+      <p class="lede">已经抵达鼠星的，会被轻轻记住在纪念星河；还在地球的，可以先寄到地球来信。提交后会先安静地等审核，通过后才会公开展示。</p>
     </section>
 
     <section class="submit-layout" aria-label="玩家投稿">
@@ -64,7 +65,7 @@
               <option value="star">已经抵达鼠星</option>
               <option value="earth">还在地球陪着我</option>
             </select>
-            <small class="field-hint">鼠星居民会被纪念；地球来信是此刻的故事，不会被写成已经离开。</small>
+            <small class="field-hint">鼠星居民会出现在纪念星河；地球来信会出现在独立的来信页，不会被写成已经离开。</small>
           </label>
           <label>
             <span>玩家昵称</span>
@@ -173,7 +174,7 @@
           <h2>鼠鼠和我的故事</h2>
         </div>
         <div class="form-grid">
-          <label>
+          <label id="region-field">
             <span id="region-label">入驻鼠星的地区</span>
             <select name="region">
               <option>月光谷</option>

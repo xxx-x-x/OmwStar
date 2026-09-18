@@ -4,19 +4,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>鼠鼠星球 | 纪念星河</title>
+  <title>鼠鼠星球 | 地球来信</title>
   <link rel="stylesheet" href="./src/styles.css" />
 </head>
 
-<body>
+<body class="earth-letters-page" data-wall-presence="earth">
   <header class="topbar">
     <a class="brand" href="./index.html">鼠鼠星球</a>
     <nav class="topnav" aria-label="主导航">
       <a href="./index.html">首页</a>
       <a href="./map.html">星球地图</a>
       <a href="./timeline.html">时光轴</a>
-      <a class="active" href="./planet-wall.html" aria-current="page">纪念星河</a>
-      <a href="./earth-letters.html">地球来信</a>
+      <a href="./planet-wall.html">纪念星河</a>
+      <a class="active" href="./earth-letters.html" aria-current="page">地球来信</a>
       <a href="./momo.html">摸摸鼠鼠</a>
       <a href="./book.html">鼠鼠绘本</a>
       <a href="./submit.html">投稿</a>
@@ -25,34 +25,23 @@
 
   <main class="shell page-shell">
     <section class="page-hero wall-hero" aria-labelledby="wall-title">
-      <p class="eyebrow">Memory Galaxy</p>
-      <h1 id="wall-title">纪念星河</h1>
+      <p class="eyebrow">Earth Letters</p>
+      <h1 id="wall-title">地球来信</h1>
       <p class="lede">
-        每一颗星星都是一位已经抵达鼠星、被认真爱过的鼠鼠。这里永远安静，永远不排名——只负责把那些闪闪发亮的小瞬间，挂在这片星河里。还在地球的故事，请去<a href="./earth-letters.html">地球来信</a>。
+        还在地球陪着你的鼠鼠，也可以先把今天的故事寄到这里。这里不是纪念页，只是一封被轻轻收下的来信——愿它慢慢长大。
       </p>
-      <div class="wall-stats-bar" id="wall-stats-bar" aria-label="星河统计">
-        <span><strong id="wall-star-count">0</strong> 颗星星</span>
+      <div class="wall-stats-bar" id="wall-stats-bar" aria-label="来信统计">
+        <span><strong id="wall-star-count">0</strong> 封来信</span>
         <span class="wall-stats-divider" aria-hidden="true">·</span>
-        <span><strong id="wall-light-total">0</strong> 盏小灯被点亮</span>
+        <span><strong id="wall-light-total">0</strong> 盏陪伴灯被点亮</span>
       </div>
     </section>
 
     <section class="wall-section" aria-labelledby="wall-list-title">
       <div class="section-heading wall-section-head">
         <div>
-          <p class="eyebrow">Stars in the Galaxy</p>
-          <h2 id="wall-list-title">星河里的鼠鼠们</h2>
-        </div>
-        <div class="wall-filter-groups">
-          <div class="wall-filters" role="group" aria-label="按星域筛选">
-            <button class="filter active" type="button" data-wall-filter="all" aria-pressed="true">全部星域</button>
-            <button class="filter" type="button" data-wall-filter="月光谷" aria-pressed="false">月光谷</button>
-            <button class="filter" type="button" data-wall-filter="瓜子环" aria-pressed="false">瓜子环</button>
-            <button class="filter" type="button" data-wall-filter="棉花云" aria-pressed="false">棉花云</button>
-            <button class="filter" type="button" data-wall-filter="星砂海" aria-pressed="false">星砂海</button>
-            <button class="filter" type="button" data-wall-filter="蜜糖丘" aria-pressed="false">蜜糖丘</button>
-            <button class="filter" type="button" data-wall-filter="软绒原" aria-pressed="false">软绒原</button>
-          </div>
+          <p class="eyebrow">Letters from Earth</p>
+          <h2 id="wall-list-title">还在地球的来信</h2>
         </div>
       </div>
       <div id="wall-cards" class="wall-cards" aria-live="polite"></div>

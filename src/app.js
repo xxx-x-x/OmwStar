@@ -7,7 +7,6 @@ const wallCardsEl = document.querySelector("#wall-cards");
 const wallStarCountEl = document.querySelector("#wall-star-count");
 const wallLightTotalEl = document.querySelector("#wall-light-total");
 const wallFilterButtons = [...document.querySelectorAll("[data-wall-filter]")];
-const wallPresenceButtons = [...document.querySelectorAll("[data-wall-presence]")];
 const wallListTitleEl = document.querySelector("#wall-list-title");
 const singleResidentEl = document.querySelector("#single-resident");
 const mapRegionEyebrowEl = document.querySelector("#map-region-eyebrow");
@@ -53,6 +52,7 @@ function getPresenceCopy(memory = {}) {
     lightSuccess: earth ? "陪伴灯已点亮，今天又被轻轻记住了一点。" : "星灯已点亮，它的归途又亮了一点。",
     cardFooter: earth ? "愿你慢慢长大" : "谢谢你来过我的世界",
     cardFilename: `鼠鼠星球-${name}-${earth ? "地球来信" : "纪念卡"}.png`,
+    placeLine: earth ? "还在地球" : null,
     worldTitle: earth ? "它在地球的今天" : "它在鼠星的今天",
     ritualTitle: earth ? "陪伴小灯" : "归家星灯",
     ritualLead: earth
@@ -177,6 +177,7 @@ function initCustomSelect(nativeSelect) {
   });
 
   nativeSelect.addEventListener("change", updateTrigger);
+  nativeSelect.addEventListener("disabled-change", updateTrigger);
 
   // 监听原生 select 的选项变化（级联更新时自动刷新面板）
   const observer = new MutationObserver(() => {
@@ -198,8 +199,8 @@ const seedMemories = Array.isArray(window.shushuSeedMemories) ? window.shushuSee
 
 let memories = [];
 let wallActiveRegion = "all";
-let wallActivePresence = "all";
-let mapRegion = null;
+const wallActivePresence = document.body?.dataset.wallPresence === "earth" ? "earth" : "star";
+let mapSelection = null;
 let apiResidentsLoaded = false;
 let apiResidentsSettled = false;
 
@@ -358,56 +359,96 @@ function getResidentLoadingHtml() {
   `;
 }
 
+function getVisibleMemories(presence) {
+  const baseMemories = apiResidentsLoaded
+    ? memories.filter((memory) => !memory.saved)
+    : getSeedMemories();
+
+  if (!presence) return baseMemories;
+  return baseMemories.filter((memory) => normalizePresence(memory.presence) === presence);
+}
+
+function getArchiveHome(memory) {
+  return isEarthResident(memory) ? "./earth-letters.html" : "./planet-wall.html";
+}
+
+function getArchiveHomeLabel(memory) {
+  return isEarthResident(memory) ? "地球来信" : "纪念星河";
+}
+
 function renderStats() {
   if (!totalCountEl || !favoriteFoodEl || !latestArrivalEl) return;
 
-  totalCountEl.textContent = memories.length;
+  const starMemories = getVisibleMemories("star");
+  totalCountEl.textContent = starMemories.length;
 
-  const foodCounts = memories.reduce((counts, memory) => {
+  const foodCounts = starMemories.reduce((counts, memory) => {
     counts[memory.food] = (counts[memory.food] || 0) + 1;
     return counts;
   }, {});
 
   const [favoriteFood = "瓜子"] = Object.entries(foodCounts).sort((a, b) => b[1] - a[1])[0] || [];
-  const latest = [...memories].sort((a, b) => new Date(b.arrivedAt) - new Date(a.arrivedAt))[0];
+  const latest = [...starMemories].sort((a, b) => new Date(b.arrivedAt) - new Date(a.arrivedAt))[0];
 
   favoriteFoodEl.textContent = favoriteFood;
   latestArrivalEl.textContent = latest?.name || "小星星";
 }
 
+function getMapResidents(selection) {
+  if (!selection) return [];
+  if (selection.presence === "earth") return getVisibleMemories("earth");
+  return getVisibleMemories("star").filter((memory) => memory.region === selection.region);
+}
+
 function renderMap() {
   if (!mapResidentsEl) return;
 
-  if (!mapRegion) {
-    // 初始状态：展示引导文案
-    if (mapRegionEyebrowEl) mapRegionEyebrowEl.textContent = "选择一片星域";
-    if (mapRegionTitleEl) mapRegionTitleEl.textContent = "点击星球上的色块，查看那里的居民";
-    if (mapRegionDescEl) mapRegionDescEl.textContent = "旋转星球，找到彩色的陆地区域，点一下就能看到住在那里的鼠鼠们。";
+  document.querySelectorAll(".planet-world").forEach((el) => {
+    const selected = mapSelection?.presence === el.dataset.planet;
+    el.classList.toggle("is-active", selected);
+  });
+
+  if (!mapSelection) {
+    if (mapRegionEyebrowEl) mapRegionEyebrowEl.textContent = "选择一颗星球";
+    if (mapRegionTitleEl) mapRegionTitleEl.textContent = "点鼠星上的色块，或点一下地球";
+    if (mapRegionDescEl) {
+      mapRegionDescEl.textContent = "左边的彩色陆地住着鼠星居民；右边的地球上，还有鼠鼠在慢慢长大。";
+    }
     mapResidentsEl.innerHTML = "";
     return;
   }
 
-  const regionResidents = memories.filter((m) => m.region === mapRegion);
+  const earth = mapSelection.presence === "earth";
+  const residents = getMapResidents(mapSelection);
+  const placeLabel = earth ? "地球" : mapSelection.region;
 
-  if (mapRegionEyebrowEl) mapRegionEyebrowEl.textContent = mapRegion;
-  if (mapRegionTitleEl) mapRegionTitleEl.textContent = `住在${mapRegion}的鼠鼠们`;
+  if (mapRegionEyebrowEl) mapRegionEyebrowEl.textContent = placeLabel;
+  if (mapRegionTitleEl) {
+    mapRegionTitleEl.textContent = earth ? "还在地球的鼠鼠们" : `住在${placeLabel}的鼠鼠们`;
+  }
   if (mapRegionDescEl) {
-    mapRegionDescEl.textContent = regionResidents.length故事
-      ? `「${mapRegion}」目前有 ${regionResidents.length} 位居民。点卡片可以查看纪念页。`
-      : `「${mapRegion}」暂时还没有居民入住。去星球居民页为它添加第一位鼠鼠吧。`;
+    mapRegionDescEl.textContent = residents.length
+      ? earth
+        ? `地球上目前有 ${residents.length} 位还在人间的鼠鼠。点卡片可以查看故事页。`
+        : `「${placeLabel}」目前有 ${residents.length} 位居民。点卡片可以查看纪念页。`
+      : earth
+        ? "地球上暂时还没有寄来的故事。去投稿页留下第一封地球来信吧。"
+        : `「${placeLabel}」暂时还没有居民入住。去投稿页为它添加第一位鼠鼠吧。`;
   }
 
   mapResidentsEl.innerHTML = "";
 
-  if (!regionResidents.length) {
+  if (!residents.length) {
     const empty = document.createElement("p");
     empty.className = "empty";
-    empty.innerHTML = `这片星域还在等待第一位小居民。<a href="./submit.html">去投稿</a>`;
+    empty.innerHTML = earth
+      ? `地球上还在等待第一封来信。<a href="./submit.html">去投稿</a>`
+      : `这片星域还在等待第一位小居民。<a href="./submit.html">去投稿</a>`;
     mapResidentsEl.append(empty);
     return;
   }
 
-  const cards = regionResidents.map((memory) => {
+  const cards = residents.map((memory) => {
     const card = createCard(memory);
     const detailLink = card.querySelector(".card-actions a");
     if (detailLink && residentDetailEl) {
@@ -510,7 +551,7 @@ function downloadResidentCard(memory) {
   context.fillStyle = "#e98f73";
   context.font = "700 28px sans-serif";
   context.textAlign = "center";
-  context.fillText(memory.region, 450, 410);
+  context.fillText(getPlaceLabel(memory), 450, 410);
 
   context.fillStyle = "#273033";
   context.font = "900 84px sans-serif";
@@ -661,7 +702,7 @@ async function submitResidentNote(event, memory, notesEl, statusEl) {
     const result = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/notes`, {
       method: "POST",
       body: JSON.stringify(payload),
-    });故事
+    }); 故事
     form.reset();
     statusEl.textContent = "便签已送去审核，通过后会贴在纪念页。";
     statusEl.className = "form-status success";
@@ -700,11 +741,16 @@ async function submitTimeCapsule(event, memory, statusEl) {
   }
 }
 
+function getPlaceLabel(memory) {
+  const copy = getPresenceCopy(memory);
+  return copy.placeLine || memory.region || defaultRegion;
+}
+
 function createCard(memory) {
   const copy = getPresenceCopy(memory);
   const safeName = escapeHtml(memory.name);
   const safeNickname = escapeHtml(memory.nickname);
-  const safeRegion = escapeHtml(memory.region);
+  const safePlace = escapeHtml(getPlaceLabel(memory));
   const safeFood = escapeHtml(memory.food);
   const safePlayerName = escapeHtml(memory.playerName || "本地记录");
   const safeTraits = memory.traits.map(escapeHtml);
@@ -717,7 +763,7 @@ function createCard(memory) {
       <span class="avatar" style="background:${memory.color}" aria-hidden="true"></span>
       <div>
         <h3>${safeName}</h3>
-        <small>${safeNickname} · ${safeRegion}</small>
+        <small>${safeNickname} · ${safePlace}</small>
       </div>
       <span class="presence-chip ${copy.key}">${copy.label}</span>
     </div>
@@ -739,7 +785,7 @@ function createWallCard(memory, index) {
   const copy = getPresenceCopy(memory);
   const safeName = escapeHtml(memory.name);
   const safeNickname = escapeHtml(memory.nickname);
-  const safeRegion = escapeHtml(memory.region);
+  const safePlace = escapeHtml(getPlaceLabel(memory));
   const safeFood = escapeHtml(memory.food);
   const safePlayerName = escapeHtml(memory.playerName || "一位玩家");
   const safeMemory = escapeHtml(memory.memory);
@@ -757,7 +803,7 @@ function createWallCard(memory, index) {
       <span class="avatar" style="background:${memory.color}" aria-hidden="true"></span>
       <div>
         <h3>${safeName}</h3>
-        <small>${safeNickname} · ${safeRegion}</small>
+        <small>${safeNickname} · ${safePlace}</small>
       </div>
       <span class="presence-chip ${copy.key}">${copy.label}</span>
     </div>
@@ -820,14 +866,10 @@ function getSeedMemories() {
 }
 
 function getWallMemories() {
-  const baseMemories = apiResidentsLoaded
-    ? memories.filter((memory) => !memory.saved)
-    : getSeedMemories();
-
-  return baseMemories.filter((memory) => {
-    const regionMatch = wallActiveRegion === "all" || memory.region === wallActiveRegion;
-    const presenceMatch = wallActivePresence === "all" || normalizePresence(memory.presence) === wallActivePresence;
-    return regionMatch && presenceMatch;
+  const memoriesForWall = getVisibleMemories(wallActivePresence);
+  if (wallActivePresence === "earth") return memoriesForWall;
+  return memoriesForWall.filter((memory) => {
+    return wallActiveRegion === "all" || memory.region === wallActiveRegion;
   });
 }
 
@@ -835,9 +877,7 @@ function updateWallStats() {
   if (!wallStarCountEl || !wallLightTotalEl) return;
 
   const wallMemories = getWallMemories();
-  const allMemories = apiResidentsLoaded
-    ? memories.filter((memory) => !memory.saved)
-    : getSeedMemories();
+  const allMemories = getVisibleMemories(wallActivePresence);
 
   wallStarCountEl.textContent = wallMemories.length;
 
@@ -855,31 +895,18 @@ function updateWallStats() {
 
 function getWallEmptyText() {
   if (wallActivePresence === "earth") {
-    return wallActiveRegion === "all"
-      ? "还没有从地球寄来的故事。"
-      : `「${wallActiveRegion}」还没有地球来信。`;
-  }
-  if (wallActivePresence === "star") {
-    return wallActiveRegion === "all"
-      ? "纪念星河还没有点亮的小星星。"
-      : `「${wallActiveRegion}」星域还没有居民抵达。`;
+    return "还没有从地球寄来的故事。";
   }
   return wallActiveRegion === "all"
     ? "纪念星河还没有点亮的小星星。"
-    : `「${wallActiveRegion}」星域还没有故事。`;
+    : `「${wallActiveRegion}」星域还没有居民抵达。`;
 }
 
 function updateWallListTitle() {
   if (!wallListTitleEl) return;
-  if (wallActivePresence === "earth") {
-    wallListTitleEl.textContent = "还在地球的来信";
-    return;
-  }
-  if (wallActivePresence === "star") {
-    wallListTitleEl.textContent = "已经抵达鼠星的小居民";
-    return;
-  }
-  wallListTitleEl.textContent = "星河里的鼠鼠们";
+  wallListTitleEl.textContent = wallActivePresence === "earth"
+    ? "还在地球的来信"
+    : "已经抵达鼠星的小居民";
 }
 
 function setWallFilter(region) {
@@ -889,17 +916,6 @@ function setWallFilter(region) {
     btn.classList.toggle("active", isActive);
     btn.setAttribute("aria-pressed", isActive.toString());
   });
-  renderWall();
-}
-
-function setWallPresence(presence) {
-  wallActivePresence = presence;
-  wallPresenceButtons.forEach((btn) => {
-    const isActive = btn.dataset.wallPresence === presence;
-    btn.classList.toggle("active", isActive);
-    btn.setAttribute("aria-pressed", isActive.toString());
-  });
-  updateWallListTitle();
   renderWall();
 }
 
@@ -934,7 +950,7 @@ function openResidentPage(id, shouldUpdateHash = true) {
   const copy = getPresenceCopy(memory);
   const safeName = escapeHtml(memory.name);
   const safeNickname = escapeHtml(memory.nickname);
-  const safeRegion = escapeHtml(memory.region);
+  const safePlace = escapeHtml(getPlaceLabel(memory));
   const safeFood = escapeHtml(memory.food);
   const safePlayerName = escapeHtml(memory.playerName || "本地记录");
   const safeId = escapeHtml(memory.id);
@@ -952,7 +968,7 @@ function openResidentPage(id, shouldUpdateHash = true) {
         <span class="avatar large" style="background:${memory.color}" aria-hidden="true"></span>
       </div>
       <div class="resident-copy">
-        <p class="eyebrow">${safeRegion} · ${copy.label}</p>
+        <p class="eyebrow">${safePlace} · ${copy.label}</p>
         <h2>${safeName}</h2>
         <p class="resident-subtitle">${safeNickname} · ${safePlayerName} · ${formatDate(memory.arrivedAt)} ${copy.dateVerb}</p>
         <p class="memory">${safeMemory}</p>
@@ -964,8 +980,8 @@ function openResidentPage(id, shouldUpdateHash = true) {
     </div>
     <div class="resident-notes">
       <article>
-        <span>所在星域</span>
-        <strong>${safeRegion}</strong>
+        <span>${copy.earth ? "此刻" : "所在星域"}</span>
+        <strong>${safePlace}</strong>
       </article>
       <article>
         <span>记录玩家</span>
@@ -1009,6 +1025,7 @@ function renderSingleResidentPage() {
         <h1 id="missing-resident-title">没有找到这颗星</h1>
         <p class="lede">这颗星可能来自旧缓存里的示例链接，或者对应档案已经被移除。现在鼠鼠星球只展示真实收录的鼠鼠。</p>
         <a class="button primary" href="./planet-wall.html">回到纪念星河</a>
+        <a class="button ghost" href="./earth-letters.html">去地球来信</a>
       </section>
     `;
     return;
@@ -1017,7 +1034,7 @@ function renderSingleResidentPage() {
   const copy = getPresenceCopy(memory);
   const safeName = escapeHtml(memory.name);
   const safeNickname = escapeHtml(memory.nickname);
-  const safeRegion = escapeHtml(memory.region);
+  const safePlace = escapeHtml(getPlaceLabel(memory));
   const safeFood = escapeHtml(memory.food);
   const safePlayerName = escapeHtml(memory.playerName || "本地记录");
   const safeId = escapeHtml(memory.id);
@@ -1027,18 +1044,18 @@ function renderSingleResidentPage() {
   const lightTotal = Math.max(Number(memory.lightCount || 0), getLightCount(memory.id));
   const safeTomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const worldLead = copy.earth
-    ? `${safeName} 此刻还在地球，也在「${safeRegion}」有一封安静的来信。人间的日子慢慢过，故事会先被这颗星球轻轻收着。`
-    : `按照鼠星历，${safeName} 正住在「${safeRegion}」的 ${escapeHtml(starCalendar.season)} 里。人间每过一个月，鼠星就翻过一天；想念不是倒计时，而是一盏慢慢亮着的灯。`;
+    ? `${safeName} 此刻还在地球。人间的日子慢慢过，故事会先被这颗星球轻轻收着。`
+    : `按照鼠星历，${safeName} 正住在「${safePlace}」的 ${escapeHtml(starCalendar.season)} 里。人间每过一个月，鼠星就翻过一天；想念不是倒计时，而是一盏慢慢亮着的灯。`;
 
   document.title = `鼠鼠星球 | ${memory.name} 的${copy.pageNoun}`;
   singleResidentEl.innerHTML = `
     <section class="single-hero" aria-labelledby="single-resident-title">
-      <a class="back-link" href="./planet-wall.html">返回纪念星河</a>
+      <a class="back-link" href="${getArchiveHome(memory)}">返回${getArchiveHomeLabel(memory)}</a>
       <div class="single-portrait">
         <span class="avatar memorial-avatar" style="background:${memory.color}" aria-hidden="true"></span>
       </div>
       <div class="single-copy">
-        <p class="eyebrow">${safeRegion} · ${copy.label}</p>
+        <p class="eyebrow">${safePlace} · ${copy.label}</p>
         <h1 id="single-resident-title">${safeName}</h1>
         <p class="resident-subtitle">${safeNickname} · ${safePlayerName} · ${formatDate(memory.arrivedAt)} ${copy.dateVerb}</p>
         <p class="star-calendar-pill">${escapeHtml(starCalendar.label)} · ${escapeHtml(starCalendar.rule)}</p>
@@ -1060,8 +1077,8 @@ function renderSingleResidentPage() {
 
     <section class="memorial-note" aria-label="${safeName} 的故事">
       <article>
-        <span>所在星域</span>
-        <strong>${safeRegion}</strong>
+        <span>${copy.earth ? "此刻" : "所在星域"}</span>
+        <strong>${safePlace}</strong>
       </article>
       <article>
         <span>记录玩家</span>
@@ -1204,10 +1221,14 @@ function handleHashRoute() {
   if (id) openResidentPage(id, false);
 }
 
-function setMapRegion(region) {
-  mapRegion = region;
+function setMapSelection(detail = {}) {
+  const presence = detail.presence === "earth" ? "earth" : "star";
+  mapSelection = presence === "earth"
+    ? { presence: "earth", region: null }
+    : detail.region
+      ? { presence: "star", region: detail.region }
+      : null;
   renderMap();
-  // 滚动到区域居民面板
   document.querySelector(".map-region-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1248,7 +1269,7 @@ async function renderSubmissionPreview(event) {
 
     submissionStatusEl.hidden = false;
     submissionStatusEl.textContent = publicConsent
-      ? `已提交！档案编号 ${result.id}。审核通过后会出现在纪念星河。`
+      ? `已提交！档案编号 ${result.id}。审核通过后会出现在${presence === "earth" ? "地球来信" : "纪念星河"}。`
       : `已保存（编号 ${result.id}），但你未勾选同意公开展示，管理员无法审核通过。`;
     submissionStatusEl.className = "form-status success";
     submissionForm.reset();
@@ -1278,7 +1299,8 @@ function syncSubmissionPresenceCopy() {
   const earth = presence === "earth";
   const dateLabel = document.querySelector("#arrived-at-label");
   const dateHint = document.querySelector("#arrived-at-hint");
-  const regionLabel = document.querySelector("#region-label");
+  const regionField = document.querySelector("#region-field");
+  const regionSelect = submissionForm.elements.region;
   const memoryLabel = document.querySelector("#memory-label");
   const memoryField = submissionForm.elements.memory;
   const consentText = document.querySelector("#public-consent-text");
@@ -1290,7 +1312,12 @@ function syncSubmissionPresenceCopy() {
       ? "写下你们相遇的日子。这封来信会先被星球轻轻收着。"
       : "写下它抵达鼠星的日子。想念会在这里慢慢变成星光。";
   }
-  if (regionLabel) regionLabel.textContent = earth ? "想寄往的星域" : "入驻鼠星的地区";
+  if (regionField) regionField.hidden = earth;
+  if (regionSelect) {
+    regionSelect.disabled = earth;
+    regionSelect.required = !earth;
+    regionSelect.dispatchEvent(new Event("disabled-change"));
+  }
   if (memoryLabel) memoryLabel.textContent = earth ? "此刻想分享的故事" : "鼠鼠和我的故事";
   if (memoryField) {
     memoryField.placeholder = earth
@@ -1299,7 +1326,7 @@ function syncSubmissionPresenceCopy() {
   }
   if (consentText) {
     consentText.textContent = earth
-      ? "我同意将这封地球来信公开展示在纪念星河。未勾选将无法通过审核。"
+      ? "我同意将这封地球来信公开展示在地球来信页。未勾选将无法通过审核。"
       : "我同意将这份档案公开展示在纪念星河。未勾选将无法通过审核。";
   }
   if (confirmText) {
@@ -1332,9 +1359,7 @@ function resetSubmissionPreview() {
 function renderTimeline() {
   if (!timelineContainerEl) return;
 
-  const residents = apiResidentsLoaded
-    ? memories
-    : seedMemories.map(normalizeMemory);
+  const residents = getVisibleMemories("star");
 
   if (!residents.length) {
     timelineContainerEl.innerHTML = `<p class="empty">时光轴上还没有记录。等故事被收下之后，这里会亮起来。</p>`;
@@ -1364,7 +1389,6 @@ function renderTimeline() {
       const copy = getPresenceCopy(m);
       const safeName = escapeHtml(m.name);
       const safeNickname = escapeHtml(m.nickname);
-      const safeRegion = escapeHtml(m.region);
       const safeMemory = escapeHtml(m.memory);
       const shortMemory = safeMemory.length > 60 ? safeMemory.slice(0, 60) + "……" : safeMemory;
 
@@ -1377,7 +1401,7 @@ function renderTimeline() {
               <span class="avatar" style="background:${m.color}" aria-hidden="true"></span>
               <div>
                 <h3>${safeName}</h3>
-                <small>${safeNickname} · ${safeRegion}</small>
+                <small>${safeNickname} · ${escapeHtml(getPlaceLabel(m))}</small>
               </div>
             </div>
             <p class="timeline-memory">${shortMemory}</p>
@@ -1401,17 +1425,13 @@ wallFilterButtons.forEach((button) => {
   button.addEventListener("click", () => setWallFilter(button.dataset.wallFilter));
 });
 
-wallPresenceButtons.forEach((button) => {
-  button.addEventListener("click", () => setWallPresence(button.dataset.wallPresence));
-});
-
 submissionForm?.addEventListener("submit", renderSubmissionPreview);
 submissionForm?.addEventListener("reset", resetSubmissionPreview);
 window.addEventListener("hashchange", handleHashRoute);
 
-// 星球地图：监听区域点击事件
+// 星球地图：监听鼠星区域或地球点击
 document.addEventListener("planet:region-click", (event) => {
-  setMapRegion(event.detail.region);
+  setMapSelection(event.detail || {});
 });
 
 // 照片上传：点击区域触发文件选择，预览图片，支持拖拽

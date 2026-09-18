@@ -16,6 +16,7 @@
       <a class="active" href="./map.html" aria-current="page">星球地图</a>
       <a href="./timeline.html">时光轴</a>
       <a href="./planet-wall.html">纪念星河</a>
+      <a href="./earth-letters.html">地球来信</a>
       <a href="./momo.html">摸摸鼠鼠</a>
       <a href="./book.html">鼠鼠绘本</a>
       <a href="./submit.html">投稿</a>
@@ -27,21 +28,40 @@
       <p class="eyebrow">Planet Map</p>
       <h1 id="map-title">星球地图</h1>
       <p class="lede">
-        鼠鼠星球被分成月光谷、瓜子环、棉花云、星砂海、蜜糖丘和软绒原。点一点区域，就能看到住在那里的小居民，以及从地球寄往那里的来信。
+        左边是鼠鼠星球，分成月光谷、瓜子环、棉花云、星砂海、蜜糖丘和软绒原；右边是地球。点星域就能看到已经住在那里的小居民，点地球则能看到还在人间的鼠鼠。
       </p>
     </section>
 
-    <section id="planet-map" class="planet-map standalone-map planet-showcase" aria-label="可旋转鼠鼠星球">
-      <div id="three-planet-stage" class="three-planet-stage" aria-label="一个可以拖动旋转的鼠鼠星球">
-        <p class="three-planet-fallback">正在点亮鼠鼠星球。</p>
+    <section id="planet-map" class="planet-map standalone-map planet-showcase" aria-label="可旋转的鼠鼠星球和地球">
+      <div class="planet-map-worlds">
+        <article class="planet-world" data-planet="star">
+          <div class="planet-world-copy">
+            <p class="eyebrow">Mouse Star</p>
+            <h2>鼠鼠星球</h2>
+            <p>点彩色陆地，看看已经住在那里的小居民。</p>
+          </div>
+          <div id="three-planet-stage" class="three-planet-stage" aria-label="一个可以拖动旋转的鼠鼠星球">
+            <p class="three-planet-fallback">正在点亮鼠鼠星球。</p>
+          </div>
+        </article>
+        <article class="planet-world" data-planet="earth">
+          <div class="planet-world-copy">
+            <p class="eyebrow">Earth</p>
+            <h2>地球</h2>
+            <p>点一下地球，看看还在人间陪着你的鼠鼠。</p>
+          </div>
+          <div id="three-earth-stage" class="three-planet-stage earth-stage" aria-label="一个可以拖动旋转的地球">
+            <p class="three-planet-fallback">正在点亮地球。</p>
+          </div>
+        </article>
       </div>
     </section>
 
     <section class="map-region-panel" aria-label="区域居民" aria-live="polite">
       <div class="map-region-header">
-        <p class="eyebrow" id="map-region-eyebrow">选择一片星域</p>
-        <h2 id="map-region-title">点击星球上的色块，查看那里的居民</h2>
-        <p class="lede" id="map-region-desc">旋转星球，找到彩色的陆地区域，点一下就能看到住在那里的鼠鼠们。</p>
+        <p class="eyebrow" id="map-region-eyebrow">选择一颗星球</p>
+        <h2 id="map-region-title">点鼠星上的色块，或点一下地球</h2>
+        <p class="lede" id="map-region-desc">左边的彩色陆地住着鼠星居民；右边的地球上，还有鼠鼠在慢慢长大。</p>
       </div>
       <div id="map-residents" class="cards map-residents-cards"></div>
     </section>

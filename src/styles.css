@@ -117,8 +117,8 @@ textarea {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    width: max-content;
-    flex-wrap: nowrap;
+    width: min(max-content, calc(100% - 220px));
+    justify-content: center;
   }
 }
 
@@ -1131,6 +1131,10 @@ select optgroup {
   width: 100%;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .custom-select-trigger {
   width: 100%;
   min-height: 46px;
@@ -1273,9 +1277,40 @@ textarea:focus {
   backdrop-filter: none;
 }
 
+.planet-map-worlds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.planet-world {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.planet-world-copy {
+  padding: 0 4px;
+}
+
+.planet-world-copy h2 {
+  margin: 0 0 4px;
+  font-size: 1.18rem;
+}
+
+.planet-world-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.planet-world.is-active .three-planet-stage {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28), 0 18px 40px rgba(15, 23, 31, 0.22);
+}
+
 .three-planet-stage {
   position: relative;
-  min-height: min(820px, calc(100vh - 220px));
+  min-height: min(560px, calc(100vh - 280px));
   border: 1px solid rgba(39, 48, 51, 0.1);
   border-radius: 8px;
   display: grid;
@@ -1291,9 +1326,20 @@ textarea:focus {
     linear-gradient(145deg, #1d2b34, #33404d 48%, #3d3551);
 }
 
+.earth-stage {
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.9) 0 1px, transparent 2px),
+    radial-gradient(circle at 76% 16%, rgba(158, 214, 255, 0.78) 0 1px, transparent 2px),
+    radial-gradient(circle at 64% 78%, rgba(126, 200, 255, 0.7) 0 1px, transparent 2px),
+    radial-gradient(circle at 88% 62%, rgba(255, 255, 255, 0.7) 0 1px, transparent 2px),
+    radial-gradient(circle at 32% 80%, rgba(110, 176, 132, 0.45) 0 1px, transparent 2px),
+    radial-gradient(circle at 50% 50%, rgba(90, 150, 210, 0.22), transparent 42%),
+    linear-gradient(145deg, #163044, #27445a 48%, #1d3348);
+}
+
 .three-planet-canvas {
-  width: min(86vw, 760px);
-  height: min(86vw, 760px);
+  width: min(42vw, 520px);
+  height: min(42vw, 520px);
   display: block;
   cursor: grab;
   touch-action: none;
@@ -1970,6 +2016,16 @@ textarea:focus {
   background: rgba(155, 188, 178, 0.22);
 }
 
+.earth-letters-page .wall-hero::before {
+  background:
+    radial-gradient(1px 1px at 12% 20%, rgba(155, 188, 178, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 28% 10%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1px 1px at 46% 26%, rgba(143, 210, 200, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 64% 14%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 78% 24%, rgba(155, 188, 178, 0.75), transparent),
+    radial-gradient(1.5px 1.5px at 90% 12%, rgba(255, 255, 255, 0.65), transparent);
+}
+
 .field-hint {
   display: block;
   margin-top: 6px;
@@ -2087,7 +2143,7 @@ textarea:focus {
   margin-bottom: 16px;
 }
 
-.card-top > div {
+.card-top>div {
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -3036,13 +3092,17 @@ body:not(.momo-experience-page) .site-footer {
     position: static;
   }
 
+  .planet-map-worlds {
+    grid-template-columns: 1fr;
+  }
+
   .three-planet-stage {
-    min-height: min(720px, calc(100vh - 180px));
+    min-height: min(560px, calc(100vh - 180px));
   }
 
   .three-planet-canvas {
-    width: min(90vw, 620px);
-    height: min(90vw, 620px);
+    width: min(86vw, 520px);
+    height: min(86vw, 520px);
   }
 
   .cards {
@@ -3235,12 +3295,12 @@ body:not(.momo-experience-page) .site-footer {
   }
 
   .three-planet-stage {
-    min-height: min(520px, calc(100vh - 150px));
+    min-height: min(420px, calc(100vh - 150px));
   }
 
   .three-planet-canvas {
-    width: min(94vw, 430px);
-    height: min(94vw, 430px);
+    width: min(90vw, 380px);
+    height: min(90vw, 380px);
   }
 
   .memorial-note {

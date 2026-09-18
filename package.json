@@ -10,7 +10,7 @@
     "db:init": "node server/scripts/init-db.cjs",
     "db:migrate": "node server/scripts/migrate.cjs",
     "send:time-capsules": "node server/scripts/send-capsules.cjs",
-    "check": "node --check server/app.cjs && node --check server/cache.cjs && node --check server/db.cjs && node --check server/repositories.cjs && node --check server/scripts/init-db.cjs && node --check server/scripts/migrate.cjs && node --check server/scripts/send-capsules.cjs && node --check dev-server.cjs && node --check src/admin.js"
+    "check": "node --check server/app.cjs && node --check server/cache.cjs && node --check server/db.cjs && node --check server/repositories.cjs && node --check server/scripts/init-db.cjs && node --check server/scripts/migrate.cjs && node --check server/scripts/send-capsules.cjs && node --check server/scripts/check-presence-split.cjs && node --check dev-server.cjs && node --check src/admin.js && node --check src/app.js && node --check src/planet-map.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

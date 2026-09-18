@@ -27,7 +27,7 @@
 現在の位置づけは **静的な記念ページ + Express バックエンド + MySQL 保存 + Redis キャッシュ** です。アカウントシステムはなく、中心の流れは次のとおりです。
 
 ```text
-プレイヤーが投稿する → 管理者が審査する → 承認後に公開記念銀河へ入る
+プレイヤーが投稿する → 管理者が審査する → 星の住人は記念銀河へ、地球からの手紙は独立ページへ
 ```
 
 ランキングも焦りも作りません。真剣に愛された小さなハムスターが、静かに残せる場所であることを願っています。
@@ -36,10 +36,11 @@
 
 - **静かなアーカイブ** - 名前、性格、好きな食べ物、日付、物語を記録。星の住人は記念され、地球からの手紙は今のまま残る
 - **投稿審査** - 投稿はデフォルトで審査待ち。管理者が承認してから公開
-- **記念銀河** - 承認済みの公開アーカイブだけを展示し、静かな記念の空気を保つ
+- **記念銀河** - 承認済みの星の住人だけを展示し、静かな記念の空気を保つ
+- **地球からの手紙** - まだ地球にいる子の独立ページ。記念銀河とは混ぜない
 - **個別記念ページ** - 1匹ごとに共有可能なページ。文案コピーと記念カード生成に対応
-- **惑星マップ** - 回転できる 3D マップ。地域ごとに住人を見る
-- **タイムライン** - 記録された日付順。星の住人と地球からの手紙をやさしく区別
+- **惑星マップ** - 回転できる 3D の鼠星と地球。星域または地球を選んで住人を見る
+- **タイムライン** - 星へ到着した日付順
 - **小さな儀式** - 帰りの星灯、匿名メモ、タイムカプセルメール
 - **摸摸鼠鼠** - つまむ、引っ張る、くすぐるインタラクション
 - **鼠鼠絵本** - ページをめくれる絵本
@@ -49,30 +50,31 @@
 
 ## ページ
 
-| ページ | パス | 説明 |
-|------|------|------|
-| ホーム | [`index.html`](./index.html) | 入口、概要データ、守護者の展示 |
-| 惑星マップ | [`map.html`](./map.html) | 回転できる 3D マップ |
-| タイムライン | [`timeline.html`](./timeline.html) | 到着日順 |
-| 記念銀河 | [`planet-wall.html`](./planet-wall.html) | 承認済みの公開アーカイブ |
-| 摸摸鼠鼠 | [`momo.html`](./momo.html) | 軽いインタラクション |
-| 鼠鼠絵本 | [`book.html`](./book.html) | ページめくり絵本 |
-| 投稿 | [`submit.html`](./submit.html) | 記念アーカイブの提出 |
-| 記念ページ | [`resident.html`](./resident.html) | 1匹の詳細。例: `resident.html?id=1` |
-| 私たちについて | [`about.html`](./about.html) | プロジェクト紹介 |
-| プライバシー | [`privacy.html`](./privacy.html) | プライバシー方針 |
-| 利用規約 | [`terms.html`](./terms.html) | 利用条件 |
+| ページ         | パス                                         | 説明                                |
+| -------------- | -------------------------------------------- | ----------------------------------- |
+| ホーム         | [`index.html`](./index.html)                 | 入口、概要データ、守護者の展示      |
+| 惑星マップ     | [`map.html`](./map.html)                     | 回転できる 3D の鼠星と地球          |
+| タイムライン   | [`timeline.html`](./timeline.html)           | 到着日順                            |
+| 記念銀河       | [`planet-wall.html`](./planet-wall.html)     | 承認済みの星の住人                  |
+| 地球からの手紙 | [`earth-letters.html`](./earth-letters.html) | まだ地球にいる子の公開手紙          |
+| 摸摸鼠鼠       | [`momo.html`](./momo.html)                   | 軽いインタラクション                |
+| 鼠鼠絵本       | [`book.html`](./book.html)                   | ページめくり絵本                    |
+| 投稿           | [`submit.html`](./submit.html)               | 記念アーカイブの提出                |
+| 記念ページ     | [`resident.html`](./resident.html)           | 1匹の詳細。例: `resident.html?id=1` |
+| 私たちについて | [`about.html`](./about.html)                 | プロジェクト紹介                    |
+| プライバシー   | [`privacy.html`](./privacy.html)             | プライバシー方針                    |
+| 利用規約       | [`terms.html`](./terms.html)                 | 利用条件                            |
 
 ## 技術スタック
 
-| コンポーネント | 技術 |
-|------|------|
-| ランタイム | Node.js 18+ |
-| バックエンド | Express 4、Helmet、Multer、Nodemailer |
-| フロントエンド | 素の HTML / CSS / JavaScript |
-| データベース | MySQL 8+（utf8mb4） |
-| キャッシュ | Redis 7+ |
-| デプロイ | systemd + nginx リバースプロキシ |
+| コンポーネント | 技術                                  |
+| -------------- | ------------------------------------- |
+| ランタイム     | Node.js 18+                           |
+| バックエンド   | Express 4、Helmet、Multer、Nodemailer |
+| フロントエンド | 素の HTML / CSS / JavaScript          |
+| データベース   | MySQL 8+（utf8mb4）                   |
+| キャッシュ     | Redis 7+                              |
+| デプロイ       | systemd + nginx リバースプロキシ      |
 
 ## クイックスタート
 
@@ -148,17 +150,17 @@ ADMIN_PASSWORD=replace-with-a-strong-admin-password
 ADMIN_TOKEN=replace-with-a-long-random-admin-token
 ```
 
-| 変数 | 説明 |
-|------|------|
-| `PORT` / `HOST` | アプリの待受アドレス。ローカル開発のデフォルトは `127.0.0.1:4173`。本番では systemd で `127.0.0.1:3004` にできる |
-| `DB_*` | MySQL 接続情報 |
-| `REDIS_URL` | Redis 接続文字列 |
-| `CACHE_TTL_SECONDS` | 公開住人リストのキャッシュ秒数 |
-| `UPLOAD_MAX_FILE_SIZE_MB` | 投稿画像のサイズ上限 |
-| `PUBLIC_SITE_URL` | 公開サイト URL。共有リンクとタイムカプセルメールに使う |
-| `VISITOR_KEY_SALT` | 訪問者の点灯識別用ソルト |
-| `SMTP_*` / `CAPSULE_SEND_LIMIT` | タイムカプセルメールの送信設定 |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_TOKEN` | 管理審査用の認証情報 |
+| 変数                                                | 説明                                                                                                             |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `PORT` / `HOST`                                     | アプリの待受アドレス。ローカル開発のデフォルトは `127.0.0.1:4173`。本番では systemd で `127.0.0.1:3004` にできる |
+| `DB_*`                                              | MySQL 接続情報                                                                                                   |
+| `REDIS_URL`                                         | Redis 接続文字列                                                                                                 |
+| `CACHE_TTL_SECONDS`                                 | 公開住人リストのキャッシュ秒数                                                                                   |
+| `UPLOAD_MAX_FILE_SIZE_MB`                           | 投稿画像のサイズ上限                                                                                             |
+| `PUBLIC_SITE_URL`                                   | 公開サイト URL。共有リンクとタイムカプセルメールに使う                                                           |
+| `VISITOR_KEY_SALT`                                  | 訪問者の点灯識別用ソルト                                                                                         |
+| `SMTP_*` / `CAPSULE_SEND_LIMIT`                     | タイムカプセルメールの送信設定                                                                                   |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_TOKEN` | 管理審査用の認証情報                                                                                             |
 
 長いソルトやパスワードを生成する例:
 
@@ -289,6 +291,7 @@ OmwStar/
 ├── map.html                   # 惑星マップ
 ├── timeline.html              # タイムライン
 ├── planet-wall.html           # 記念銀河
+├── earth-letters.html         # 地球からの手紙
 ├── momo.html                  # 摸摸鼠鼠
 ├── book.html                  # 鼠鼠絵本
 ├── submit.html                # 投稿
@@ -343,15 +346,15 @@ OmwStar/
 
 ## スクリプト
 
-| コマンド | 説明 |
-|------|------|
-| `npm run dev` | 完全なサイトを起動（MySQL / Redis に接続） |
-| `npm start` | 本番モードで起動 |
-| `npm run dev:static` | 静的プレビューのみ |
-| `npm run db:init` | データベース初期化 |
-| `npm run db:migrate` | スキーマ移行 |
-| `npm run send:time-capsules` | 期限が来たタイムカプセルメールを送信 |
-| `npm run check` | 基本構文チェック |
+| コマンド                     | 説明                                       |
+| ---------------------------- | ------------------------------------------ |
+| `npm run dev`                | 完全なサイトを起動（MySQL / Redis に接続） |
+| `npm start`                  | 本番モードで起動                           |
+| `npm run dev:static`         | 静的プレビューのみ                         |
+| `npm run db:init`            | データベース初期化                         |
+| `npm run db:migrate`         | スキーマ移行                               |
+| `npm run send:time-capsules` | 期限が来たタイムカプセルメールを送信       |
+| `npm run check`              | 基本構文チェック                           |
 
 ## ライセンス
 

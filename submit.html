@@ -24,9 +24,9 @@
 
   <main class="shell page-shell">
     <section class="page-hero" aria-labelledby="submit-title">
-      <p class="eyebrow"><span class="edition-dot" aria-hidden="true"></span> 一份要被温柔收下的故事</p>
+      <p class="eyebrow"><span class="edition-dot" aria-hidden="true"></span> 一份要被温柔收下的纪念</p>
       <h1 id="submit-title">把鼠鼠，<br>送到星球</h1>
-      <p class="lede">已经抵达鼠星的，会被轻轻记住；还在地球的，也可以先寄来一封信。提交后会先安静地等审核，通过后才会出现在纪念星河。</p>
+      <p class="lede">慢慢写就好。提交后会先安静地等审核，通过后才会出现在纪念星河。</p>
     </section>
 
     <section class="submit-layout" aria-label="玩家投稿">
@@ -58,14 +58,6 @@
           <h2>鼠鼠的基本信息</h2>
         </div>
         <div class="form-grid">
-          <label class="full-field presence-field">
-            <span>此刻它在哪里</span>
-            <select name="presence">
-              <option value="star">已经抵达鼠星</option>
-              <option value="earth">还在地球陪着我</option>
-            </select>
-            <small class="field-hint">鼠星居民会被纪念；地球来信是此刻的故事，不会被写成已经离开。</small>
-          </label>
           <label>
             <span>玩家昵称</span>
             <input name="playerName" required maxlength="20" placeholder="比如：奶盖的饲养员" />
@@ -94,9 +86,8 @@
               style="margin-top:6px;display:none" />
           </label>
           <label>
-            <span id="arrived-at-label">抵达鼠星日期</span>
+            <span>抵达鼠星日期</span>
             <input name="arrivedAt" type="date" required />
-            <small class="field-hint" id="arrived-at-hint">写下它抵达鼠星的日子。想念会在这里慢慢变成星光。</small>
           </label>
         </div>
 
@@ -174,7 +165,7 @@
         </div>
         <div class="form-grid">
           <label>
-            <span id="region-label">入驻鼠星的地区</span>
+            <span>入驻鼠星的地区</span>
             <select name="region">
               <option>月光谷</option>
               <option>瓜子环</option>
@@ -197,7 +188,7 @@
             <input name="color" type="color" value="#8fd2c8" />
           </label>
           <label class="full-field">
-            <span id="memory-label">鼠鼠和我的故事</span>
+            <span>鼠鼠和我的故事</span>
             <textarea name="memory" required maxlength="2000" rows="6"
               placeholder="写下你和鼠鼠之间最难忘的故事。它怎么来到你身边的？它有什么小习惯？它最喜欢做什么？那些闪闪发亮的小瞬间，都值得被记住……"></textarea>
           </label>
@@ -206,11 +197,11 @@
         <!-- 确认 -->
         <label class="consent-check">
           <input name="publicConsent" type="checkbox" />
-          <span id="public-consent-text">我同意将这份档案公开展示在纪念星河。未勾选将无法通过审核。</span>
+          <span>我同意将这份档案公开展示在纪念星河。未勾选将无法通过审核。</span>
         </label>
         <label class="consent-check">
           <input name="confirm" type="checkbox" required />
-          <span id="confirm-text">我确认以上信息真实，并理解提交后将进入待审核状态，审核通过后公开展示在纪念星河。</span>
+          <span>我确认以上信息真实，并理解提交后将进入待审核状态，审核通过后公开展示在纪念星河。</span>
         </label>
         <label class="consent-check">
           <input name="originalConfirm" type="checkbox" required />

@@ -7,8 +7,6 @@ const wallCardsEl = document.querySelector("#wall-cards");
 const wallStarCountEl = document.querySelector("#wall-star-count");
 const wallLightTotalEl = document.querySelector("#wall-light-total");
 const wallFilterButtons = [...document.querySelectorAll("[data-wall-filter]")];
-const wallPresenceButtons = [...document.querySelectorAll("[data-wall-presence]")];
-const wallListTitleEl = document.querySelector("#wall-list-title");
 const singleResidentEl = document.querySelector("#single-resident");
 const mapRegionEyebrowEl = document.querySelector("#map-region-eyebrow");
 const mapRegionTitleEl = document.querySelector("#map-region-title");
@@ -20,53 +18,6 @@ const guardianListEl = document.querySelector("#guardian-list");
 const lightsStorageKey = "shushu-planet.wall-lights.v1";
 const apiBase = "/api";
 const defaultRegion = "月光谷";
-
-function normalizePresence(value) {
-  return value === "earth" ? "earth" : "star";
-}
-
-function isEarthResident(memory) {
-  return normalizePresence(memory?.presence) === "earth";
-}
-
-function getPresenceCopy(memory = {}) {
-  const earth = isEarthResident(memory);
-  const name = memory.name || "它";
-  const playerName = memory.playerName || "一位玩家";
-
-  return {
-    earth,
-    key: earth ? "earth" : "star",
-    label: earth ? "地球来信" : "鼠星居民",
-    dateVerb: earth ? "来到我身边" : "抵达鼠星",
-    pageNoun: earth ? "故事页" : "纪念页",
-    ownerLine: earth ? `由 ${playerName} 从地球寄来` : `由 ${playerName} 送到鼠鼠星球`,
-    shareOpen: earth
-      ? `我在鼠鼠星球为「${name}」留下一封地球来信。`
-      : `我在鼠鼠星球为「${name}」点亮了一颗星。`,
-    shareClose: earth ? "愿你慢慢长大。" : "谢谢你来过我的世界。",
-    lightNoun: earth ? "陪伴灯" : "归家星灯",
-    lightButton: earth ? "点亮一盏陪伴灯" : "点亮归家星灯",
-    lightPressed: earth ? "陪伴灯已点亮" : "已点亮",
-    lightCountLabel: (count) => `${count} 盏${earth ? "陪伴灯" : "归家星灯"}`,
-    lightAlready: earth ? "这盏陪伴灯一直亮着。" : "这盏星灯一直亮着。",
-    lightSuccess: earth ? "陪伴灯已点亮，今天又被轻轻记住了一点。" : "星灯已点亮，它的归途又亮了一点。",
-    cardFooter: earth ? "愿你慢慢长大" : "谢谢你来过我的世界",
-    cardFilename: `鼠鼠星球-${name}-${earth ? "地球来信" : "纪念卡"}.png`,
-    worldTitle: earth ? "它在地球的今天" : "它在鼠星的今天",
-    ritualTitle: earth ? "陪伴小灯" : "归家星灯",
-    ritualLead: earth
-      ? "轻轻点亮一盏灯，告诉它：今天也被认真爱着。"
-      : "轻轻点亮一盏灯，告诉它：还有人记得这条回家的路。",
-    ritualIdle: earth ? "你将成为陪伴它的旅鼠之一。" : "你将成为点亮归途的旅鼠之一。",
-    notePlaceholder: earth
-      ? "例如：今天也要好好吃饭，慢慢长大。"
-      : "例如：在鼠星记得吃胖点，也要继续做快乐的小星星。",
-    capsulePlaceholder: earth
-      ? "一年后，如果你还想再看看今天的它，就回来读这封信。"
-      : "一年后，如果你还想它，就回来看看这颗星。",
-  };
-}
 
 // ---- 自定义下拉组件 ----
 function initCustomSelect(nativeSelect) {
@@ -198,7 +149,6 @@ const seedMemories = Array.isArray(window.shushuSeedMemories) ? window.shushuSee
 
 let memories = [];
 let wallActiveRegion = "all";
-let wallActivePresence = "all";
 let mapRegion = null;
 let apiResidentsLoaded = false;
 let apiResidentsSettled = false;
@@ -220,7 +170,6 @@ function normalizeMemory(memory) {
     name: memory.name || "未命名鼠鼠",
     nickname: memory.nickname || "新来的星星",
     region: memory.region || defaultRegion,
-    presence: normalizePresence(memory.presence),
     arrivedAt: arrivedAt?.toString().slice(0, 10),
     food: memory.food || "小零食",
     color: normalizeColor(memory.color),
@@ -392,7 +341,7 @@ function renderMap() {
   if (mapRegionEyebrowEl) mapRegionEyebrowEl.textContent = mapRegion;
   if (mapRegionTitleEl) mapRegionTitleEl.textContent = `住在${mapRegion}的鼠鼠们`;
   if (mapRegionDescEl) {
-    mapRegionDescEl.textContent = regionResidents.length故事
+    mapRegionDescEl.textContent = regionResidents.length
       ? `「${mapRegion}」目前有 ${regionResidents.length} 位居民。点卡片可以查看纪念页。`
       : `「${mapRegion}」暂时还没有居民入住。去星球居民页为它添加第一位鼠鼠吧。`;
   }
@@ -423,13 +372,12 @@ function renderMap() {
 }
 
 function createShareText(memory) {
-  const copy = getPresenceCopy(memory);
   const traits = memory.traits.length ? `它是${memory.traits.slice(0, 2).join("、")}的小星星，` : "";
   return [
-    copy.shareOpen,
+    `我在鼠鼠星球为「${memory.name}」点亮了一颗星。`,
     `${traits}最喜欢${memory.food}。`,
     memory.memory,
-    copy.shareClose,
+    "谢谢你来过我的世界。",
   ].join("\n");
 }
 
@@ -516,10 +464,9 @@ function downloadResidentCard(memory) {
   context.font = "900 84px sans-serif";
   context.fillText(memory.name, 450, 510);
 
-  const copy = getPresenceCopy(memory);
   context.fillStyle = "#687579";
   context.font = "700 28px sans-serif";
-  context.fillText(`${memory.nickname} · ${formatDate(memory.arrivedAt)} ${copy.dateVerb}`, 450, 565);
+  context.fillText(`${memory.nickname} · ${formatDate(memory.arrivedAt)} 抵达鼠星`, 450, 565);
 
   context.textAlign = "left";
   context.fillStyle = "#4d5b5f";
@@ -551,10 +498,10 @@ function downloadResidentCard(memory) {
   context.fillText("鼠鼠星球", 450, 1050);
   context.fillStyle = "#687579";
   context.font = "400 22px sans-serif";
-  context.fillText(copy.cardFooter, 450, 1086);
+  context.fillText("谢谢你来过我的世界", 450, 1086);
 
   const link = document.createElement("a");
-  link.download = copy.cardFilename;
+  link.download = `鼠鼠星球-${memory.name}-纪念卡.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
 }
@@ -590,19 +537,17 @@ async function lightResident(memory, countEl, buttonEl, statusEl) {
       method: "POST",
       body: JSON.stringify({}),
     });
-    const copy = getPresenceCopy(memory);
     memory.lightCount = Number(data.lightCount || memory.lightCount || 0);
-    countEl.textContent = copy.lightCountLabel(memory.lightCount);
-    buttonEl.textContent = data.alreadyLit ? "你已点亮过" : copy.lightPressed;
+    countEl.textContent = `${memory.lightCount} 盏归家星灯`;
+    buttonEl.textContent = data.alreadyLit ? "你已点亮过" : `第 ${memory.lightCount} 位点亮归途的旅鼠`;
     buttonEl.setAttribute("aria-pressed", "true");
-    if (statusEl) statusEl.textContent = data.alreadyLit ? copy.lightAlready : copy.lightSuccess;
+    if (statusEl) statusEl.textContent = data.alreadyLit ? "这盏星灯一直亮着。" : "星灯已点亮，它的归途又亮了一点。";
   } catch (error) {
-    const copy = getPresenceCopy(memory);
     const savedLights = getLightCount(memory.id);
     addLight(memory.id);
     const totalLights = Math.max(memory.lightCount || 0, savedLights + 1);
-    countEl.textContent = copy.lightCountLabel(totalLights);
-    buttonEl.textContent = copy.lightPressed;
+    countEl.textContent = `${totalLights} 盏归家星灯`;
+    buttonEl.textContent = "已点亮";
     buttonEl.setAttribute("aria-pressed", "true");
     if (statusEl) statusEl.textContent = "后端暂时不可用，已先在当前浏览器点亮。";
   }
@@ -661,7 +606,7 @@ async function submitResidentNote(event, memory, notesEl, statusEl) {
     const result = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/notes`, {
       method: "POST",
       body: JSON.stringify(payload),
-    });故事
+    });
     form.reset();
     statusEl.textContent = "便签已送去审核，通过后会贴在纪念页。";
     statusEl.className = "form-status success";
@@ -701,7 +646,6 @@ async function submitTimeCapsule(event, memory, statusEl) {
 }
 
 function createCard(memory) {
-  const copy = getPresenceCopy(memory);
   const safeName = escapeHtml(memory.name);
   const safeNickname = escapeHtml(memory.nickname);
   const safeRegion = escapeHtml(memory.region);
@@ -711,7 +655,7 @@ function createCard(memory) {
   const safeMemory = escapeHtml(memory.memory);
 
   const article = document.createElement("article");
-  article.className = `card presence-${copy.key}`;
+  article.className = "card";
   article.innerHTML = `
     <div class="card-top">
       <span class="avatar" style="background:${memory.color}" aria-hidden="true"></span>
@@ -719,7 +663,6 @@ function createCard(memory) {
         <h3>${safeName}</h3>
         <small>${safeNickname} · ${safeRegion}</small>
       </div>
-      <span class="presence-chip ${copy.key}">${copy.label}</span>
     </div>
     <ul class="tags">
       <li>${safePlayerName}</li>
@@ -728,7 +671,7 @@ function createCard(memory) {
     </ul>
     <p class="memory">${safeMemory}</p>
     <div class="card-actions">
-      <a class="button ghost" href="${getResidentPageUrl(memory.id)}">查看${copy.pageNoun}</a>
+      <a class="button ghost" href="${getResidentPageUrl(memory.id)}">查看纪念页</a>
     </div>
   `;
 
@@ -736,7 +679,6 @@ function createCard(memory) {
 }
 
 function createWallCard(memory, index) {
-  const copy = getPresenceCopy(memory);
   const safeName = escapeHtml(memory.name);
   const safeNickname = escapeHtml(memory.nickname);
   const safeRegion = escapeHtml(memory.region);
@@ -750,7 +692,7 @@ function createWallCard(memory, index) {
   const wasLit = savedLights > 0;
 
   const article = document.createElement("article");
-  article.className = `wall-card presence-${copy.key}${wasLit ? " lit" : ""}`;
+  article.className = `wall-card${wasLit ? " lit" : ""}`;
   article.innerHTML = `
     <div class="wall-card-glow" style="background:${memory.color}" aria-hidden="true"></div>
     <div class="card-top">
@@ -759,17 +701,16 @@ function createWallCard(memory, index) {
         <h3>${safeName}</h3>
         <small>${safeNickname} · ${safeRegion}</small>
       </div>
-      <span class="presence-chip ${copy.key}">${copy.label}</span>
     </div>
-    <p class="wall-owner">${escapeHtml(copy.ownerLine)}</p>
+    <p class="wall-owner">由 ${safePlayerName} 送到鼠鼠星球</p>
     <p class="memory">${safeMemory}</p>
     <ul class="tags">
       <li>爱吃 ${safeFood}</li>
       ${safeTraits.slice(0, 2).map((trait) => `<li>${trait}</li>`).join("")}
     </ul>
     <div class="wall-actions">
-      <span data-light-count>${copy.lightCountLabel(totalLights)}</span>
-      <button class="button ghost light-button" type="button" aria-pressed="${wasLit}">${wasLit ? copy.lightPressed : "点一盏灯"}</button>
+      <span data-light-count>${totalLights} 盏小灯</span>
+      <button class="button ghost light-button" type="button" aria-pressed="${wasLit}">${wasLit ? "已点亮" : "点一盏灯"}</button>
     </div>
   `;
 
@@ -781,8 +722,8 @@ function createWallCard(memory, index) {
     addLight(memory.id);
     const newTotal = totalLights + 1;
     lightButton.setAttribute("aria-pressed", "true");
-    lightButton.textContent = copy.lightPressed;
-    lightCountEl.textContent = copy.lightCountLabel(newTotal);
+    lightButton.textContent = "已点亮";
+    lightCountEl.textContent = `${newTotal} 盏小灯`;
     article.classList.add("lit");
     updateWallStats();
   });
@@ -824,11 +765,8 @@ function getWallMemories() {
     ? memories.filter((memory) => !memory.saved)
     : getSeedMemories();
 
-  return baseMemories.filter((memory) => {
-    const regionMatch = wallActiveRegion === "all" || memory.region === wallActiveRegion;
-    const presenceMatch = wallActivePresence === "all" || normalizePresence(memory.presence) === wallActivePresence;
-    return regionMatch && presenceMatch;
-  });
+  if (wallActiveRegion === "all") return baseMemories;
+  return baseMemories.filter((m) => m.region === wallActiveRegion);
 }
 
 function updateWallStats() {
@@ -853,35 +791,6 @@ function updateWallStats() {
   wallLightTotalEl.textContent = totalLights;
 }
 
-function getWallEmptyText() {
-  if (wallActivePresence === "earth") {
-    return wallActiveRegion === "all"
-      ? "还没有从地球寄来的故事。"
-      : `「${wallActiveRegion}」还没有地球来信。`;
-  }
-  if (wallActivePresence === "star") {
-    return wallActiveRegion === "all"
-      ? "纪念星河还没有点亮的小星星。"
-      : `「${wallActiveRegion}」星域还没有居民抵达。`;
-  }
-  return wallActiveRegion === "all"
-    ? "纪念星河还没有点亮的小星星。"
-    : `「${wallActiveRegion}」星域还没有故事。`;
-}
-
-function updateWallListTitle() {
-  if (!wallListTitleEl) return;
-  if (wallActivePresence === "earth") {
-    wallListTitleEl.textContent = "还在地球的来信";
-    return;
-  }
-  if (wallActivePresence === "star") {
-    wallListTitleEl.textContent = "已经抵达鼠星的小居民";
-    return;
-  }
-  wallListTitleEl.textContent = "星河里的鼠鼠们";
-}
-
 function setWallFilter(region) {
   wallActiveRegion = region;
   wallFilterButtons.forEach((btn) => {
@@ -892,28 +801,18 @@ function setWallFilter(region) {
   renderWall();
 }
 
-function setWallPresence(presence) {
-  wallActivePresence = presence;
-  wallPresenceButtons.forEach((btn) => {
-    const isActive = btn.dataset.wallPresence === presence;
-    btn.classList.toggle("active", isActive);
-    btn.setAttribute("aria-pressed", isActive.toString());
-  });
-  updateWallListTitle();
-  renderWall();
-}
-
 function renderWall() {
   if (!wallCardsEl) return;
 
   const wallMemories = getWallMemories();
   wallCardsEl.innerHTML = "";
-  updateWallListTitle();
 
   if (!wallMemories.length) {
     const empty = document.createElement("p");
     empty.className = "empty";
-    empty.textContent = getWallEmptyText();
+    empty.textContent = wallActiveRegion === "all"
+      ? "纪念星河还没有点亮的小星星。"
+      : `「${wallActiveRegion}」星域还没有居民抵达。`;
     wallCardsEl.append(empty);
   } else {
     wallCardsEl.append(...wallMemories.map((m, i) => createWallCard(m, i)));
@@ -931,7 +830,6 @@ function openResidentPage(id, shouldUpdateHash = true) {
   const memory = getMemoryById(id);
   if (!memory) return;
 
-  const copy = getPresenceCopy(memory);
   const safeName = escapeHtml(memory.name);
   const safeNickname = escapeHtml(memory.nickname);
   const safeRegion = escapeHtml(memory.region);
@@ -940,6 +838,9 @@ function openResidentPage(id, shouldUpdateHash = true) {
   const safeId = escapeHtml(memory.id);
   const safeTraits = memory.traits.map(escapeHtml);
   const safeMemory = escapeHtml(memory.memory);
+  const safeTomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const lightTotal = Math.max(Number(memory.lightCount || 0), getLightCount(memory.id));
+  const starCalendar = getMouseStarCalendar(memory.arrivedAt);
   const hasArchive = Boolean(document.querySelector("#archive"));
   const backHref = hasArchive ? "#archive" : "#planet-map";
   const backText = hasArchive ? "返回档案列表" : "返回星球地图";
@@ -952,9 +853,9 @@ function openResidentPage(id, shouldUpdateHash = true) {
         <span class="avatar large" style="background:${memory.color}" aria-hidden="true"></span>
       </div>
       <div class="resident-copy">
-        <p class="eyebrow">${safeRegion} · ${copy.label}</p>
+        <p class="eyebrow">${safeRegion}</p>
         <h2>${safeName}</h2>
-        <p class="resident-subtitle">${safeNickname} · ${safePlayerName} · ${formatDate(memory.arrivedAt)} ${copy.dateVerb}</p>
+        <p class="resident-subtitle">${safeNickname} · ${safePlayerName} · ${formatDate(memory.arrivedAt)} 抵达鼠星</p>
         <p class="memory">${safeMemory}</p>
         <ul class="tags">
           <li>爱吃 ${safeFood}</li>
@@ -1014,7 +915,6 @@ function renderSingleResidentPage() {
     return;
   }
 
-  const copy = getPresenceCopy(memory);
   const safeName = escapeHtml(memory.name);
   const safeNickname = escapeHtml(memory.nickname);
   const safeRegion = escapeHtml(memory.region);
@@ -1026,11 +926,8 @@ function renderSingleResidentPage() {
   const starCalendar = getMouseStarCalendar(memory.arrivedAt);
   const lightTotal = Math.max(Number(memory.lightCount || 0), getLightCount(memory.id));
   const safeTomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const worldLead = copy.earth
-    ? `${safeName} 此刻还在地球，也在「${safeRegion}」有一封安静的来信。人间的日子慢慢过，故事会先被这颗星球轻轻收着。`
-    : `按照鼠星历，${safeName} 正住在「${safeRegion}」的 ${escapeHtml(starCalendar.season)} 里。人间每过一个月，鼠星就翻过一天；想念不是倒计时，而是一盏慢慢亮着的灯。`;
 
-  document.title = `鼠鼠星球 | ${memory.name} 的${copy.pageNoun}`;
+  document.title = `鼠鼠星球 | ${memory.name} 的纪念页`;
   singleResidentEl.innerHTML = `
     <section class="single-hero" aria-labelledby="single-resident-title">
       <a class="back-link" href="./planet-wall.html">返回纪念星河</a>
@@ -1038,17 +935,17 @@ function renderSingleResidentPage() {
         <span class="avatar memorial-avatar" style="background:${memory.color}" aria-hidden="true"></span>
       </div>
       <div class="single-copy">
-        <p class="eyebrow">${safeRegion} · ${copy.label}</p>
+        <p class="eyebrow">${safeRegion}</p>
         <h1 id="single-resident-title">${safeName}</h1>
-        <p class="resident-subtitle">${safeNickname} · ${safePlayerName} · ${formatDate(memory.arrivedAt)} ${copy.dateVerb}</p>
+        <p class="resident-subtitle">${safeNickname} · ${safePlayerName} · ${formatDate(memory.arrivedAt)} 抵达鼠星</p>
         <p class="star-calendar-pill">${escapeHtml(starCalendar.label)} · ${escapeHtml(starCalendar.rule)}</p>
         <p class="single-memory">${safeMemory}</p>
         <ul class="tags">
           <li>爱吃 ${safeFood}</li>
           ${safeTraits.map((trait) => `<li>${trait}</li>`).join("")}
         </ul>
-        <div class="share-actions" aria-label="${copy.pageNoun}分享操作">
-          <button class="button primary resident-light-button" id="resident-light" type="button" aria-pressed="false">${copy.lightButton}</button>
+        <div class="share-actions" aria-label="纪念页分享操作">
+          <button class="button primary resident-light-button" id="resident-light" type="button" aria-pressed="false">点亮归家星灯</button>
           <button class="button primary" id="copy-share" type="button">复制分享文案</button>
           <button class="button ghost" id="download-card" type="button">生成纪念卡图片</button>
         </div>
@@ -1058,7 +955,7 @@ function renderSingleResidentPage() {
       </div>
     </section>
 
-    <section class="memorial-note" aria-label="${safeName} 的故事">
+    <section class="memorial-note" aria-label="${safeName} 的纪念内容">
       <article>
         <span>所在星域</span>
         <strong>${safeRegion}</strong>
@@ -1076,7 +973,7 @@ function renderSingleResidentPage() {
         <strong>#${safeId}</strong>
       </article>
       <article>
-        <span>${copy.lightNoun}</span>
+        <span>归家星灯</span>
         <strong id="resident-light-count">${lightTotal} 盏</strong>
       </article>
       <article>
@@ -1087,9 +984,9 @@ function renderSingleResidentPage() {
 
     <section class="world-panel" aria-labelledby="world-title">
       <div>
-        <p class="eyebrow">${copy.earth ? "Earth Letter" : "Mouse Star Lore"}</p>
-        <h2 id="world-title">${copy.worldTitle}</h2>
-        <p>${worldLead}</p>
+        <p class="eyebrow">Mouse Star Lore</p>
+        <h2 id="world-title">它在鼠星的今天</h2>
+        <p>按照鼠星历，${safeName} 正住在「${safeRegion}」的 ${escapeHtml(starCalendar.season)} 里。人间每过一个月，鼠星就翻过一天；想念不是倒计时，而是一盏慢慢亮着的灯。</p>
       </div>
       <div class="world-orbit" aria-hidden="true">
         <span></span>
@@ -1098,14 +995,14 @@ function renderSingleResidentPage() {
 
     <section class="ritual-panel" aria-labelledby="ritual-title">
       <div>
-        <p class="eyebrow">${copy.earth ? "Companion Light" : "Home Star"}</p>
-        <h2 id="ritual-title">${copy.ritualTitle}</h2>
-        <p>${copy.ritualLead}</p>
+        <p class="eyebrow">Home Star</p>
+        <h2 id="ritual-title">归家星灯</h2>
+        <p>轻轻点亮一盏灯，告诉它：还有人记得这条回家的路。</p>
       </div>
       <div class="ritual-stars" aria-hidden="true">
         <span></span><span></span><span></span><span></span><span></span>
       </div>
-      <p class="form-status" id="ritual-status" aria-live="polite">${copy.ritualIdle}</p>
+      <p class="form-status" id="ritual-status" aria-live="polite">你将成为点亮归途的旅鼠之一。</p>
     </section>
 
     <section class="memory-board" aria-labelledby="notes-title">
@@ -1126,7 +1023,7 @@ function renderSingleResidentPage() {
         </label>
         <label class="full-field">
           <span>便签内容</span>
-          <textarea name="message" maxlength="280" required placeholder="${copy.notePlaceholder}"></textarea>
+          <textarea name="message" maxlength="280" required placeholder="例如：在鼠星记得吃胖点，也要继续做快乐的小星星。"></textarea>
         </label>
         <div class="form-actions">
           <button class="button primary" type="submit">贴上便签</button>
@@ -1152,7 +1049,7 @@ function renderSingleResidentPage() {
         </label>
         <label class="full-field">
           <span>写给未来的话</span>
-          <textarea name="message" maxlength="2000" required placeholder="${copy.capsulePlaceholder}"></textarea>
+          <textarea name="message" maxlength="2000" required placeholder="一年后，如果你还想它，就回来看看这颗星。"></textarea>
         </label>
         <div class="form-actions">
           <button class="button primary" type="submit">封存时间胶囊</button>
@@ -1185,7 +1082,7 @@ function renderSingleResidentPage() {
   });
   singleResidentEl.querySelector("#download-card")?.addEventListener("click", () => {
     downloadResidentCard(memory);
-    statusEl.textContent = copy.earth ? "地球来信卡片已生成。" : "纪念卡图片已生成。";
+    statusEl.textContent = "纪念卡图片已生成。";
   });
   singleResidentEl.querySelector("#resident-note-form")?.addEventListener("submit", (event) => {
     submitResidentNote(event, memory, notesEl, noteStatusEl);
@@ -1221,12 +1118,10 @@ async function renderSubmissionPreview(event) {
   const arrivedAt = data.get("arrivedAt").toString();
   const memory = data.get("memory").toString().trim();
   const publicConsent = data.get("publicConsent") === "on";
-  const presence = data.get("presence") === "earth" ? "earth" : "star";
-  const dateLabel = presence === "earth" ? "相遇日期" : "抵达日期";
 
   if (!playerName || !name || !arrivedAt || !memory) {
     submissionStatusEl.hidden = false;
-    submissionStatusEl.textContent = `请填写玩家昵称、鼠鼠名字、${dateLabel}和故事。`;
+    submissionStatusEl.textContent = "请填写玩家昵称、鼠鼠名字、抵达日期和故事。";
     submissionStatusEl.className = "form-status error";
     return;
   }
@@ -1252,7 +1147,6 @@ async function renderSubmissionPreview(event) {
       : `已保存（编号 ${result.id}），但你未勾选同意公开展示，管理员无法审核通过。`;
     submissionStatusEl.className = "form-status success";
     submissionForm.reset();
-    syncSubmissionPresenceCopy();
     // 清除照片预览
     document.querySelectorAll(".photo-drop").forEach((drop) => {
       const input = drop.querySelector('input[type="file"]');
@@ -1268,44 +1162,6 @@ async function renderSubmissionPreview(event) {
     submissionStatusEl.hidden = false;
     submissionStatusEl.textContent = error.message || "后端暂时不可用，请稍后再试。";
     submissionStatusEl.className = "form-status error";
-  }
-}
-
-function syncSubmissionPresenceCopy() {
-  if (!submissionForm) return;
-
-  const presence = submissionForm.elements.presence?.value === "earth" ? "earth" : "star";
-  const earth = presence === "earth";
-  const dateLabel = document.querySelector("#arrived-at-label");
-  const dateHint = document.querySelector("#arrived-at-hint");
-  const regionLabel = document.querySelector("#region-label");
-  const memoryLabel = document.querySelector("#memory-label");
-  const memoryField = submissionForm.elements.memory;
-  const consentText = document.querySelector("#public-consent-text");
-  const confirmText = document.querySelector("#confirm-text");
-
-  if (dateLabel) dateLabel.textContent = earth ? "来到我身边的日子" : "抵达鼠星日期";
-  if (dateHint) {
-    dateHint.textContent = earth
-      ? "写下你们相遇的日子。这封来信会先被星球轻轻收着。"
-      : "写下它抵达鼠星的日子。想念会在这里慢慢变成星光。";
-  }
-  if (regionLabel) regionLabel.textContent = earth ? "想寄往的星域" : "入驻鼠星的地区";
-  if (memoryLabel) memoryLabel.textContent = earth ? "此刻想分享的故事" : "鼠鼠和我的故事";
-  if (memoryField) {
-    memoryField.placeholder = earth
-      ? "写下此刻的它。它怎么来到你身边的？有什么小习惯？今天最想被记住的瞬间是什么？"
-      : "写下你和鼠鼠之间最难忘的故事。它怎么来到你身边的？它有什么小习惯？它最喜欢做什么？那些闪闪发亮的小瞬间，都值得被记住……";
-  }
-  if (consentText) {
-    consentText.textContent = earth
-      ? "我同意将这封地球来信公开展示在纪念星河。未勾选将无法通过审核。"
-      : "我同意将这份档案公开展示在纪念星河。未勾选将无法通过审核。";
-  }
-  if (confirmText) {
-    confirmText.textContent = earth
-      ? "我确认以上信息真实，并理解提交后将进入待审核状态，审核通过后会作为地球来信公开展示。"
-      : "我确认以上信息真实，并理解提交后将进入待审核状态，审核通过后公开展示在纪念星河。";
   }
 }
 
@@ -1337,7 +1193,7 @@ function renderTimeline() {
     : seedMemories.map(normalizeMemory);
 
   if (!residents.length) {
-    timelineContainerEl.innerHTML = `<p class="empty">时光轴上还没有记录。等故事被收下之后，这里会亮起来。</p>`;
+    timelineContainerEl.innerHTML = `<p class="empty">时光轴上还没有记录。等鼠鼠们抵达鼠星之后，这里会亮起来。</p>`;
     return;
   }
 
@@ -1361,7 +1217,6 @@ function renderTimeline() {
     const entries = groups.get(year);
     entries.forEach((m, i) => {
       const side = i % 2 === 0 ? "left" : "right";
-      const copy = getPresenceCopy(m);
       const safeName = escapeHtml(m.name);
       const safeNickname = escapeHtml(m.nickname);
       const safeRegion = escapeHtml(m.region);
@@ -1372,7 +1227,7 @@ function renderTimeline() {
         <div class="timeline-entry ${side}">
           <div class="timeline-dot" style="background:${m.color}" aria-hidden="true"></div>
           <a class="timeline-card" href="./resident.html?id=${encodeURIComponent(m.id)}">
-            <span class="timeline-date">${formatDate(m.arrivedAt)} · ${copy.label}</span>
+            <span class="timeline-date">${formatDate(m.arrivedAt)}</span>
             <div class="timeline-card-top">
               <span class="avatar" style="background:${m.color}" aria-hidden="true"></span>
               <div>
@@ -1399,10 +1254,6 @@ function renderAll() {
 
 wallFilterButtons.forEach((button) => {
   button.addEventListener("click", () => setWallFilter(button.dataset.wallFilter));
-});
-
-wallPresenceButtons.forEach((button) => {
-  button.addEventListener("click", () => setWallPresence(button.dataset.wallPresence));
 });
 
 submissionForm?.addEventListener("submit", renderSubmissionPreview);
@@ -1581,9 +1432,6 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
     });
   }
 })();
-submissionForm?.elements.presence?.addEventListener("change", syncSubmissionPresenceCopy);
-syncSubmissionPresenceCopy();
-
 
 // 初始化自定义下拉组件（所有 select 统一替换原生外观）
 document.querySelectorAll("select").forEach((sel) => initCustomSelect(sel));

@@ -144,6 +144,7 @@ function normalizeSubmissionPayload(body) {
     nickname: cleanText(body.nickname, 40, "新来的星星"),
     breed: cleanText(body.breed, 40, ""),
     region: validRegions.includes(body.region) ? body.region : "月光谷",
+    presence: body.presence === "earth" ? "earth" : "star",
     arrivedAt: cleanText(body.arrivedAt, 10),
     food: cleanText(body.food, 40, "小零食"),
     color: /^#[0-9a-fA-F]{6}$/.test(body.color || "") ? body.color : "#8fd2c8",
@@ -160,9 +161,11 @@ function normalizeSubmissionPayload(body) {
   if (!payload.playerName) return { error: "请填写玩家昵称。" };
   if (!payload.name) return { error: "请填写鼠鼠名字。" };
   if (!payload.arrivedAt || Number.isNaN(Date.parse(payload.arrivedAt))) {
-    return { error: "请填写有效的抵达鼠星日期。" };
+    return {
+      error: payload.presence === "earth" ? "请填写有效的相遇日期。" : "请填写有效的抵达鼠星日期。",
+    };
   }
-  if (!payload.memory) return { error: "请写下一段纪念。" };
+  if (!payload.memory) return { error: "请写下一段故事。" };
 
   return { payload };
 }

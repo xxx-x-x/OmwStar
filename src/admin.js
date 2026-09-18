@@ -95,13 +95,14 @@ function renderSubmission(submission) {
         <div>
           <p class="eyebrow">${escapeHtml(submission.status)}</p>
           <h2>${escapeHtml(submission.name)}</h2>
-          <p class="admin-meta">玩家：${escapeHtml(submission.playerName)} · ${escapeHtml(submission.region)} · ${formatDate(submission.arrivedAt)}</p>
+          <p class="admin-meta">玩家：${escapeHtml(submission.playerName)} · ${escapeHtml(submission.region)} · ${submission.presence === "earth" ? "地球来信" : "鼠星居民"} · ${formatDate(submission.arrivedAt)}</p>
         </div>
         <span class="admin-consent ${submission.publicConsent ? "ok" : "warn"}">${submission.publicConsent ? "已同意公开" : "未同意公开"}</span>
       </div>
       <div class="admin-card-grid">
         <div>
           <dl class="admin-fields">
+            <div><dt>身份</dt><dd>${submission.presence === "earth" ? "地球来信" : "鼠星居民"}</dd></div>
             <div><dt>昵称</dt><dd>${escapeHtml(submission.nickname || "-")}</dd></div>
             <div><dt>品种</dt><dd>${escapeHtml(submission.breed || "-")}</dd></div>
             <div><dt>爱吃</dt><dd>${escapeHtml(submission.food || "-")}</dd></div>

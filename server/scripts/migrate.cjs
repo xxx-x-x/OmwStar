@@ -16,6 +16,8 @@ const migrations = [
     { table: "residents", col: "bilibili", after: "xiaohongshu", type: "VARCHAR(40) NOT NULL DEFAULT ''" },
     { table: "submissions", col: "spread_image", after: "photos", type: "VARCHAR(255) NOT NULL DEFAULT ''" },
     { table: "residents", col: "spread_image", after: "photos", type: "VARCHAR(255) NOT NULL DEFAULT ''" },
+    { table: "submissions", col: "presence", after: "region", type: "ENUM('star', 'earth') NOT NULL DEFAULT 'star'" },
+    { table: "residents", col: "presence", after: "region", type: "ENUM('star', 'earth') NOT NULL DEFAULT 'star'" },
 ];
 
 const tableMigrations = [

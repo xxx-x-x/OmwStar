@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const { getPool } = require("./db.cjs");
 const { deleteKeys, getJson, setJson } = require("./cache.cjs");
 
-const publicResidentsCacheKey = "residents:public:v1";
+const publicResidentsCacheKey = "residents:public:v2";
 
 function createPublicId() {
   return crypto.randomBytes(10).toString("hex");
@@ -19,6 +19,10 @@ function parseJsonField(value, fallback) {
   }
 }
 
+function normalizePresence(value) {
+  return value === "earth" ? "earth" : "star";
+}
+
 function toResident(row) {
   return {
     id: row.public_id,
@@ -28,6 +32,7 @@ function toResident(row) {
     nickname: row.nickname,
     breed: row.breed || "",
     region: row.region,
+    presence: normalizePresence(row.presence),
     arrivedAt: row.arrived_at,
     food: row.food,
     color: row.color,
@@ -69,6 +74,7 @@ function toSubmission(row) {
     nickname: row.nickname,
     breed: row.breed || "",
     region: row.region,
+    presence: normalizePresence(row.presence),
     arrivedAt: row.arrived_at,
     food: row.food,
     color: row.color,
@@ -317,7 +323,7 @@ async function createTimeCapsule(publicId, payload) {
 
 async function listDueTimeCapsules(limit = 50) {
   const [rows] = await getPool().execute(
-    `SELECT c.*, r.public_id AS resident_public_id, r.name AS resident_name, r.nickname, r.arrived_at, r.memory
+    `SELECT c.*, r.public_id AS resident_public_id, r.name AS resident_name, r.nickname, r.arrived_at, r.memory, r.presence
        FROM time_capsules c
        INNER JOIN residents r ON r.id = c.resident_id
       WHERE c.status = 'pending'
@@ -338,6 +344,7 @@ async function listDueTimeCapsules(limit = 50) {
     residentName: row.resident_name,
     residentNickname: row.nickname,
     residentArrivedAt: row.arrived_at,
+    residentPresence: normalizePresence(row.presence),
     residentMemory: row.memory,
   }));
 }
@@ -355,9 +362,9 @@ async function createSubmission(payload) {
   const publicId = createPublicId();
   await getPool().execute(
     `INSERT INTO submissions
-      (public_id, status, player_name, name, nickname, breed, region, arrived_at, food, color, traits, memory, photos, spread_image, public_consent, douyin, xiaohongshu, bilibili)
+      (public_id, status, player_name, name, nickname, breed, region, presence, arrived_at, food, color, traits, memory, photos, spread_image, public_consent, douyin, xiaohongshu, bilibili)
      VALUES
-      (:publicId, 'pending', :playerName, :name, :nickname, :breed, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), :spreadImage, :publicConsent, :douyin, :xiaohongshu, :bilibili)`,
+      (:publicId, 'pending', :playerName, :name, :nickname, :breed, :region, :presence, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), :spreadImage, :publicConsent, :douyin, :xiaohongshu, :bilibili)`,
     {
       publicId,
       playerName: payload.playerName,
@@ -365,6 +372,7 @@ async function createSubmission(payload) {
       nickname: payload.nickname,
       breed: payload.breed || "",
       region: payload.region,
+      presence: payload.presence === "earth" ? "earth" : "star",
       arrivedAt: payload.arrivedAt,
       food: payload.food,
       color: payload.color,
@@ -450,9 +458,9 @@ async function reviewSubmission(publicId, action, reviewerNote = "") {
     const residentPublicId = createPublicId();
     const [residentResult] = await connection.execute(
       `INSERT INTO residents
-        (public_id, name, nickname, breed, player_name, region, arrived_at, food, color, traits, memory, photos, spread_image, visibility, source, published_at, douyin, xiaohongshu, bilibili)
+        (public_id, name, nickname, breed, player_name, region, presence, arrived_at, food, color, traits, memory, photos, spread_image, visibility, source, published_at, douyin, xiaohongshu, bilibili)
        VALUES
-        (:residentPublicId, :name, :nickname, :breed, :playerName, :region, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), :spreadImage, 'public', 'submission', NOW(), :douyin, :xiaohongshu, :bilibili)`,
+        (:residentPublicId, :name, :nickname, :breed, :playerName, :region, :presence, :arrivedAt, :food, :color, CAST(:traits AS JSON), :memory, CAST(:photos AS JSON), :spreadImage, 'public', 'submission', NOW(), :douyin, :xiaohongshu, :bilibili)`,
       {
         residentPublicId,
         name: submission.name,
@@ -460,6 +468,7 @@ async function reviewSubmission(publicId, action, reviewerNote = "") {
         breed: submission.breed || "",
         playerName: submission.player_name,
         region: submission.region,
+        presence: submission.presence === "earth" ? "earth" : "star",
         arrivedAt: submission.arrived_at,
         food: submission.food,
         color: submission.color,

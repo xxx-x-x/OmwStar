@@ -148,6 +148,7 @@ CAPSULE_SEND_LIMIT=50
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=replace-with-a-strong-admin-password
 ADMIN_TOKEN=replace-with-a-long-random-admin-token
+ADMIN_SECONDARY_PASSWORD=replace-with-a-different-strong-secondary-password
 ```
 
 | 変数                                                | 説明                                                                                                             |

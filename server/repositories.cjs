@@ -389,16 +389,218 @@ async function createSubmission(payload) {
   return publicId;
 }
 
-async function listSubmissions(status = "pending") {
+async function listSubmissions(status = "pending", archiveId = "") {
+  const normalizedArchiveId = archiveId.toString().trim();
   const [rows] = await getPool().execute(
-    `SELECT *
-       FROM submissions
-      WHERE status = :status
-      ORDER BY created_at ASC
+    `SELECT s.*, r.public_id AS resident_public_id
+       FROM submissions s
+       LEFT JOIN residents r ON r.id = s.resident_id
+      WHERE (:archiveId <> '' OR s.status = :status)
+        AND (
+          :archiveId = ''
+          OR s.public_id = :archiveId
+          OR r.public_id = :archiveId
+          OR CAST(s.id AS CHAR) = :archiveId
+          OR CAST(r.id AS CHAR) = :archiveId
+        )
+      ORDER BY s.created_at ASC
       LIMIT 200`,
-    { status },
+    { status, archiveId: normalizedArchiveId },
   );
-  return rows.map(toSubmission);
+  return rows.map((row) => ({
+    ...toSubmission(row),
+    residentPublicId: row.resident_public_id || "",
+  }));
+}
+
+async function getAdminSubmission(publicId) {
+  const [rows] = await getPool().execute(
+    `SELECT s.*, r.public_id AS resident_public_id
+       FROM submissions s
+       LEFT JOIN residents r ON r.id = s.resident_id
+      WHERE s.public_id = :publicId
+      LIMIT 1`,
+    { publicId },
+  );
+  if (!rows[0]) return null;
+  return {
+    ...toSubmission(rows[0]),
+    residentPublicId: rows[0].resident_public_id || "",
+  };
+}
+
+async function updateSubmission(publicId, payload) {
+  const pool = getPool();
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    const [submissionRows] = await connection.execute(
+      `SELECT s.*, r.public_id AS resident_public_id
+         FROM submissions s
+         LEFT JOIN residents r ON r.id = s.resident_id
+        WHERE s.public_id = :publicId
+        FOR UPDATE`,
+      { publicId },
+    );
+    const submission = submissionRows[0];
+
+    if (!submission) {
+      await connection.rollback();
+      return null;
+    }
+
+    const values = {
+      publicId,
+      playerName: payload.playerName,
+      name: payload.name,
+      nickname: payload.nickname,
+      breed: payload.breed || "",
+      region: payload.region,
+      presence: payload.presence === "earth" ? "earth" : "star",
+      arrivedAt: payload.arrivedAt,
+      food: payload.food,
+      color: payload.color,
+      traits: JSON.stringify(payload.traits),
+      memory: payload.memory,
+      photos: JSON.stringify(payload.photos || []),
+      spreadImage: payload.spreadImage || "",
+      publicConsent: payload.publicConsent ? 1 : 0,
+      douyin: payload.douyin || "",
+      xiaohongshu: payload.xiaohongshu || "",
+      bilibili: payload.bilibili || "",
+    };
+
+    await connection.execute(
+      `UPDATE submissions
+          SET player_name = :playerName,
+              name = :name,
+              nickname = :nickname,
+              breed = :breed,
+              region = :region,
+              presence = :presence,
+              arrived_at = :arrivedAt,
+              food = :food,
+              color = :color,
+              traits = CAST(:traits AS JSON),
+              memory = :memory,
+              photos = CAST(:photos AS JSON),
+              spread_image = :spreadImage,
+              public_consent = :publicConsent,
+              douyin = :douyin,
+              xiaohongshu = :xiaohongshu,
+              bilibili = :bilibili
+        WHERE public_id = :publicId`,
+      values,
+    );
+
+    if (submission.resident_id) {
+      await connection.execute(
+        `UPDATE residents
+            SET player_name = :playerName,
+                name = :name,
+                nickname = :nickname,
+                breed = :breed,
+                region = :region,
+                presence = :presence,
+                arrived_at = :arrivedAt,
+                food = :food,
+                color = :color,
+                traits = CAST(:traits AS JSON),
+                memory = :memory,
+                photos = CAST(:photos AS JSON),
+                spread_image = :spreadImage,
+                douyin = :douyin,
+                xiaohongshu = :xiaohongshu,
+                bilibili = :bilibili
+          WHERE id = :residentId`,
+        { ...values, residentId: submission.resident_id },
+      );
+    }
+
+    await connection.commit();
+    if (submission.resident_public_id) {
+      await deleteKeys([publicResidentsCacheKey, `resident:public:${submission.resident_public_id}`]);
+    }
+
+    return {
+      ...toSubmission({
+        ...submission,
+        player_name: values.playerName,
+        name: values.name,
+        nickname: values.nickname,
+        breed: values.breed,
+        region: values.region,
+        presence: values.presence,
+        arrived_at: values.arrivedAt,
+        food: values.food,
+        color: values.color,
+        traits: values.traits,
+        memory: values.memory,
+        photos: values.photos,
+        spread_image: values.spreadImage,
+        public_consent: values.publicConsent,
+        douyin: values.douyin,
+        xiaohongshu: values.xiaohongshu,
+        bilibili: values.bilibili,
+      }),
+      residentPublicId: submission.resident_public_id || "",
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function deleteSubmission(publicId) {
+  const pool = getPool();
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    const [rows] = await connection.execute(
+      `SELECT s.id, s.resident_id, s.photos, s.spread_image, r.public_id AS resident_public_id
+         FROM submissions s
+         LEFT JOIN residents r ON r.id = s.resident_id
+        WHERE s.public_id = :publicId
+        FOR UPDATE`,
+      { publicId },
+    );
+    const submission = rows[0];
+    if (!submission) {
+      await connection.rollback();
+      return null;
+    }
+
+    await connection.execute(
+      `DELETE FROM submissions WHERE id = :submissionId`,
+      { submissionId: submission.id },
+    );
+    if (submission.resident_id) {
+      await connection.execute(
+        `DELETE FROM residents WHERE id = :residentId`,
+        { residentId: submission.resident_id },
+      );
+    }
+    await connection.commit();
+
+    const residentPublicId = submission.resident_public_id || "";
+    await deleteKeys([
+      publicResidentsCacheKey,
+      ...(residentPublicId ? [`resident:public:${residentPublicId}`] : []),
+    ]);
+    return {
+      photos: parseJsonField(submission.photos, []),
+      spreadImage: submission.spread_image || "",
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 async function reviewSubmission(publicId, action, reviewerNote = "") {
@@ -513,10 +715,12 @@ async function reviewSubmission(publicId, action, reviewerNote = "") {
 
 module.exports = {
   createSubmission,
+  deleteSubmission,
   addResidentLight,
   createResidentNote,
   createTimeCapsule,
   getPublicResident,
+  getAdminSubmission,
   listAdminResidentNotes,
   listDueTimeCapsules,
   listResidentNotes,
@@ -525,4 +729,5 @@ module.exports = {
   markTimeCapsuleSent,
   reviewResidentNote,
   reviewSubmission,
+  updateSubmission,
 };

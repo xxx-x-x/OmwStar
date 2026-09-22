@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex,nofollow" />
     <title>鼠鼠星球 | 审核后台</title>
+    <link rel="icon" href="./assets/水瓶耗耗.png" type="image/png" />
     <link rel="stylesheet" href="./src/styles.css" />
 </head>
 
@@ -62,6 +63,14 @@
                         <option value="rejected">已拒绝</option>
                     </select>
                 </label>
+                <form id="admin-archive-search" class="admin-archive-search" role="search">
+                    <label class="search-field">
+                        <span>档案编号</span>
+                        <input id="admin-archive-id" type="search" maxlength="32" placeholder="投稿或公开档案编号" />
+                    </label>
+                    <button class="button ghost" type="submit">检索</button>
+                    <button id="admin-clear-search" class="button ghost" type="button" hidden>清除</button>
+                </form>
                 <div class="admin-toolbar-actions">
                     <button id="admin-refresh" class="button ghost" type="button">刷新列表</button>
                     <button id="admin-logout" class="button ghost" type="button">退出登录</button>

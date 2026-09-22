@@ -5,6 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>鼠鼠星球 | 投稿</title>
+  <link rel="icon" href="./assets/水瓶耗耗.png" type="image/png" />
   <link rel="stylesheet" href="./src/styles.css" />
 </head>
 
@@ -28,6 +29,15 @@
       <p class="eyebrow"><span class="edition-dot" aria-hidden="true"></span> 一份要被温柔收下的故事</p>
       <h1 id="submit-title">把鼠鼠，<br>送到星球</h1>
       <p class="lede">已经抵达鼠星的，会被轻轻记住在纪念星河；还在地球的，可以先寄到地球来信。提交后会先安静地等审核，通过后才会公开展示。</p>
+    </section>
+
+    <section id="admin-edit-banner" class="admin-edit-banner" hidden aria-labelledby="admin-edit-title">
+      <div>
+        <p class="eyebrow">Admin Edit</p>
+        <h2 id="admin-edit-title">管理员编辑档案</h2>
+        <p id="admin-edit-record" class="admin-record-ids"></p>
+      </div>
+      <a class="button ghost" href="./_review.html">返回审核后台</a>
     </section>
 
     <section class="submit-layout" aria-label="玩家投稿">
@@ -74,6 +84,10 @@
           <label>
             <span>鼠鼠名字</span>
             <input name="name" required maxlength="16" placeholder="比如：奶盖" />
+          </label>
+          <label>
+            <span>鼠鼠昵称</span>
+            <input name="nickname" maxlength="40" placeholder="比如：盖盖、小奶团" />
           </label>
           <label>
             <span>鼠鼠种类</span>
@@ -218,9 +232,19 @@
           <span>我承诺以上文字和照片均为本人原创或已获得授权，不侵犯他人权益。</span>
         </label>
 
+        <section id="admin-secondary-panel" class="admin-secondary-panel" hidden>
+          <label>
+            <span>管理员二级密码</span>
+            <input id="admin-secondary-password" type="password" autocomplete="current-password"
+              placeholder="保存或删除前必须再次验证" />
+          </label>
+          <p>二级密码只用于本次保存或删除，不会存储在浏览器中。</p>
+        </section>
+
         <div class="form-actions">
-          <button class="button primary" type="submit">提交到鼠鼠星球</button>
-          <button class="button ghost" type="reset">清空草稿</button>
+          <button id="submission-submit" class="button primary" type="submit">提交到鼠鼠星球</button>
+          <button id="submission-reset" class="button ghost" type="reset">清空草稿</button>
+          <button id="admin-delete-submission" class="button ghost danger" type="button" hidden>删除当前档案</button>
         </div>
         <p id="submission-status" class="form-status" aria-live="polite" hidden></p>
       </form>

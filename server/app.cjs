@@ -10,6 +10,8 @@ const {
   createResidentNote,
   createSubmission,
   createTimeCapsule,
+  deleteSubmission,
+  getAdminSubmission,
   getPublicResident,
   listAdminResidentNotes,
   listResidentNotes,
@@ -17,6 +19,7 @@ const {
   listSubmissions,
   reviewResidentNote,
   reviewSubmission,
+  updateSubmission,
 } = require("./repositories.cjs");
 
 dotenv.config();
@@ -317,6 +320,21 @@ function requireAdmin(request, response, next) {
   next();
 }
 
+function requireAdminSecondaryPassword(request, response, next) {
+  const secondaryPassword = request.get("x-admin-secondary-password") || "";
+  const expectedPassword = process.env.ADMIN_SECONDARY_PASSWORD || "";
+
+  if (!expectedPassword) {
+    response.status(503).json({ error: "管理员二级密码尚未配置。" });
+    return;
+  }
+  if (!safeCompare(secondaryPassword, expectedPassword)) {
+    response.status(403).json({ error: "管理员二级密码不正确。" });
+    return;
+  }
+  next();
+}
+
 app.post("/api/admin/login", asyncRoute(async (request, response) => {
   const username = cleanText(request.body?.username, 80);
   const password = request.body?.password == null ? "" : request.body.password.toString();
@@ -469,8 +487,101 @@ app.post("/api/submissions", upload.fields([
 }));
 
 app.get("/api/admin/submissions", requireAdmin, asyncRoute(async (request, response) => {
-  const submissions = await listSubmissions(request.query.status || "pending");
+  const archiveId = cleanText(request.query.archiveId, 32);
+  const submissions = await listSubmissions(request.query.status || "pending", archiveId);
   response.json({ submissions });
+}));
+
+app.get("/api/admin/submissions/:id", requireAdmin, asyncRoute(async (request, response) => {
+  const submission = await getAdminSubmission(request.params.id);
+  if (!submission) {
+    response.status(404).json({ error: "没有找到这份档案。" });
+    return;
+  }
+  response.json({ submission });
+}));
+
+app.put("/api/admin/submissions/:id", requireAdmin, requireAdminSecondaryPassword, upload.fields([
+  { name: "photos", maxCount: 3 },
+  { name: "spreadImage", maxCount: 1 },
+]), asyncRoute(async (request, response) => {
+  const photoFiles = request.files?.photos || [];
+  const spreadFiles = request.files?.spreadImage || [];
+  const allFiles = [...photoFiles, ...spreadFiles];
+  const currentSubmission = await getAdminSubmission(request.params.id);
+  if (!currentSubmission) {
+    await removeUploadedFiles(allFiles);
+    response.status(404).json({ error: "没有找到这份档案。" });
+    return;
+  }
+
+  const photoError = await validateUploadedImages(photoFiles);
+  if (photoError) {
+    await removeUploadedFiles(spreadFiles);
+    response.status(400).json({ error: photoError });
+    return;
+  }
+  const spreadError = await validateUploadedImages(spreadFiles, {
+    requiredSize: { width: 1760, height: 1240 },
+  });
+  if (spreadError) {
+    await removeUploadedFiles(allFiles);
+    response.status(400).json({ error: spreadError });
+    return;
+  }
+
+  let existingPhotos = [];
+  try {
+    existingPhotos = JSON.parse(request.body.existingPhotos || "[]");
+  } catch {
+    existingPhotos = currentSubmission.photos;
+  }
+  const currentPhotos = new Set(currentSubmission.photos);
+  existingPhotos = existingPhotos.filter((item) => currentPhotos.has(item));
+  const requestedSpreadImage = cleanText(request.body.existingSpreadImage, 255, "");
+  const body = {
+    ...request.body,
+    photos: [
+      ...existingPhotos,
+      ...photoFiles.map((file) => `/uploads/${file.filename}`),
+    ].slice(0, 3),
+    spreadImage: spreadFiles[0]
+      ? `/uploads/${spreadFiles[0].filename}`
+      : requestedSpreadImage === currentSubmission.spreadImage ? requestedSpreadImage : "",
+    publicConsent: request.body.publicConsent === "on" || request.body.publicConsent === "true",
+  };
+  const { error, payload } = normalizeSubmissionPayload(body);
+
+  if (error) {
+    await removeUploadedFiles(allFiles);
+    response.status(400).json({ error });
+    return;
+  }
+
+  const submission = await updateSubmission(request.params.id, payload);
+  if (!submission) {
+    response.status(404).json({ error: "没有找到这份档案。" });
+    return;
+  }
+
+  const retainedUploads = new Set([...payload.photos, payload.spreadImage]);
+  const replacedUploads = [...currentSubmission.photos, currentSubmission.spreadImage]
+    .filter((item) => item?.startsWith("/uploads/") && !retainedUploads.has(item));
+  await Promise.all(replacedUploads.map((item) => fs.promises.unlink(path.join(root, item)).catch(() => {})));
+
+  response.json({ submission });
+}));
+
+app.delete("/api/admin/submissions/:id", requireAdmin, requireAdminSecondaryPassword, asyncRoute(async (request, response) => {
+  const deleted = await deleteSubmission(request.params.id);
+  if (!deleted) {
+    response.status(404).json({ error: "没有找到这份档案。" });
+    return;
+  }
+
+  const uploadPaths = [...deleted.photos, deleted.spreadImage].filter((item) => item?.startsWith("/uploads/"));
+  await Promise.all(uploadPaths.map((item) => fs.promises.unlink(path.join(root, item)).catch(() => {})));
+  response.json({ message: "档案及其关联内容已删除。" });
 }));
 
 app.get("/api/admin/notes", requireAdmin, asyncRoute(async (request, response) => {

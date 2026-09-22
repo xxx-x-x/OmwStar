@@ -9,6 +9,9 @@ const reviewStatus = document.querySelector("#admin-review-status");
 const submissionsEl = document.querySelector("#admin-submissions");
 const contentTypeFilter = document.querySelector("#admin-content-type");
 const statusFilter = document.querySelector("#admin-status-filter");
+const archiveSearchForm = document.querySelector("#admin-archive-search");
+const archiveIdInput = document.querySelector("#admin-archive-id");
+const clearSearchButton = document.querySelector("#admin-clear-search");
 const refreshButton = document.querySelector("#admin-refresh");
 const logoutButton = document.querySelector("#admin-logout");
 
@@ -96,6 +99,7 @@ function renderSubmission(submission) {
           <p class="eyebrow">${escapeHtml(submission.status)}</p>
           <h2>${escapeHtml(submission.name)}</h2>
           <p class="admin-meta">玩家：${escapeHtml(submission.playerName)} · ${escapeHtml(submission.region)} · ${submission.presence === "earth" ? "地球来信" : "鼠星居民"} · ${formatDate(submission.arrivedAt)}</p>
+          <p class="admin-record-ids">投稿编号：${escapeHtml(submission.id)}${submission.residentPublicId ? ` · 档案编号：${escapeHtml(submission.residentPublicId)}` : ""}</p>
         </div>
         <span class="admin-consent ${submission.publicConsent ? "ok" : "warn"}">${submission.publicConsent ? "已同意公开" : "未同意公开"}</span>
       </div>
@@ -123,6 +127,7 @@ function renderSubmission(submission) {
         <textarea rows="2" maxlength="255" ${isPending ? "" : "disabled"}>${escapeHtml(submission.reviewerNote || "")}</textarea>
       </label>
       <div class="form-actions admin-card-actions">
+        <a class="button ghost" href="./submit.html?adminEdit=${encodeURIComponent(submission.id)}">编辑档案</a>
         <button class="button primary" type="button" data-action="approve" ${isPending ? "" : "disabled"}>通过</button>
         <button class="button ghost" type="button" data-action="reject" ${isPending ? "" : "disabled"}>拒绝</button>
       </div>
@@ -156,16 +161,28 @@ function getContentType() {
     return contentTypeFilter?.value || "submissions";
 }
 
+function syncArchiveSearchVisibility() {
+    const isSubmissionMode = getContentType() === "submissions";
+    archiveSearchForm.hidden = !isSubmissionMode;
+    if (!isSubmissionMode) {
+        archiveIdInput.value = "";
+        clearSearchButton.hidden = true;
+    }
+}
+
 async function loadSubmissions() {
     const status = statusFilter.value || "pending";
+    const archiveId = archiveIdInput?.value.trim() || "";
     setStatus(reviewStatus, "正在读取投稿...");
     submissionsEl.innerHTML = "";
 
     try {
-        const data = await adminFetch(`${adminApiBase}/submissions?status=${encodeURIComponent(status)}`);
+        const params = new URLSearchParams({ status });
+        if (archiveId) params.set("archiveId", archiveId);
+        const data = await adminFetch(`${adminApiBase}/submissions?${params}`);
         const submissions = Array.isArray(data.submissions) ? data.submissions : [];
-        submissionsEl.innerHTML = submissions.length ? submissions.map(renderSubmission).join("") : "<p class=\"empty\">当前没有这个状态的投稿。</p>";
-        setStatus(reviewStatus, `已加载 ${submissions.length} 条投稿。`, "success");
+        submissionsEl.innerHTML = submissions.length ? submissions.map(renderSubmission).join("") : `<p class="empty">${archiveId ? "没有找到这个编号的档案。" : "当前没有这个状态的投稿。"}</p>`;
+        setStatus(reviewStatus, archiveId ? `编号检索完成，找到 ${submissions.length} 条档案。` : `已加载 ${submissions.length} 条投稿。`, "success");
     } catch (error) {
         if (error.message.includes("审核权限")) {
             clearAdminToken();
@@ -283,8 +300,21 @@ submissionsEl?.addEventListener("click", (event) => {
     }
 });
 
-contentTypeFilter?.addEventListener("change", loadCurrentContent);
+contentTypeFilter?.addEventListener("change", () => {
+    syncArchiveSearchVisibility();
+    loadCurrentContent();
+});
 statusFilter?.addEventListener("change", loadCurrentContent);
+archiveSearchForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    clearSearchButton.hidden = !archiveIdInput.value.trim();
+    loadSubmissions();
+});
+clearSearchButton?.addEventListener("click", () => {
+    archiveIdInput.value = "";
+    clearSearchButton.hidden = true;
+    loadSubmissions();
+});
 refreshButton?.addEventListener("click", loadCurrentContent);
 logoutButton?.addEventListener("click", () => {
     clearAdminToken();
@@ -292,8 +322,10 @@ logoutButton?.addEventListener("click", () => {
 });
 
 if (getAdminToken()) {
+    syncArchiveSearchVisibility();
     showReviewPanel();
     loadCurrentContent();
 } else {
+    syncArchiveSearchVisibility();
     showLoginPanel();
 }

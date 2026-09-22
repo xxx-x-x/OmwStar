@@ -2350,7 +2350,18 @@ textarea:focus {
 }
 
 .admin-toolbar {
-  grid-template-columns: minmax(220px, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(150px, 0.7fr)) minmax(260px, 1.4fr) auto;
+  align-items: end;
+}
+
+.admin-archive-search {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+}
+
+.admin-archive-search .search-field {
+  flex: 1;
 }
 
 .admin-toolbar-actions {
@@ -2389,6 +2400,14 @@ textarea:focus {
 .admin-memory {
   color: var(--muted);
   line-height: 1.75;
+}
+
+.admin-record-ids {
+  margin: 6px 0 0;
+  color: #526064;
+  font-family: monospace;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
 }
 
 .admin-consent {
@@ -2469,6 +2488,42 @@ textarea:focus {
 .admin-note textarea:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.admin-edit-banner {
+  margin-bottom: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.76);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.admin-edit-banner h2 {
+  margin: 2px 0 0;
+}
+
+.admin-secondary-panel {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid rgba(139, 58, 42, 0.3);
+  border-radius: 8px;
+  background: rgba(233, 143, 115, 0.08);
+}
+
+.admin-secondary-panel label {
+  display: grid;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.admin-secondary-panel p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .submission-panel {
@@ -3273,7 +3328,9 @@ body:not(.momo-experience-page) .site-footer {
   }
 
   .admin-card-head,
-  .admin-toolbar-actions {
+  .admin-toolbar-actions,
+  .admin-archive-search,
+  .admin-edit-banner {
     align-items: stretch;
     flex-direction: column;
   }

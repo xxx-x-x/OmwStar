@@ -148,6 +148,7 @@ CAPSULE_SEND_LIMIT=50
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=replace-with-a-strong-admin-password
 ADMIN_TOKEN=replace-with-a-long-random-admin-token
+ADMIN_SECONDARY_PASSWORD=replace-with-a-different-strong-secondary-password
 ```
 
 | 变量                                                | 说明                                                                                |
@@ -160,7 +161,8 @@ ADMIN_TOKEN=replace-with-a-long-random-admin-token
 | `PUBLIC_SITE_URL`                                   | 对外站点地址，用于分享链接和时间胶囊邮件                                            |
 | `VISITOR_KEY_SALT`                                  | 访客点灯标识盐值                                                                    |
 | `SMTP_*` / `CAPSULE_SEND_LIMIT`                     | 时间胶囊邮件发送配置                                                                |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_TOKEN` | 管理审核凭证                                                                        |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_TOKEN` | 管理审核登录凭证                                                                    |
+| `ADMIN_SECONDARY_PASSWORD`                          | 编辑保存或删除档案时再次验证的独立二级密码                                          |
 
 生成较长的随机盐值和口令：
 

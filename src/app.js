@@ -19,6 +19,19 @@ const guardianListEl = document.querySelector("#guardian-list");
 const lightsStorageKey = "shushu-planet.wall-lights.v1";
 const apiBase = "/api";
 const defaultRegion = "月光谷";
+const adminStorageKey = "shushu-planet.admin-token.v1";
+const adminEditId = new URLSearchParams(location.search).get("adminEdit") || "";
+let adminEditRecord = null;
+let adminExistingPhotos = [];
+let adminExistingSpreadImage = "";
+
+function getAdminToken() {
+  try {
+    return sessionStorage.getItem(adminStorageKey) || "";
+  } catch {
+    return "";
+  }
+}
 
 function normalizePresence(value) {
   return value === "earth" ? "earth" : "star";
@@ -292,6 +305,15 @@ function formatDate(dateValue) {
     month: "long",
     day: "numeric",
   }).format(new Date(dateValue));
+}
+
+function formatDateInput(dateValue) {
+  if (!dateValue) return "";
+  const match = dateValue.toString().match(/^\d{4}-\d{2}-\d{2}/);
+  if (match) return match[0];
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
 }
 
 function getMouseStarCalendar(dateValue) {
@@ -1237,6 +1259,8 @@ async function renderSubmissionPreview(event) {
   if (!submissionForm || !submissionStatusEl) return;
 
   const data = new FormData(submissionForm);
+  const customBreed = submissionForm.elements.breedCustom?.value?.trim();
+  if (customBreed) data.set("breed", customBreed);
   const playerName = data.get("playerName").toString().trim();
   const name = data.get("name").toString().trim();
   const arrivedAt = data.get("arrivedAt").toString();
@@ -1257,6 +1281,31 @@ async function renderSubmissionPreview(event) {
   submissionStatusEl.className = "form-status";
 
   try {
+    if (adminEditRecord) {
+      const secondaryPassword = document.querySelector("#admin-secondary-password")?.value || "";
+      if (!secondaryPassword) {
+        throw new Error("请输入管理员二级密码后再保存。");
+      }
+      data.set("existingPhotos", JSON.stringify(adminExistingPhotos.filter(Boolean)));
+      data.set("existingSpreadImage", adminExistingSpreadImage);
+      data.set("publicConsent", submissionForm.elements.publicConsent?.checked ? "true" : "false");
+      const response = await fetch(`${apiBase}/admin/submissions/${encodeURIComponent(adminEditRecord.id)}`, {
+        method: "PUT",
+        headers: {
+          "x-admin-token": getAdminToken(),
+          "x-admin-secondary-password": secondaryPassword,
+        },
+        body: data,
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "档案保存失败。");
+      submissionStatusEl.textContent = "档案已保存，公开页面也已同步更新。";
+      submissionStatusEl.className = "form-status success";
+      adminEditRecord = result.submission || adminEditRecord;
+      document.querySelector("#admin-secondary-password").value = "";
+      return;
+    }
+
     const response = await fetch(`${apiBase}/submissions`, {
       method: "POST",
       body: data,
@@ -1290,6 +1339,136 @@ async function renderSubmissionPreview(event) {
     submissionStatusEl.textContent = error.message || "后端暂时不可用，请稍后再试。";
     submissionStatusEl.className = "form-status error";
   }
+}
+
+function setSubmissionField(name, value) {
+  const field = submissionForm?.elements[name];
+  if (!field) return;
+  field.value = value == null ? "" : value;
+  field.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function setAdminPhotoPreview(field, url) {
+  const drop = field?.closest(".photo-drop");
+  if (!drop || !url) return;
+  const preview = drop.querySelector(".photo-preview");
+  const placeholder = drop.querySelector(".photo-placeholder");
+  const removeButton = drop.querySelector(".photo-remove");
+  preview.src = url;
+  preview.hidden = false;
+  placeholder.hidden = true;
+  removeButton.hidden = false;
+}
+
+function fillAdminSubmission(record) {
+  adminEditRecord = record;
+  adminExistingPhotos = Array.isArray(record.photos) ? [...record.photos] : [];
+  adminExistingSpreadImage = record.spreadImage || "";
+  setSubmissionField("presence", record.presence);
+  setSubmissionField("playerName", record.playerName);
+  setSubmissionField("name", record.name);
+  setSubmissionField("arrivedAt", formatDateInput(record.arrivedAt));
+  setSubmissionField("breed", record.breed);
+  setSubmissionField("nickname", record.nickname);
+  setSubmissionField("douyin", record.douyin);
+  setSubmissionField("xiaohongshu", record.xiaohongshu);
+  setSubmissionField("bilibili", record.bilibili);
+  setSubmissionField("region", record.region);
+  setSubmissionField("food", record.food);
+  setSubmissionField("traits", (record.traits || []).join("，"));
+  setSubmissionField("color", record.color || "#8fd2c8");
+  setSubmissionField("memory", record.memory);
+  if (submissionForm.elements.publicConsent) submissionForm.elements.publicConsent.checked = Boolean(record.publicConsent);
+  ["confirm", "originalConfirm"].forEach((name) => {
+    const field = submissionForm.elements[name];
+    if (field) {
+      field.checked = true;
+      field.disabled = true;
+    }
+  });
+
+  const category = document.querySelector("#breed-category");
+  const breedSelect = document.querySelector("#breed-select");
+  const breedCustom = document.querySelector("#breed-custom");
+  if (category && breedSelect) {
+    const categoryOptions = [...category.options];
+    const matchingCategory = categoryOptions.find((option) => option.value && record.breed && record.breed.includes(option.value.split("（")[0]));
+    category.value = matchingCategory?.value || "其他";
+    category.dispatchEvent(new Event("change", { bubbles: true }));
+    if (category.value === "其他" && breedCustom) {
+      breedCustom.value = record.breed || "";
+      breedCustom.dispatchEvent(new Event("input", { bubbles: true }));
+    } else {
+      breedSelect.value = record.breed || "";
+      breedSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+
+  document.querySelectorAll('.photo-field:not(.spread-field) input[type="file"]').forEach((field, index) => {
+    if (adminExistingPhotos[index]) setAdminPhotoPreview(field, adminExistingPhotos[index]);
+  });
+  const spreadInput = document.querySelector(".spread-field input[type=\"file\"]");
+  if (adminExistingSpreadImage) setAdminPhotoPreview(spreadInput, adminExistingSpreadImage);
+  syncSubmissionPresenceCopy();
+  document.querySelector("#admin-edit-banner").hidden = false;
+  document.querySelector("#admin-edit-record").textContent = `投稿编号：${record.id}${record.residentPublicId ? ` · 档案编号：${record.residentPublicId}` : ""}`;
+  document.querySelector("#admin-secondary-panel").hidden = false;
+  document.querySelector("#admin-delete-submission").hidden = false;
+  document.querySelector("#submission-submit").textContent = "保存管理员修改";
+  document.querySelector("#submission-reset").hidden = true;
+  document.querySelector("#public-consent-text").closest(".consent-check").hidden = true;
+  document.title = `鼠鼠星球 | 编辑 ${record.name}`;
+}
+
+async function loadAdminSubmission() {
+  if (!adminEditId || !submissionForm) return;
+  const token = getAdminToken();
+  if (!token) {
+    submissionStatusEl.hidden = false;
+    submissionStatusEl.textContent = "请先从审核后台登录，再打开编辑页面。";
+    submissionStatusEl.className = "form-status error";
+    submissionForm.querySelectorAll("input, select, textarea, button").forEach((field) => { field.disabled = true; });
+    return;
+  }
+  try {
+    const response = await fetch(`${apiBase}/admin/submissions/${encodeURIComponent(adminEditId)}`, {
+      headers: { "x-admin-token": token },
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "档案读取失败。");
+    fillAdminSubmission(result.submission);
+  } catch (error) {
+    submissionStatusEl.hidden = false;
+    submissionStatusEl.textContent = error.message;
+    submissionStatusEl.className = "form-status error";
+  }
+}
+
+async function deleteAdminSubmission() {
+  if (!adminEditRecord) return;
+  if (!window.confirm(`确定删除「${adminEditRecord.name}」吗？\n这会同时删除公开档案、便签、点灯和时间胶囊，且无法恢复。`)) return;
+  const secondaryPassword = document.querySelector("#admin-secondary-password")?.value || "";
+  if (!secondaryPassword) {
+    submissionStatusEl.hidden = false;
+    submissionStatusEl.textContent = "请输入管理员二级密码后再删除。";
+    submissionStatusEl.className = "form-status error";
+    return;
+  }
+  const response = await fetch(`${apiBase}/admin/submissions/${encodeURIComponent(adminEditRecord.id)}`, {
+    method: "DELETE",
+    headers: {
+      "x-admin-token": getAdminToken(),
+      "x-admin-secondary-password": secondaryPassword,
+    },
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    submissionStatusEl.hidden = false;
+    submissionStatusEl.textContent = result.error || "删除失败。";
+    submissionStatusEl.className = "form-status error";
+    return;
+  }
+  location.href = "./_review.html";
 }
 
 function syncSubmissionPresenceCopy() {
@@ -1459,6 +1638,14 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
     }
     if (!file) return;
 
+    if (adminEditRecord) {
+      if (drop.closest(".spread-field")) adminExistingSpreadImage = "";
+      else {
+        const index = Number(input.dataset.photoIndex);
+        adminExistingPhotos[index] = "";
+      }
+    }
+
     const requiredSize = input.dataset.requiredSize;
     const showPreview = () => {
       const reader = new FileReader();
@@ -1521,6 +1708,13 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
       }
       if (placeholder) placeholder.hidden = false;
       if (removeBtn) removeBtn.hidden = true;
+      if (adminEditRecord) {
+        if (drop.closest(".spread-field")) adminExistingSpreadImage = "";
+        else {
+          const index = Number(input.dataset.photoIndex);
+          adminExistingPhotos[index] = "";
+        }
+      }
     });
   }
 
@@ -1603,6 +1797,14 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
 })();
 submissionForm?.elements.presence?.addEventListener("change", syncSubmissionPresenceCopy);
 syncSubmissionPresenceCopy();
+document.querySelector("#admin-delete-submission")?.addEventListener("click", () => {
+  deleteAdminSubmission().catch((error) => {
+    submissionStatusEl.hidden = false;
+    submissionStatusEl.textContent = error.message || "删除失败。";
+    submissionStatusEl.className = "form-status error";
+  });
+});
+loadAdminSubmission();
 
 
 // 初始化自定义下拉组件（所有 select 统一替换原生外观）

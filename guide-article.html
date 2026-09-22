@@ -4,12 +4,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>鼠鼠星球 | 地球来信</title>
+  <meta name="description" content="鼠鼠星球照护手册文章：阅读站方指南与精选分享。" />
+  <title>鼠鼠星球 | 照护文章</title>
   <link rel="icon" href="./assets/水瓶耗耗.png" type="image/png" />
   <link rel="stylesheet" href="./src/styles.css" />
+  <link rel="stylesheet" href="./src/guide.css" />
 </head>
 
-<body class="earth-letters-page" data-wall-presence="earth">
+<body class="guide-page" data-guide-view="article">
   <header class="topbar">
     <a class="brand" href="./index.html">鼠鼠星球</a>
     <nav class="topnav" aria-label="主导航">
@@ -17,36 +19,27 @@
       <a href="./map.html">星球地图</a>
       <a href="./timeline.html">时光轴</a>
       <a href="./planet-wall.html">纪念星河</a>
-      <a class="active" href="./earth-letters.html" aria-current="page">地球来信</a>
+      <a href="./earth-letters.html">地球来信</a>
       <a href="./momo.html">摸摸鼠鼠</a>
       <a href="./book.html">鼠鼠绘本</a>
-        <a href="./guide.html">照护手册</a>
+      <a class="active" href="./guide.html" aria-current="page">照护手册</a>
       <a href="./submit.html">投稿</a>
     </nav>
   </header>
 
-  <main class="shell page-shell">
-    <section class="page-hero wall-hero" aria-labelledby="wall-title">
-      <p class="eyebrow">Earth Letters</p>
-      <h1 id="wall-title">地球来信</h1>
-      <p class="lede">
-        还在地球陪着你的鼠鼠，也可以先把今天的故事寄到这里。这里不是纪念页，只是一封被轻轻收下的来信——愿它慢慢长大。
-      </p>
-      <div class="wall-stats-bar" id="wall-stats-bar" aria-label="来信统计">
-        <span><strong id="wall-star-count">0</strong> 封来信</span>
-        <span class="wall-stats-divider" aria-hidden="true">·</span>
-        <span><strong id="wall-light-total">0</strong> 盏陪伴灯被点亮</span>
-      </div>
-    </section>
-
-    <section class="wall-section" aria-labelledby="wall-list-title">
-      <div class="section-heading wall-section-head">
+  <main class="shell page-shell guide-shell">
+    <a class="guide-back" href="./guide.html">← 返回照护手册</a>
+    <article id="guide-article" class="guide-article" aria-live="polite">
+      <p>正在加载文章……</p>
+    </article>
+    <section id="guide-related" class="guide-section guide-related" aria-labelledby="related-title" hidden>
+      <div class="guide-heading">
         <div>
-          <p class="eyebrow">Letters from Earth</p>
-          <h2 id="wall-list-title">还在地球的来信</h2>
+          <p class="eyebrow">More to read</p>
+          <h2 id="related-title">接着读</h2>
         </div>
       </div>
-      <div id="wall-cards" class="wall-cards" aria-live="polite"></div>
+      <div id="guide-related-cards" class="guide-cards"></div>
     </section>
   </main>
 
@@ -63,9 +56,8 @@
           height="16" />晋公网安备14042702000117号</a>
     </div>
   </footer>
-
-  <script src="./data/memories.js"></script>
-  <script src="./src/app.js"></script>
+  <script src="./data/guides.js"></script>
+  <script src="./src/guide.js"></script>
 </body>
 
 </html>

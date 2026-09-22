@@ -122,6 +122,15 @@ textarea {
   }
 }
 
+@media (min-width: 901px) and (max-width: 1180px) {
+  body:not(.momo-experience-page) .topnav {
+    position: static;
+    width: auto;
+    max-width: calc(100% - 125px);
+    transform: none;
+  }
+}
+
 .shell {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;

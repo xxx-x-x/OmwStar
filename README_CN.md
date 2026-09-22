@@ -44,26 +44,35 @@
 - **轻仪式互动** - 归家星灯、匿名回忆便签、时间胶囊邮件
 - **摸摸鼠鼠** - 可捏、可拖、可挠痒的互动体验页
 - **鼠鼠绘本** - 可翻页的绘本画册
+- **鼠鼠照护手册** - 站方维护的新手路线、基础照护提纲与精选分享入口，不开放教程投稿
 - **图片上传** - 投稿支持 JPG / PNG / WebP / GIF，默认单文件不超过 2MB
 - **管理审核 API** - 审核投稿和便签，未审核内容不会进入公开星河
 - **Redis 缓存** - 公开居民列表带 TTL 缓存，减轻数据库压力
 
 ## 页面入口
 
-| 页面     | 路径                                         | 说明                                    |
-| -------- | -------------------------------------------- | --------------------------------------- |
-| 首页     | [`index.html`](./index.html)                 | 星球入口、概览数据和守护者展示          |
-| 星球地图 | [`map.html`](./map.html)                     | 3D 可旋转的鼠星与地球                   |
-| 时光轴   | [`timeline.html`](./timeline.html)           | 按抵达日期排列                          |
-| 纪念星河 | [`planet-wall.html`](./planet-wall.html)     | 审核通过的鼠星居民墙                    |
-| 地球来信 | [`earth-letters.html`](./earth-letters.html) | 还在地球的公开来信                      |
-| 摸摸鼠鼠 | [`momo.html`](./momo.html)                   | 轻互动体验                              |
-| 鼠鼠绘本 | [`book.html`](./book.html)                   | 翻页画册                                |
-| 投稿     | [`submit.html`](./submit.html)               | 玩家提交纪念档案                        |
-| 纪念页   | [`resident.html`](./resident.html)           | 单只鼠鼠详情，例如 `resident.html?id=1` |
-| 关于我们 | [`about.html`](./about.html)                 | 项目介绍                                |
-| 隐私政策 | [`privacy.html`](./privacy.html)             | 隐私说明                                |
-| 用户协议 | [`terms.html`](./terms.html)                 | 使用条款                                |
+| 页面     | 路径                                         | 说明                                              |
+| -------- | -------------------------------------------- | ------------------------------------------------- |
+| 首页     | [`index.html`](./index.html)                 | 星球入口、概览数据和守护者展示                    |
+| 星球地图 | [`map.html`](./map.html)                     | 3D 可旋转的鼠星与地球                             |
+| 时光轴   | [`timeline.html`](./timeline.html)           | 按抵达日期排列                                    |
+| 纪念星河 | [`planet-wall.html`](./planet-wall.html)     | 审核通过的鼠星居民墙                              |
+| 地球来信 | [`earth-letters.html`](./earth-letters.html) | 还在地球的公开来信                                |
+| 摸摸鼠鼠 | [`momo.html`](./momo.html)                   | 轻互动体验                                        |
+| 鼠鼠绘本 | [`book.html`](./book.html)                   | 翻页画册                                          |
+| 照护手册 | [`guide.html`](./guide.html)                 | 搜索、分类与新手阅读路线                          |
+| 照护文章 | [`guide-article.html`](./guide-article.html) | 单篇详情，例如 `guide-article.html?id=first-week` |
+| 投稿     | [`submit.html`](./submit.html)               | 玩家提交纪念档案                                  |
+| 纪念页   | [`resident.html`](./resident.html)           | 单只鼠鼠详情，例如 `resident.html?id=1`           |
+| 关于我们 | [`about.html`](./about.html)                 | 项目介绍                                          |
+| 隐私政策 | [`privacy.html`](./privacy.html)             | 隐私说明                                          |
+| 用户协议 | [`terms.html`](./terms.html)                 | 使用条款                                          |
+
+### 照护手册内容维护
+
+手册内容集中在 [`data/guides.js`](./data/guides.js)，页面由 [`src/guide.js`](./src/guide.js) 渲染。新增站方指南时使用唯一 `id`，并填写分类、风险等级、作者、收录日期、最近核查日期、正文和参考资料。`beginnerPath` 与 `relatedIds` 只引用已存在的文章 ID。
+
+当前内容是基于已核实网页的中文原创整理，共覆盖准备、环境、饮食、互动、清洁、沙浴、健康和就医等主题。整理时合并重复建议、删除商品推荐，并在每篇文章中保留来源、作者/审核者和原文更新时间；具体数字存在来源差异时会明确标注，不擅自合并为统一标准。精选分享应使用 `type: "curated"`，保留作者、出处、站方摘要、推荐语与原文链接；未获授权不复制原文全文或图片。健康文章只提供照护参考，不能替代异宠兽医诊断与治疗。教程不接收用户投稿，现有投稿入口仍只用于鼠鼠档案。内容需定期复核，当前页面中的核查日期为 `2026-09-22`。
 
 ## 技术栈
 

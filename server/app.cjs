@@ -174,6 +174,13 @@ function normalizeSubmissionPayload(body) {
 }
 
 function getVisitorKey(request) {
+  const clientVisitorId = request.get("x-visitor-id") || "";
+  if (/^[A-Za-z0-9-]{16,100}$/.test(clientVisitorId)) {
+    return crypto.createHash("sha256")
+      .update(`${clientVisitorId}|${process.env.VISITOR_KEY_SALT || "shushu-planet"}`)
+      .digest("hex");
+  }
+
   const raw = [
     request.ip,
     request.get("user-agent") || "",
@@ -567,7 +574,7 @@ app.put("/api/admin/submissions/:id", requireAdmin, requireAdminSecondaryPasswor
   const retainedUploads = new Set([...payload.photos, payload.spreadImage]);
   const replacedUploads = [...currentSubmission.photos, currentSubmission.spreadImage]
     .filter((item) => item?.startsWith("/uploads/") && !retainedUploads.has(item));
-  await Promise.all(replacedUploads.map((item) => fs.promises.unlink(path.join(root, item)).catch(() => {})));
+  await Promise.all(replacedUploads.map((item) => fs.promises.unlink(path.join(root, item)).catch(() => { })));
 
   response.json({ submission });
 }));
@@ -580,7 +587,7 @@ app.delete("/api/admin/submissions/:id", requireAdmin, requireAdminSecondaryPass
   }
 
   const uploadPaths = [...deleted.photos, deleted.spreadImage].filter((item) => item?.startsWith("/uploads/"));
-  await Promise.all(uploadPaths.map((item) => fs.promises.unlink(path.join(root, item)).catch(() => {})));
+  await Promise.all(uploadPaths.map((item) => fs.promises.unlink(path.join(root, item)).catch(() => { })));
   response.json({ message: "档案及其关联内容已删除。" });
 }));
 

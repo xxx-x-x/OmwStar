@@ -16,7 +16,8 @@ const mapResidentsEl = document.querySelector("#map-residents");
 const residentDetailEl = document.querySelector("#resident-detail");
 const timelineContainerEl = document.querySelector("#timeline-container");
 const guardianListEl = document.querySelector("#guardian-list");
-const lightsStorageKey = "shushu-planet.wall-lights.v1";
+const visitorIdStorageKey = "shushu-planet.visitor-id.v1";
+const lightsStorageKey = "shushu-planet.lit-residents.v2";
 const apiBase = "/api";
 const defaultRegion = "月光谷";
 const adminStorageKey = "shushu-planet.admin-token.v1";
@@ -263,6 +264,46 @@ async function fetchJson(url, options) {
   }
 
   return data;
+}
+
+function getVisitorId() {
+  try {
+    const saved = localStorage.getItem(visitorIdStorageKey);
+    if (saved) return saved;
+    const visitorId = crypto.randomUUID();
+    localStorage.setItem(visitorIdStorageKey, visitorId);
+    return visitorId;
+  } catch {
+    return `temporary-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+}
+
+function getLitResidents() {
+  try {
+    return JSON.parse(localStorage.getItem(lightsStorageKey) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function hasLitResident(memoryId) {
+  return Boolean(getLitResidents()[memoryId]);
+}
+
+function rememberLitResident(memoryId) {
+  const litResidents = getLitResidents();
+  litResidents[memoryId] = true;
+  try {
+    localStorage.setItem(lightsStorageKey, JSON.stringify(litResidents));
+  } catch { /* 忽略存储错误 */ }
+}
+
+function getLightRequestOptions() {
+  return {
+    method: "POST",
+    headers: { "X-Visitor-Id": getVisitorId() },
+    body: JSON.stringify({}),
+  };
 }
 
 async function loadApiResidents() {
@@ -646,28 +687,21 @@ async function copyResidentShareText(memory, statusEl) {
 }
 
 async function lightResident(memory, countEl, buttonEl, statusEl) {
+  if (hasLitResident(memory.id)) return;
   buttonEl.disabled = true;
 
   try {
-    const data = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/lights`, {
-      method: "POST",
-      body: JSON.stringify({}),
-    });
+    const data = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/lights`, getLightRequestOptions());
     const copy = getPresenceCopy(memory);
+    rememberLitResident(memory.id);
     memory.lightCount = Number(data.lightCount || memory.lightCount || 0);
     countEl.textContent = copy.lightCountLabel(memory.lightCount);
     buttonEl.textContent = data.alreadyLit ? "你已点亮过" : copy.lightPressed;
     buttonEl.setAttribute("aria-pressed", "true");
     if (statusEl) statusEl.textContent = data.alreadyLit ? copy.lightAlready : copy.lightSuccess;
   } catch (error) {
-    const copy = getPresenceCopy(memory);
-    const savedLights = getLightCount(memory.id);
-    addLight(memory.id);
-    const totalLights = Math.max(memory.lightCount || 0, savedLights + 1);
-    countEl.textContent = copy.lightCountLabel(totalLights);
-    buttonEl.textContent = copy.lightPressed;
-    buttonEl.setAttribute("aria-pressed", "true");
-    if (statusEl) statusEl.textContent = "后端暂时不可用，已先在当前浏览器点亮。";
+    buttonEl.disabled = false;
+    if (statusEl) statusEl.textContent = "点灯暂时不可用，请稍后重试。";
   }
 }
 
@@ -812,10 +846,9 @@ function createWallCard(memory, index) {
   const safePlayerName = escapeHtml(memory.playerName || "一位玩家");
   const safeMemory = escapeHtml(memory.memory);
   const safeTraits = memory.traits.map(escapeHtml);
-  const savedLights = getLightCount(memory.id);
-  const baseLights = memory.lightCount || (8 + index * 3);
-  const totalLights = baseLights + savedLights;
-  const wasLit = savedLights > 0;
+  const baseLights = apiResidentsLoaded ? Number(memory.lightCount || 0) : (8 + index * 3);
+  const totalLights = baseLights;
+  const wasLit = hasLitResident(memory.id);
 
   const article = document.createElement("article");
   article.className = `wall-card presence-${copy.key}${wasLit ? " lit" : ""}`;
@@ -843,16 +876,24 @@ function createWallCard(memory, index) {
 
   const lightButton = article.querySelector(".light-button");
   const lightCountEl = article.querySelector("[data-light-count]");
-  lightButton.addEventListener("click", () => {
+  lightButton.addEventListener("click", async () => {
     const alreadyLit = lightButton.getAttribute("aria-pressed") === "true";
     if (alreadyLit) return; // 每人每只鼠鼠只能点一次
-    addLight(memory.id);
-    const newTotal = totalLights + 1;
-    lightButton.setAttribute("aria-pressed", "true");
-    lightButton.textContent = copy.lightPressed;
-    lightCountEl.textContent = copy.lightCountLabel(newTotal);
-    article.classList.add("lit");
-    updateWallStats();
+    lightButton.disabled = true;
+    try {
+      const data = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/lights`, getLightRequestOptions());
+      const newTotal = Number(data.lightCount ?? totalLights);
+      memory.lightCount = newTotal;
+      rememberLitResident(memory.id);
+      lightButton.setAttribute("aria-pressed", "true");
+      lightButton.textContent = copy.lightPressed;
+      lightCountEl.textContent = copy.lightCountLabel(newTotal);
+      article.classList.add("lit");
+      updateWallStats();
+    } catch {
+      lightButton.disabled = false;
+      lightButton.title = "点灯暂时不可用，请稍后重试";
+    }
   });
 
   article.querySelector(".card-top")?.addEventListener("click", () => {
@@ -860,27 +901,6 @@ function createWallCard(memory, index) {
   });
 
   return article;
-}
-
-function getWallLights() {
-  try {
-    return JSON.parse(localStorage.getItem(lightsStorageKey) || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function getLightCount(memoryId) {
-  const lights = getWallLights();
-  return lights[memoryId] || 0;
-}
-
-function addLight(memoryId) {
-  const lights = getWallLights();
-  lights[memoryId] = (lights[memoryId] || 0) + 1;
-  try {
-    localStorage.setItem(lightsStorageKey, JSON.stringify(lights));
-  } catch { /* 忽略存储错误 */ }
 }
 
 function getSeedMemories() {
@@ -904,13 +924,8 @@ function updateWallStats() {
   wallStarCountEl.textContent = wallMemories.length;
 
   let totalLights = 0;
-  const lights = getWallLights();
-  allMemories.forEach((m) => {
-    totalLights += lights[m.id] || 0;
-  });
-  // 加上后端灯数；种子数据无后端时保留基础灯数
   allMemories.forEach((m, i) => {
-    totalLights += m.lightCount || (lights[m.id] ? 0 : 8 + i * 3);
+    totalLights += apiResidentsLoaded ? Number(m.lightCount || 0) : 8 + i * 3;
   });
   wallLightTotalEl.textContent = totalLights;
 }
@@ -1063,7 +1078,7 @@ function renderSingleResidentPage() {
   const safeTraits = memory.traits.map(escapeHtml);
   const safeMemory = escapeHtml(memory.memory);
   const starCalendar = getMouseStarCalendar(memory.arrivedAt);
-  const lightTotal = Math.max(Number(memory.lightCount || 0), getLightCount(memory.id));
+  const lightTotal = Number(memory.lightCount || 0);
   const safeTomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const worldLead = copy.earth
     ? `${safeName} 此刻还在地球。人间的日子慢慢过，故事会先被这颗星球轻轻收着。`
@@ -1087,7 +1102,7 @@ function renderSingleResidentPage() {
           ${safeTraits.map((trait) => `<li>${trait}</li>`).join("")}
         </ul>
         <div class="share-actions" aria-label="${copy.pageNoun}分享操作">
-          <button class="button primary resident-light-button" id="resident-light" type="button" aria-pressed="false">${copy.lightButton}</button>
+          <button class="button primary resident-light-button" id="resident-light" type="button" aria-pressed="${hasLitResident(memory.id)}"${hasLitResident(memory.id) ? " disabled" : ""}>${hasLitResident(memory.id) ? copy.lightPressed : copy.lightButton}</button>
           <button class="button primary" id="copy-share" type="button">复制分享文案</button>
           <button class="button ghost" id="download-card" type="button">生成纪念卡图片</button>
         </div>
@@ -1213,6 +1228,9 @@ function renderSingleResidentPage() {
   const ritualStatusEl = singleResidentEl.querySelector("#ritual-status");
   const lightCountEl = singleResidentEl.querySelector("#resident-light-count");
   const lightButtonEl = singleResidentEl.querySelector("#resident-light");
+  if (hasLitResident(memory.id)) {
+    ritualStatusEl.textContent = copy.lightAlready;
+  }
   const notesEl = singleResidentEl.querySelector("#resident-notes");
   const noteStatusEl = singleResidentEl.querySelector("#note-status");
   const capsuleStatusEl = singleResidentEl.querySelector("#capsule-status");

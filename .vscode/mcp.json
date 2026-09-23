@@ -16,8 +16,8 @@
       ],
       "env": {
         "IMAGE_API_KEY": "${input:omwstarImageApiKey}",
-        "IMAGE_API_ENDPOINT": "https://REPLACE_WITH_YOUR_IMAGE_API_ENDPOINT",
-        "IMAGE_API_MODEL": "REPLACE_WITH_YOUR_IMAGE_MODEL",
+        "IMAGE_API_ENDPOINT": "https://www.omwai.xyz/",
+        "IMAGE_API_MODEL": "gpt-image-2",
         "IMAGE_OUTPUT_ROOT": "${workspaceFolder}/assets/guides"
       }
     }

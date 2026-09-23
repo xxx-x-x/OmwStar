@@ -5,9 +5,10 @@ import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import * as z from "zod/v4";
 
 const MAX_RESPONSE_BYTES = 25 * 1024 * 1024;
-const REQUEST_TIMEOUT_MS = 120_000;
+const REQUEST_TIMEOUT_MS = 30_000;
+const TASK_TIMEOUT_MS = 10 * 60_000;
+const POLL_INTERVAL_MS = 2_000;
 const ALLOWED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
-const ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
@@ -47,14 +48,6 @@ async function ensureNotExists(path: string): Promise<void> {
   }
 }
 
-async function readLimitedBody(response: Response): Promise<Buffer> {
-  const contentLength = Number(response.headers.get("content-length") || 0);
-  if (contentLength > MAX_RESPONSE_BYTES) throw new Error("图片响应超过 25MB 限制。");
-  const bytes = Buffer.from(await response.arrayBuffer());
-  if (bytes.byteLength > MAX_RESPONSE_BYTES) throw new Error("图片响应超过 25MB 限制。");
-  return bytes;
-}
-
 function decodeBase64(value: string): Buffer {
   const normalized = value.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, "");
   const bytes = Buffer.from(normalized, "base64");
@@ -62,77 +55,110 @@ function decodeBase64(value: string): Buffer {
   return bytes;
 }
 
-async function downloadImage(url: string, signal: AbortSignal): Promise<Buffer> {
-  const parsed = new URL(url);
-  if (parsed.protocol !== "https:") throw new Error("API 返回的图片 URL 必须使用 HTTPS。");
-  const response = await fetch(parsed, { signal, redirect: "follow" });
-  if (!response.ok) throw new Error(`下载生成图片失败：HTTP ${response.status}`);
-  const mime = response.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
-  if (mime && !ALLOWED_MIME_TYPES.has(mime)) throw new Error(`图片 URL 返回了不支持的类型：${mime}`);
-  return readLimitedBody(response);
+function apiUrl(endpoint: string, path: string): URL {
+  const base = new URL(endpoint.endsWith("/") ? endpoint : `${endpoint}/`);
+  if (base.protocol !== "https:" && base.hostname !== "127.0.0.1" && base.hostname !== "localhost") {
+    throw new Error("IMAGE_API_ENDPOINT 必须使用 HTTPS；仅 localhost 可使用 HTTP。");
+  }
+  return new URL(path.replace(/^\//, ""), base);
 }
 
-/**
- * OpenAI-compatible adapter. If your provider uses different request or response
- * fields, edit only this function and keep the validation/storage code unchanged.
- */
+type ImageTask = {
+  id?: string;
+  task_id?: string;
+  status?: "queued" | "in_progress" | "completed" | "failed";
+  progress?: string;
+  error?: { code?: string; message?: string } | null;
+  data?: Array<{ b64_json?: string; revised_prompt?: string }>;
+};
+
+async function requestJson(url: URL, init: RequestInit, apiKey: string): Promise<ImageTask> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, { ...init, signal: controller.signal });
+    if (!response.ok) {
+      const detail = (await response.text()).slice(0, 800).replaceAll(apiKey, "[REDACTED]");
+      throw new Error(`生图 API 请求失败：HTTP ${response.status}${detail ? ` — ${detail}` : ""}`);
+    }
+    return await response.json() as ImageTask;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function taskError(task: ImageTask): string {
+  const code = task.error?.code ? `${task.error.code}: ` : "";
+  return `${code}${task.error?.message || "图片生成任务失败，接口未返回具体原因。"}`;
+}
+
+async function wait(milliseconds: number): Promise<void> {
+  await new Promise(resolvePromise => setTimeout(resolvePromise, milliseconds));
+}
+
+/** OmwAI GPT Image 2 async adapter. */
 async function requestImage(args: {
   prompt: string;
-  negativePrompt?: string;
-  width: number;
-  height: number;
+  size: "1024x1024" | "1536x1024" | "1024x1536";
+  quality: "low" | "medium" | "high" | "auto";
+  background: "transparent" | "opaque" | "auto" | "none";
   format: "png" | "jpeg" | "webp";
 }): Promise<Buffer> {
   const endpoint = requireEnv("IMAGE_API_ENDPOINT");
   const apiKey = requireEnv("IMAGE_API_KEY");
   const model = requireEnv("IMAGE_API_MODEL");
-  const endpointUrl = new URL(endpoint);
-  if (endpointUrl.protocol !== "https:" && endpointUrl.hostname !== "127.0.0.1" && endpointUrl.hostname !== "localhost") {
-    throw new Error("IMAGE_API_ENDPOINT 必须使用 HTTPS；仅 localhost 可使用 HTTP。");
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try {
-    const response = await fetch(endpointUrl, {
+  const authorization = `Bearer ${apiKey}`;
+  const submitted = await requestJson(
+    apiUrl(endpoint, "/v1/images/async/generations"),
+    {
       method: "POST",
       headers: {
-        "authorization": `Bearer ${apiKey}`,
+        authorization,
         "content-type": "application/json",
       },
       body: JSON.stringify({
         model,
         prompt: args.prompt,
-        negative_prompt: args.negativePrompt,
-        size: `${args.width}x${args.height}`,
-        width: args.width,
-        height: args.height,
-        response_format: "b64_json",
-        output_format: args.format,
         n: 1,
+        size: args.size,
+        quality: args.quality,
+        background: args.background,
+        output_format: args.format,
+        moderation: "auto",
       }),
-      signal: controller.signal,
-    });
+    },
+    apiKey,
+  );
 
-    if (!response.ok) {
-      const detail = (await response.text()).slice(0, 800).replaceAll(apiKey, "[REDACTED]");
-      throw new Error(`生图 API 请求失败：HTTP ${response.status}${detail ? ` — ${detail}` : ""}`);
+  if (submitted.status === "failed") throw new Error(taskError(submitted));
+  const taskId = submitted.task_id || submitted.id;
+  if (!taskId || !/^task_[A-Za-z0-9_-]+$/.test(taskId)) {
+    throw new Error("提交成功但接口未返回有效的 task_id。");
+  }
+
+  const deadline = Date.now() + TASK_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    if (submitted.status === "completed") {
+      const base64 = submitted.data?.[0]?.b64_json;
+      if (!base64) throw new Error("任务已完成，但 data[0].b64_json 为空。");
+      return decodeBase64(base64);
     }
 
-    const mime = response.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
-    if (mime && ALLOWED_MIME_TYPES.has(mime)) return readLimitedBody(response);
-
-    const payload = await response.json() as Record<string, unknown>;
-    const first = Array.isArray(payload.data) ? payload.data[0] as Record<string, unknown> | undefined : undefined;
-    const base64 = first?.b64_json ?? first?.base64 ?? payload.b64_json ?? payload.base64;
-    if (typeof base64 === "string") return decodeBase64(base64);
-    const imageUrl = first?.url ?? payload.url;
-    if (typeof imageUrl === "string") return downloadImage(imageUrl, controller.signal);
-
-    throw new Error("无法识别 API 响应。请修改 requestImage() 以适配服务商的响应字段。");
-  } finally {
-    clearTimeout(timeout);
+    await wait(POLL_INTERVAL_MS);
+    const task = await requestJson(
+      apiUrl(endpoint, `/v1/images/async/generations/${encodeURIComponent(taskId)}`),
+      { method: "GET", headers: { authorization } },
+      apiKey,
+    );
+    if (task.status === "failed") throw new Error(taskError(task));
+    if (task.status === "completed") {
+      const base64 = task.data?.[0]?.b64_json;
+      if (!base64) throw new Error("任务已完成，但 data[0].b64_json 为空。");
+      return decodeBase64(base64);
+    }
   }
+
+  throw new Error("图片生成超过 10 分钟仍未完成，请稍后在服务商后台检查任务状态。");
 }
 
 const server = new McpServer({ name: "omwstar-image-generator", version: "0.1.0" });
@@ -141,22 +167,27 @@ server.registerTool(
   "generate_image",
   {
     title: "Generate and save image",
-    description: "Generate one image using the configured API and save it safely under IMAGE_OUTPUT_ROOT.",
+    description: "Generate one GPT Image 2 image through the OmwAI async API and save it under IMAGE_OUTPUT_ROOT.",
     inputSchema: z.object({
       prompt: z.string().min(10).max(8_000).describe("Detailed image-generation prompt"),
-      negativePrompt: z.string().max(4_000).optional().describe("Optional negative prompt"),
-      width: z.number().int().min(256).max(2048).default(1024),
-      height: z.number().int().min(256).max(2048).default(1024),
+      size: z.enum(["1024x1024", "1536x1024", "1024x1536"]).default("1024x1024"),
+      quality: z.enum(["low", "medium", "high", "auto"]).default("high"),
+      background: z.enum(["transparent", "opaque", "auto", "none"]).default("auto"),
       format: z.enum(["png", "jpeg", "webp"]).default("webp"),
       outputPath: z.string().min(1).max(240).describe("Relative path under IMAGE_OUTPUT_ROOT, including extension"),
     }),
     annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: true },
   },
-  async ({ prompt, negativePrompt, width, height, format, outputPath }) => {
+  async ({ prompt, size, quality, background, format, outputPath }) => {
     try {
       const destination = safeOutputPath(outputPath);
+      const extension = extname(destination).toLowerCase();
+      const expectedExtensions = format === "jpeg" ? new Set([".jpg", ".jpeg"]) : new Set([`.${format}`]);
+      if (!expectedExtensions.has(extension)) {
+        throw new Error(`outputPath 扩展名必须与 format=${format} 一致。`);
+      }
       await ensureNotExists(destination);
-      const image = await requestImage({ prompt, negativePrompt, width, height, format });
+      const image = await requestImage({ prompt, size, quality, background, format });
       await mkdir(resolve(destination, ".."), { recursive: true });
       await writeFile(destination, image, { flag: "wx" });
       return {

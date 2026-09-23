@@ -1,16 +1,41 @@
 {
-  "name": "omwstar-image-generator-mcp",
+  "name": "@omwai/omwstar-image-generator-mcp",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
-  "description": "Local stdio MCP server that generates images through a configurable API.",
+  "description": "MCP server that generates and saves images through the OmwAI GPT Image API.",
+  "license": "MIT",
+  "bin": {
+    "omwstar-image-generator-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xxx-x-x/OmwStar.git",
+    "directory": "tools/image-generator-mcp"
+  },
+  "homepage": "https://github.com/xxx-x-x/OmwStar/tree/main/tools/image-generator-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/xxx-x-x/OmwStar/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "image-generation",
+    "vscode",
+    "copilot"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run check && npm run build",
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/server": "latest",
+    "@modelcontextprotocol/server": "^2.0.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
@@ -20,5 +45,9 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

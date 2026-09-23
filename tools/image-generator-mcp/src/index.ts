@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { mkdir, stat, writeFile } from "node:fs/promises";
 import { extname, isAbsolute, relative, resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/server";

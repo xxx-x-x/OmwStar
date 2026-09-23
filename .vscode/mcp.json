@@ -1,0 +1,25 @@
+{
+  "inputs": [
+    {
+      "id": "omwstarImageApiKey",
+      "type": "promptString",
+      "description": "请输入图片生成 API Key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "omwstar-image-generator": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/tools/image-generator-mcp/dist/index.js"
+      ],
+      "env": {
+        "IMAGE_API_KEY": "${input:omwstarImageApiKey}",
+        "IMAGE_API_ENDPOINT": "https://REPLACE_WITH_YOUR_IMAGE_API_ENDPOINT",
+        "IMAGE_API_MODEL": "REPLACE_WITH_YOUR_IMAGE_MODEL",
+        "IMAGE_OUTPUT_ROOT": "${workspaceFolder}/assets/guides"
+      }
+    }
+  }
+}

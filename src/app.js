@@ -16,23 +16,9 @@ const mapResidentsEl = document.querySelector("#map-residents");
 const residentDetailEl = document.querySelector("#resident-detail");
 const timelineContainerEl = document.querySelector("#timeline-container");
 const guardianListEl = document.querySelector("#guardian-list");
-const visitorIdStorageKey = "shushu-planet.visitor-id.v1";
-const lightsStorageKey = "shushu-planet.lit-residents.v2";
+const lightsStorageKey = "shushu-planet.wall-lights.v1";
 const apiBase = "/api";
 const defaultRegion = "月光谷";
-const adminStorageKey = "shushu-planet.admin-token.v1";
-const adminEditId = new URLSearchParams(location.search).get("adminEdit") || "";
-let adminEditRecord = null;
-let adminExistingPhotos = [];
-let adminExistingSpreadImage = "";
-
-function getAdminToken() {
-  try {
-    return sessionStorage.getItem(adminStorageKey) || "";
-  } catch {
-    return "";
-  }
-}
 
 function normalizePresence(value) {
   return value === "earth" ? "earth" : "star";
@@ -266,46 +252,6 @@ async function fetchJson(url, options) {
   return data;
 }
 
-function getVisitorId() {
-  try {
-    const saved = localStorage.getItem(visitorIdStorageKey);
-    if (saved) return saved;
-    const visitorId = crypto.randomUUID();
-    localStorage.setItem(visitorIdStorageKey, visitorId);
-    return visitorId;
-  } catch {
-    return `temporary-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  }
-}
-
-function getLitResidents() {
-  try {
-    return JSON.parse(localStorage.getItem(lightsStorageKey) || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function hasLitResident(memoryId) {
-  return Boolean(getLitResidents()[memoryId]);
-}
-
-function rememberLitResident(memoryId) {
-  const litResidents = getLitResidents();
-  litResidents[memoryId] = true;
-  try {
-    localStorage.setItem(lightsStorageKey, JSON.stringify(litResidents));
-  } catch { /* 忽略存储错误 */ }
-}
-
-function getLightRequestOptions() {
-  return {
-    method: "POST",
-    headers: { "X-Visitor-Id": getVisitorId() },
-    body: JSON.stringify({}),
-  };
-}
-
 async function loadApiResidents() {
   try {
     const data = await fetchJson(`${apiBase}/residents`);
@@ -346,15 +292,6 @@ function formatDate(dateValue) {
     month: "long",
     day: "numeric",
   }).format(new Date(dateValue));
-}
-
-function formatDateInput(dateValue) {
-  if (!dateValue) return "";
-  const match = dateValue.toString().match(/^\d{4}-\d{2}-\d{2}/);
-  if (match) return match[0];
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 10);
 }
 
 function getMouseStarCalendar(dateValue) {
@@ -687,21 +624,28 @@ async function copyResidentShareText(memory, statusEl) {
 }
 
 async function lightResident(memory, countEl, buttonEl, statusEl) {
-  if (hasLitResident(memory.id)) return;
   buttonEl.disabled = true;
 
   try {
-    const data = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/lights`, getLightRequestOptions());
+    const data = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/lights`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
     const copy = getPresenceCopy(memory);
-    rememberLitResident(memory.id);
     memory.lightCount = Number(data.lightCount || memory.lightCount || 0);
     countEl.textContent = copy.lightCountLabel(memory.lightCount);
     buttonEl.textContent = data.alreadyLit ? "你已点亮过" : copy.lightPressed;
     buttonEl.setAttribute("aria-pressed", "true");
     if (statusEl) statusEl.textContent = data.alreadyLit ? copy.lightAlready : copy.lightSuccess;
   } catch (error) {
-    buttonEl.disabled = false;
-    if (statusEl) statusEl.textContent = "点灯暂时不可用，请稍后重试。";
+    const copy = getPresenceCopy(memory);
+    const savedLights = getLightCount(memory.id);
+    addLight(memory.id);
+    const totalLights = Math.max(memory.lightCount || 0, savedLights + 1);
+    countEl.textContent = copy.lightCountLabel(totalLights);
+    buttonEl.textContent = copy.lightPressed;
+    buttonEl.setAttribute("aria-pressed", "true");
+    if (statusEl) statusEl.textContent = "后端暂时不可用，已先在当前浏览器点亮。";
   }
 }
 
@@ -846,9 +790,10 @@ function createWallCard(memory, index) {
   const safePlayerName = escapeHtml(memory.playerName || "一位玩家");
   const safeMemory = escapeHtml(memory.memory);
   const safeTraits = memory.traits.map(escapeHtml);
-  const baseLights = apiResidentsLoaded ? Number(memory.lightCount || 0) : (8 + index * 3);
-  const totalLights = baseLights;
-  const wasLit = hasLitResident(memory.id);
+  const savedLights = getLightCount(memory.id);
+  const baseLights = memory.lightCount || (8 + index * 3);
+  const totalLights = baseLights + savedLights;
+  const wasLit = savedLights > 0;
 
   const article = document.createElement("article");
   article.className = `wall-card presence-${copy.key}${wasLit ? " lit" : ""}`;
@@ -876,24 +821,16 @@ function createWallCard(memory, index) {
 
   const lightButton = article.querySelector(".light-button");
   const lightCountEl = article.querySelector("[data-light-count]");
-  lightButton.addEventListener("click", async () => {
+  lightButton.addEventListener("click", () => {
     const alreadyLit = lightButton.getAttribute("aria-pressed") === "true";
     if (alreadyLit) return; // 每人每只鼠鼠只能点一次
-    lightButton.disabled = true;
-    try {
-      const data = await fetchJson(`${apiBase}/residents/${encodeURIComponent(memory.id)}/lights`, getLightRequestOptions());
-      const newTotal = Number(data.lightCount ?? totalLights);
-      memory.lightCount = newTotal;
-      rememberLitResident(memory.id);
-      lightButton.setAttribute("aria-pressed", "true");
-      lightButton.textContent = copy.lightPressed;
-      lightCountEl.textContent = copy.lightCountLabel(newTotal);
-      article.classList.add("lit");
-      updateWallStats();
-    } catch {
-      lightButton.disabled = false;
-      lightButton.title = "点灯暂时不可用，请稍后重试";
-    }
+    addLight(memory.id);
+    const newTotal = totalLights + 1;
+    lightButton.setAttribute("aria-pressed", "true");
+    lightButton.textContent = copy.lightPressed;
+    lightCountEl.textContent = copy.lightCountLabel(newTotal);
+    article.classList.add("lit");
+    updateWallStats();
   });
 
   article.querySelector(".card-top")?.addEventListener("click", () => {
@@ -901,6 +838,27 @@ function createWallCard(memory, index) {
   });
 
   return article;
+}
+
+function getWallLights() {
+  try {
+    return JSON.parse(localStorage.getItem(lightsStorageKey) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function getLightCount(memoryId) {
+  const lights = getWallLights();
+  return lights[memoryId] || 0;
+}
+
+function addLight(memoryId) {
+  const lights = getWallLights();
+  lights[memoryId] = (lights[memoryId] || 0) + 1;
+  try {
+    localStorage.setItem(lightsStorageKey, JSON.stringify(lights));
+  } catch { /* 忽略存储错误 */ }
 }
 
 function getSeedMemories() {
@@ -924,8 +882,13 @@ function updateWallStats() {
   wallStarCountEl.textContent = wallMemories.length;
 
   let totalLights = 0;
+  const lights = getWallLights();
+  allMemories.forEach((m) => {
+    totalLights += lights[m.id] || 0;
+  });
+  // 加上后端灯数；种子数据无后端时保留基础灯数
   allMemories.forEach((m, i) => {
-    totalLights += apiResidentsLoaded ? Number(m.lightCount || 0) : 8 + i * 3;
+    totalLights += m.lightCount || (lights[m.id] ? 0 : 8 + i * 3);
   });
   wallLightTotalEl.textContent = totalLights;
 }
@@ -1078,7 +1041,7 @@ function renderSingleResidentPage() {
   const safeTraits = memory.traits.map(escapeHtml);
   const safeMemory = escapeHtml(memory.memory);
   const starCalendar = getMouseStarCalendar(memory.arrivedAt);
-  const lightTotal = Number(memory.lightCount || 0);
+  const lightTotal = Math.max(Number(memory.lightCount || 0), getLightCount(memory.id));
   const safeTomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const worldLead = copy.earth
     ? `${safeName} 此刻还在地球。人间的日子慢慢过，故事会先被这颗星球轻轻收着。`
@@ -1102,7 +1065,7 @@ function renderSingleResidentPage() {
           ${safeTraits.map((trait) => `<li>${trait}</li>`).join("")}
         </ul>
         <div class="share-actions" aria-label="${copy.pageNoun}分享操作">
-          <button class="button primary resident-light-button" id="resident-light" type="button" aria-pressed="${hasLitResident(memory.id)}"${hasLitResident(memory.id) ? " disabled" : ""}>${hasLitResident(memory.id) ? copy.lightPressed : copy.lightButton}</button>
+          <button class="button primary resident-light-button" id="resident-light" type="button" aria-pressed="false">${copy.lightButton}</button>
           <button class="button primary" id="copy-share" type="button">复制分享文案</button>
           <button class="button ghost" id="download-card" type="button">生成纪念卡图片</button>
         </div>
@@ -1228,9 +1191,6 @@ function renderSingleResidentPage() {
   const ritualStatusEl = singleResidentEl.querySelector("#ritual-status");
   const lightCountEl = singleResidentEl.querySelector("#resident-light-count");
   const lightButtonEl = singleResidentEl.querySelector("#resident-light");
-  if (hasLitResident(memory.id)) {
-    ritualStatusEl.textContent = copy.lightAlready;
-  }
   const notesEl = singleResidentEl.querySelector("#resident-notes");
   const noteStatusEl = singleResidentEl.querySelector("#note-status");
   const capsuleStatusEl = singleResidentEl.querySelector("#capsule-status");
@@ -1277,8 +1237,6 @@ async function renderSubmissionPreview(event) {
   if (!submissionForm || !submissionStatusEl) return;
 
   const data = new FormData(submissionForm);
-  const customBreed = submissionForm.elements.breedCustom?.value?.trim();
-  if (customBreed) data.set("breed", customBreed);
   const playerName = data.get("playerName").toString().trim();
   const name = data.get("name").toString().trim();
   const arrivedAt = data.get("arrivedAt").toString();
@@ -1299,31 +1257,6 @@ async function renderSubmissionPreview(event) {
   submissionStatusEl.className = "form-status";
 
   try {
-    if (adminEditRecord) {
-      const secondaryPassword = document.querySelector("#admin-secondary-password")?.value || "";
-      if (!secondaryPassword) {
-        throw new Error("请输入管理员二级密码后再保存。");
-      }
-      data.set("existingPhotos", JSON.stringify(adminExistingPhotos.filter(Boolean)));
-      data.set("existingSpreadImage", adminExistingSpreadImage);
-      data.set("publicConsent", submissionForm.elements.publicConsent?.checked ? "true" : "false");
-      const response = await fetch(`${apiBase}/admin/submissions/${encodeURIComponent(adminEditRecord.id)}`, {
-        method: "PUT",
-        headers: {
-          "x-admin-token": getAdminToken(),
-          "x-admin-secondary-password": secondaryPassword,
-        },
-        body: data,
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "档案保存失败。");
-      submissionStatusEl.textContent = "档案已保存，公开页面也已同步更新。";
-      submissionStatusEl.className = "form-status success";
-      adminEditRecord = result.submission || adminEditRecord;
-      document.querySelector("#admin-secondary-password").value = "";
-      return;
-    }
-
     const response = await fetch(`${apiBase}/submissions`, {
       method: "POST",
       body: data,
@@ -1357,136 +1290,6 @@ async function renderSubmissionPreview(event) {
     submissionStatusEl.textContent = error.message || "后端暂时不可用，请稍后再试。";
     submissionStatusEl.className = "form-status error";
   }
-}
-
-function setSubmissionField(name, value) {
-  const field = submissionForm?.elements[name];
-  if (!field) return;
-  field.value = value == null ? "" : value;
-  field.dispatchEvent(new Event("change", { bubbles: true }));
-}
-
-function setAdminPhotoPreview(field, url) {
-  const drop = field?.closest(".photo-drop");
-  if (!drop || !url) return;
-  const preview = drop.querySelector(".photo-preview");
-  const placeholder = drop.querySelector(".photo-placeholder");
-  const removeButton = drop.querySelector(".photo-remove");
-  preview.src = url;
-  preview.hidden = false;
-  placeholder.hidden = true;
-  removeButton.hidden = false;
-}
-
-function fillAdminSubmission(record) {
-  adminEditRecord = record;
-  adminExistingPhotos = Array.isArray(record.photos) ? [...record.photos] : [];
-  adminExistingSpreadImage = record.spreadImage || "";
-  setSubmissionField("presence", record.presence);
-  setSubmissionField("playerName", record.playerName);
-  setSubmissionField("name", record.name);
-  setSubmissionField("arrivedAt", formatDateInput(record.arrivedAt));
-  setSubmissionField("breed", record.breed);
-  setSubmissionField("nickname", record.nickname);
-  setSubmissionField("douyin", record.douyin);
-  setSubmissionField("xiaohongshu", record.xiaohongshu);
-  setSubmissionField("bilibili", record.bilibili);
-  setSubmissionField("region", record.region);
-  setSubmissionField("food", record.food);
-  setSubmissionField("traits", (record.traits || []).join("，"));
-  setSubmissionField("color", record.color || "#8fd2c8");
-  setSubmissionField("memory", record.memory);
-  if (submissionForm.elements.publicConsent) submissionForm.elements.publicConsent.checked = Boolean(record.publicConsent);
-  ["confirm", "originalConfirm"].forEach((name) => {
-    const field = submissionForm.elements[name];
-    if (field) {
-      field.checked = true;
-      field.disabled = true;
-    }
-  });
-
-  const category = document.querySelector("#breed-category");
-  const breedSelect = document.querySelector("#breed-select");
-  const breedCustom = document.querySelector("#breed-custom");
-  if (category && breedSelect) {
-    const categoryOptions = [...category.options];
-    const matchingCategory = categoryOptions.find((option) => option.value && record.breed && record.breed.includes(option.value.split("（")[0]));
-    category.value = matchingCategory?.value || "其他";
-    category.dispatchEvent(new Event("change", { bubbles: true }));
-    if (category.value === "其他" && breedCustom) {
-      breedCustom.value = record.breed || "";
-      breedCustom.dispatchEvent(new Event("input", { bubbles: true }));
-    } else {
-      breedSelect.value = record.breed || "";
-      breedSelect.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-  }
-
-  document.querySelectorAll('.photo-field:not(.spread-field) input[type="file"]').forEach((field, index) => {
-    if (adminExistingPhotos[index]) setAdminPhotoPreview(field, adminExistingPhotos[index]);
-  });
-  const spreadInput = document.querySelector(".spread-field input[type=\"file\"]");
-  if (adminExistingSpreadImage) setAdminPhotoPreview(spreadInput, adminExistingSpreadImage);
-  syncSubmissionPresenceCopy();
-  document.querySelector("#admin-edit-banner").hidden = false;
-  document.querySelector("#admin-edit-record").textContent = `投稿编号：${record.id}${record.residentPublicId ? ` · 档案编号：${record.residentPublicId}` : ""}`;
-  document.querySelector("#admin-secondary-panel").hidden = false;
-  document.querySelector("#admin-delete-submission").hidden = false;
-  document.querySelector("#submission-submit").textContent = "保存管理员修改";
-  document.querySelector("#submission-reset").hidden = true;
-  document.querySelector("#public-consent-text").closest(".consent-check").hidden = true;
-  document.title = `鼠鼠星球 | 编辑 ${record.name}`;
-}
-
-async function loadAdminSubmission() {
-  if (!adminEditId || !submissionForm) return;
-  const token = getAdminToken();
-  if (!token) {
-    submissionStatusEl.hidden = false;
-    submissionStatusEl.textContent = "请先从审核后台登录，再打开编辑页面。";
-    submissionStatusEl.className = "form-status error";
-    submissionForm.querySelectorAll("input, select, textarea, button").forEach((field) => { field.disabled = true; });
-    return;
-  }
-  try {
-    const response = await fetch(`${apiBase}/admin/submissions/${encodeURIComponent(adminEditId)}`, {
-      headers: { "x-admin-token": token },
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || "档案读取失败。");
-    fillAdminSubmission(result.submission);
-  } catch (error) {
-    submissionStatusEl.hidden = false;
-    submissionStatusEl.textContent = error.message;
-    submissionStatusEl.className = "form-status error";
-  }
-}
-
-async function deleteAdminSubmission() {
-  if (!adminEditRecord) return;
-  if (!window.confirm(`确定删除「${adminEditRecord.name}」吗？\n这会同时删除公开档案、便签、点灯和时间胶囊，且无法恢复。`)) return;
-  const secondaryPassword = document.querySelector("#admin-secondary-password")?.value || "";
-  if (!secondaryPassword) {
-    submissionStatusEl.hidden = false;
-    submissionStatusEl.textContent = "请输入管理员二级密码后再删除。";
-    submissionStatusEl.className = "form-status error";
-    return;
-  }
-  const response = await fetch(`${apiBase}/admin/submissions/${encodeURIComponent(adminEditRecord.id)}`, {
-    method: "DELETE",
-    headers: {
-      "x-admin-token": getAdminToken(),
-      "x-admin-secondary-password": secondaryPassword,
-    },
-  });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    submissionStatusEl.hidden = false;
-    submissionStatusEl.textContent = result.error || "删除失败。";
-    submissionStatusEl.className = "form-status error";
-    return;
-  }
-  location.href = "./_review.html";
 }
 
 function syncSubmissionPresenceCopy() {
@@ -1656,14 +1459,6 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
     }
     if (!file) return;
 
-    if (adminEditRecord) {
-      if (drop.closest(".spread-field")) adminExistingSpreadImage = "";
-      else {
-        const index = Number(input.dataset.photoIndex);
-        adminExistingPhotos[index] = "";
-      }
-    }
-
     const requiredSize = input.dataset.requiredSize;
     const showPreview = () => {
       const reader = new FileReader();
@@ -1726,13 +1521,6 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
       }
       if (placeholder) placeholder.hidden = false;
       if (removeBtn) removeBtn.hidden = true;
-      if (adminEditRecord) {
-        if (drop.closest(".spread-field")) adminExistingSpreadImage = "";
-        else {
-          const index = Number(input.dataset.photoIndex);
-          adminExistingPhotos[index] = "";
-        }
-      }
     });
   }
 
@@ -1815,14 +1603,6 @@ document.querySelectorAll(".photo-drop").forEach((drop) => {
 })();
 submissionForm?.elements.presence?.addEventListener("change", syncSubmissionPresenceCopy);
 syncSubmissionPresenceCopy();
-document.querySelector("#admin-delete-submission")?.addEventListener("click", () => {
-  deleteAdminSubmission().catch((error) => {
-    submissionStatusEl.hidden = false;
-    submissionStatusEl.textContent = error.message || "删除失败。";
-    submissionStatusEl.className = "form-status error";
-  });
-});
-loadAdminSubmission();
 
 
 // 初始化自定义下拉组件（所有 select 统一替换原生外观）

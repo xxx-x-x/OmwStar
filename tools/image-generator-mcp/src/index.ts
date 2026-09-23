@@ -9,6 +9,7 @@ const REQUEST_TIMEOUT_MS = 30_000;
 const TASK_TIMEOUT_MS = 10 * 60_000;
 const POLL_INTERVAL_MS = 2_000;
 const ALLOWED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+const ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
@@ -55,6 +56,30 @@ function decodeBase64(value: string): Buffer {
   return bytes;
 }
 
+async function readLimitedBody(response: Response): Promise<Buffer> {
+  const contentLength = Number(response.headers.get("content-length") || 0);
+  if (contentLength > MAX_RESPONSE_BYTES) throw new Error("图片响应超过 25MB 限制。");
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (!bytes.length || bytes.byteLength > MAX_RESPONSE_BYTES) throw new Error("图片响应为空或超过 25MB 限制。");
+  return bytes;
+}
+
+async function downloadImage(url: string): Promise<Buffer> {
+  const parsed = new URL(url);
+  if (parsed.protocol !== "https:") throw new Error("查询接口返回的图片 URL 必须使用 HTTPS。");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(parsed, { signal: controller.signal, redirect: "follow" });
+    if (!response.ok) throw new Error(`下载查询结果图片失败：HTTP ${response.status}`);
+    const mime = response.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
+    if (mime && !ALLOWED_MIME_TYPES.has(mime)) throw new Error(`查询结果 URL 返回了不支持的类型：${mime}`);
+    return await readLimitedBody(response);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function apiUrl(endpoint: string, path: string): URL {
   const base = new URL(endpoint.endsWith("/") ? endpoint : `${endpoint}/`);
   if (base.protocol !== "https:" && base.hostname !== "127.0.0.1" && base.hostname !== "localhost") {
@@ -69,7 +94,9 @@ type ImageTask = {
   status?: "queued" | "in_progress" | "completed" | "failed";
   progress?: string;
   error?: { code?: string; message?: string } | null;
-  data?: Array<{ b64_json?: string; revised_prompt?: string }>;
+  data?: unknown;
+  result?: unknown;
+  output?: unknown;
 };
 
 async function requestJson(url: URL, init: RequestInit, apiKey: string): Promise<ImageTask> {
@@ -90,6 +117,55 @@ async function requestJson(url: URL, init: RequestInit, apiKey: string): Promise
 function taskError(task: ImageTask): string {
   const code = task.error?.code ? `${task.error.code}: ` : "";
   return `${code}${task.error?.message || "图片生成任务失败，接口未返回具体原因。"}`;
+}
+
+function record(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+}
+
+function firstItem(value: unknown): Record<string, unknown> | undefined {
+  return Array.isArray(value) ? record(value[0]) : record(value);
+}
+
+function imageResult(task: ImageTask): { base64?: string; url?: string } {
+  const top = task as Record<string, unknown>;
+  const result = record(task.result);
+  const output = record(task.output);
+  const candidates = [
+    firstItem(task.data),
+    firstItem(result?.data),
+    firstItem(result?.images),
+    firstItem(output?.data),
+    firstItem(output?.images),
+    result,
+    output,
+    top,
+  ].filter((value): value is Record<string, unknown> => Boolean(value));
+
+  for (const candidate of candidates) {
+    const base64 = candidate.b64_json ?? candidate.base64 ?? candidate.image_base64;
+    if (typeof base64 === "string" && base64.length > 0) return { base64 };
+    const url = candidate.url ?? candidate.image_url;
+    if (typeof url === "string" && url.length > 0) return { url };
+  }
+  return {};
+}
+
+function responseShape(task: ImageTask): string {
+  const describe = (value: unknown): string => {
+    if (Array.isArray(value)) return `array(${value.length})[${Object.keys(record(value[0]) || {}).join(",") || typeof value[0]}]`;
+    const object = record(value);
+    if (object) return `object[${Object.keys(object).join(",")}]`;
+    return value === null ? "null" : typeof value;
+  };
+  return `顶层字段=${Object.keys(task).join(",")}; data=${describe(task.data)}; result=${describe(task.result)}; output=${describe(task.output)}`;
+}
+
+async function decodeTaskImage(task: ImageTask): Promise<Buffer> {
+  const image = imageResult(task);
+  if (image.base64) return decodeBase64(image.base64);
+  if (image.url) return downloadImage(image.url);
+  throw new Error(`任务已完成，但未找到图片数据。实际响应结构：${responseShape(task)}`);
 }
 
 async function wait(milliseconds: number): Promise<void> {
@@ -139,9 +215,7 @@ async function requestImage(args: {
   const deadline = Date.now() + TASK_TIMEOUT_MS;
   while (Date.now() < deadline) {
     if (submitted.status === "completed") {
-      const base64 = submitted.data?.[0]?.b64_json;
-      if (!base64) throw new Error("任务已完成，但 data[0].b64_json 为空。");
-      return decodeBase64(base64);
+      return decodeTaskImage(submitted);
     }
 
     await wait(POLL_INTERVAL_MS);
@@ -152,9 +226,7 @@ async function requestImage(args: {
     );
     if (task.status === "failed") throw new Error(taskError(task));
     if (task.status === "completed") {
-      const base64 = task.data?.[0]?.b64_json;
-      if (!base64) throw new Error("任务已完成，但 data[0].b64_json 为空。");
-      return decodeBase64(base64);
+      return decodeTaskImage(task);
     }
   }
 

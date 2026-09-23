@@ -328,6 +328,52 @@
       z-index: 2
     }
 
+    .book-mode-switch {
+      display: inline-grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--hairline);
+      border-radius: 999px;
+      background: rgba(250, 246, 238, .72);
+      box-shadow: 0 8px 24px rgba(78, 70, 61, .08);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    .book-mode {
+      min-width: 132px;
+      min-height: 36px;
+      padding: 7px 18px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink-soft);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .03em;
+      transition: color .2s ease, background-color .2s ease, box-shadow .2s ease;
+    }
+
+    .book-mode:hover {
+      color: var(--ink)
+    }
+
+    .book-mode[aria-selected="true"] {
+      color: var(--ink);
+      background: rgba(255, 252, 246, .96);
+      box-shadow: 0 2px 10px rgba(78, 70, 61, .12)
+    }
+
+    .book-mode:focus-visible,
+    .sb-arrow:focus-visible,
+    .tool:focus-visible {
+      outline: 2px solid var(--earth);
+      outline-offset: 3px
+    }
+
     .sb-stage {
       display: flex;
       align-items: center;
@@ -870,6 +916,44 @@
       animation: sb-cap-in .5s ease both
     }
 
+    .sb-caption.species-caption {
+      display: grid;
+      grid-template-columns: minmax(0, auto) auto auto;
+      align-items: baseline;
+      justify-content: center;
+      column-gap: 12px;
+      row-gap: 3px;
+      max-width: min(760px, 90vw);
+      text-align: center;
+      text-transform: none;
+      letter-spacing: 0
+    }
+
+    .species-name {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700
+    }
+
+    .species-scientific {
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-style: italic
+    }
+
+    .species-page {
+      color: var(--ink-faint);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums
+    }
+
+    .species-note {
+      grid-column: 1 / -1;
+      color: var(--ink-faint);
+      font-size: 10px;
+      line-height: 1.5
+    }
+
     .sb-caption.live {
       animation: none
     }
@@ -928,6 +1012,17 @@
         margin-inline: calc(50% - 50vw)
       }
 
+      .book-mode-switch {
+        width: min(92vw, 360px)
+      }
+
+      .book-mode {
+        min-width: 0;
+        min-height: 40px;
+        padding-inline: 10px;
+        font-size: 12px
+      }
+
       .sb-arrow {
         position: absolute;
         top: 50%;
@@ -953,6 +1048,30 @@
         letter-spacing: .1em;
         padding: 0 16px;
         text-align: center
+      }
+
+      .sb-caption.species-caption {
+        grid-template-columns: 1fr;
+        row-gap: 2px;
+        padding-inline: 14px
+      }
+
+      .species-note {
+        grid-column: 1;
+        max-width: 36em
+      }
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+
+      .book-mode,
+      .sb-arrow,
+      .tool,
+      .sb-hint,
+      .loupe,
+      .sb-caption {
+        transition: none;
+        animation: none
       }
     }
 
@@ -1214,6 +1333,12 @@
       <p class="hero-kicker">Designer / Creator / AI Educator / Founder @ Singapore</p>
 
       <div class="sb-wrap" id="sbWrap">
+        <div class="book-mode-switch" role="tablist" aria-label="绘本内容">
+          <button class="book-mode" id="storyMode" type="button" role="tab" aria-selected="true"
+            aria-controls="sbStage">绘本故事</button>
+          <button class="book-mode" id="speciesMode" type="button" role="tab" aria-selected="false" tabindex="-1"
+            aria-controls="sbStage">查看鼠鼠品种</button>
+        </div>
         <svg width="0" height="0" style="position:absolute" aria-hidden="true">
           <filter id="sb-mblur-1">
             <feGaussianBlur stdDeviation="5 0" />
@@ -1249,7 +1374,7 @@
             </svg>
           </button>
         </div>
-        <div class="sb-captions" id="sbCaptions"></div>
+        <div class="sb-captions" id="sbCaptions" aria-live="polite"></div>
         <div class="sb-tools" role="group" aria-label="view controls">
           <button class="tool" id="zOut" aria-label="zoom out"><svg viewBox="0 0 20 20" fill="none"
               stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
@@ -1270,7 +1395,7 @@
               <path d="M6.4 7.2a3.2 3.2 0 0 1 2.4-1.4" opacity=".55" />
             </svg></button>
         </div>
-        <p class="sb-hint" id="sbHint">Drag the page to turn · Drag the glass across it</p>
+        <p class="sb-hint" id="sbHint">拖拽翻页 · 方向键切换 · 拖动放大镜查看细节</p>
       </div>
 
       <button class="hero-down" id="heroDown" aria-label="scroll to about">
@@ -1332,7 +1457,7 @@
        ===================================================================== */
     const Q = new URLSearchParams(location.search);
     const DIR = 'sketchbook/';
-    const PAGES = [
+    const STORY_PAGES = [
       { file: 'marina-bay-sands.webp', title: 'Marina Bay Sands', place: 'Bayfront' },
       { file: 'gardens-by-the-bay.webp', title: 'Gardens by the Bay', place: 'Supertree Grove' },
       { file: 'merlion.webp', title: 'The Merlion', place: 'Merlion Park' },
@@ -1343,13 +1468,26 @@
       { file: 'singapore-river.webp', title: 'Singapore River', place: 'Boat Quay' },
       { file: 'botanic-gardens.webp', title: 'Botanic Gardens', place: 'Tanglin' }
     ];
-    PAGES.forEach(p => p.url = DIR + p.file);
-    const M = PAGES.length, LAND = 6;
+    STORY_PAGES.forEach(p => p.url = DIR + p.file);
+    const SPECIES_DIR = '../assets/guides/hamster-species/';
+    const SPECIES_PAGES = [
+      { file: 'syrian-hamster.webp', title: '叙利亚仓鼠（金丝熊）', scientific: 'Mesocricetus auratus' },
+      { file: 'campbell-dwarf-hamster.webp', title: '坎贝尔侏儒仓鼠', scientific: 'Phodopus campbelli' },
+      { file: 'winter-white-hamster.webp', title: '冬白侏儒仓鼠', scientific: 'Phodopus sungorus' },
+      { file: 'roborovski-hamster.webp', title: '罗伯罗夫斯基仓鼠', scientific: 'Phodopus roborovskii' },
+      { file: 'chinese-hamster.webp', title: '中国仓鼠', scientific: 'Cricetulus griseus' }
+    ];
+    SPECIES_PAGES.forEach(p => p.url = SPECIES_DIR + p.file);
+    const COLLECTIONS = { story: STORY_PAGES, species: SPECIES_PAGES };
+    const modeIndexes = { story: 0, species: 0 };
+    let mode = 'story', PAGES = COLLECTIONS[mode], M = PAGES.length;
+    const LAND = 6;
     const pageLoads = new Map();
 
     function preloadPage(index, priority = 'auto') {
       const normalized = (index + M) % M;
-      if (pageLoads.has(normalized)) return pageLoads.get(normalized);
+      const key = mode + ':' + normalized;
+      if (pageLoads.has(key)) return pageLoads.get(key);
       const image = new Image();
       image.decoding = 'async';
       image.fetchPriority = priority;
@@ -1357,7 +1495,7 @@
       const loaded = image.decode
         ? image.decode().catch(() => { })
         : new Promise(resolve => { image.onload = image.onerror = resolve; });
-      pageLoads.set(normalized, loaded);
+      pageLoads.set(key, loaded);
       return loaded;
     }
 
@@ -1372,6 +1510,10 @@
     const book = document.getElementById('sbBook');
     const capBox = document.getElementById('sbCaptions');
     const hint = document.getElementById('sbHint');
+    const modeButtons = {
+      story: document.getElementById('storyMode'),
+      species: document.getElementById('speciesMode')
+    };
     const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     /* ------------------------------------------------ the turning leaf */
@@ -1470,12 +1612,23 @@
       capBox.textContent = '';
       capOut = capIn = null;
       if (turn) {
-        capOut = el('p', 'sb-caption live'); capOut.textContent = PAGES[turn.from].title; capBox.appendChild(capOut);
-        capIn = el('p', 'sb-caption live'); capIn.textContent = PAGES[turn.to].title; capBox.appendChild(capIn);
+        capOut = makeCaption(turn.from, true); capBox.appendChild(capOut);
+        capIn = makeCaption(turn.to, true); capBox.appendChild(capIn);
         fadeCaption(turn.t);
       } else {
-        const p = el('p', 'sb-caption'); p.textContent = PAGES[idx].title; capBox.appendChild(p);
+        capBox.appendChild(makeCaption(idx, false));
       }
+    }
+    function makeCaption(pageIndex, live) {
+      const page = PAGES[pageIndex];
+      const p = el('p', 'sb-caption' + (live ? ' live' : '') + (mode === 'species' ? ' species-caption' : ''));
+      if (mode !== 'species') { p.textContent = page.title; return p; }
+      const name = el('span', 'species-name'); name.textContent = page.title;
+      const scientific = el('span', 'species-scientific'); scientific.textContent = page.scientific;
+      const number = el('span', 'species-page'); number.textContent = String(pageIndex + 1).padStart(2, '0') + ' / ' + String(M).padStart(2, '0');
+      const note = el('span', 'species-note'); note.textContent = 'AI 生成示意图，仅用于认识常见类型，不作为个体鉴定依据。';
+      p.append(name, scientific, number, note);
+      return p;
     }
     let capOut = null, capIn = null;
     function fadeCaption(t) {
@@ -1562,6 +1715,12 @@
       view.trx = Math.max(-TILT_X, Math.min(TILT_X, rx));
       view.try_ = Math.max(-TILT_Y, Math.min(TILT_Y, ry));
       view.tz = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+      if (REDUCED) {
+        view.rx = view.trx; view.ry = view.try_; view.z = view.tz;
+        viewActive = false; applyView();
+        if (typeof syncZoom === 'function') syncZoom();
+        return;
+      }
       viewActive = true; kick();
       if (typeof syncZoom === 'function') syncZoom();
     }
@@ -1645,6 +1804,7 @@
     }
     function cancel() {
       if (!turn) return;
+      if (REDUCED) { turn = null; paint(); return; }
       animateTo(0, () => { turn = null; paint(); }, 150, 24);
       kick();
     }
@@ -1661,13 +1821,36 @@
       if (Math.min(fwd, back) === 1) { step(fwd === 1 ? 'next' : 'prev'); return; }
       idx = i; paint();
     }
+    function setMode(nextMode) {
+      if (nextMode === mode || !COLLECTIONS[nextMode]) return;
+      if (introOn) endIntro();
+      modeIndexes[mode] = turn ? turn.to : idx;
+      spring = null; turn = null; drag = null;
+      mode = nextMode;
+      PAGES = COLLECTIONS[mode]; M = PAGES.length;
+      idx = Math.max(0, Math.min(M - 1, modeIndexes[mode]));
+      Object.entries(modeButtons).forEach(([name, button]) => {
+        button.setAttribute('aria-selected', String(name === mode));
+        button.tabIndex = name === mode ? 0 : -1;
+      });
+      paint(); preloadPage(idx, 'high'); preloadNeighbors(idx); hideHint();
+    }
+    Object.entries(modeButtons).forEach(([name, button]) => {
+      button.onclick = () => setMode(name);
+      button.onkeydown = e => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+        e.preventDefault();
+        const nextMode = e.key === 'ArrowLeft' || e.key === 'Home' ? 'story' : 'species';
+        setMode(nextMode); modeButtons[nextMode].focus();
+      };
+    });
     document.getElementById('sbLeft').onclick = () => step('prev');
     document.getElementById('sbRight').onclick = () => step('next');
     addEventListener('keydown', e => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || t.getAttribute('role') === 'tab')) return;
       e.preventDefault(); hideHint();
       step(e.key === 'ArrowRight' ? 'next' : 'prev');
     });
